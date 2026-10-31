@@ -16,3 +16,5 @@
 | F-10 | Studio 允许把工程建在 `examples/` 等源码目录下 | 工程路径无约束 | 运行记录混入源码树 | 显式工程上下文中校验 | 计划中（M2.5） | `.yuem/baseline_diff.md` |
 | F-11 | 启动和每个页面都提示缺少 “Segoe UI” 字体 | 主题写死 Windows 字体 | 每次启动多耗约 110 ms，非 Windows 平台字体替换不可控 | 字体回退链 | 计划中（M4.2） | Studio 自检输出 |
 | F-12 | 一次 GUI 测试运行在进程退出时报 “QThread: Destroyed while thread is still running” | 未复现（当时 shell 残留指向旧环境的 `QT_PLUGIN_PATH`） | 退出时可能崩溃 | GUI 测试守护：运行中销毁 QThread/QProcess 即失败 | 已加守护 | `tests/yuem/gui/conftest.py` |
+| F-13 | 重力+磁法联合反演在给定种子下不可复现 | SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 用自身 `seed`，上游只设了全局种子 | 同一种子两次运行结果相差 2.6% | 种子直接赋给 directive，保留全局设种兼容旧版 | 已修复（P-0006，可回馈） | `tests/yuem/test_rng.py`；上游原代码对比 |
+| F-14 | 三维克里金的变差函数搜索与训练/验证划分不可复现 | 使用全局 `np.random` | 结果随运行变化 | 显式 `random_seed` 与 `default_rng` | 已修复（P-0006，可回馈） | 棘轮 global_np_random 9 → 0 |

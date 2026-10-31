@@ -94,7 +94,9 @@ def upstream_ref() -> str:
     The local ``upstream`` branch when present; otherwise the recorded base
     commit, which every clone of the fork contains.
     """
-    return "upstream" if ref_exists("upstream") else ownership().base_commit
+    # The full ref: a remote named "upstream" makes the bare name ambiguous.
+    branch = "refs/heads/upstream"
+    return branch if ref_exists(branch) else ownership().base_commit
 
 
 def changed_files(base: str, *, include_worktree: bool = True) -> list[str]:

@@ -37,6 +37,8 @@
 
 - 数值验证集 `tests/yuem/verification/`（标记 `numerical`）14 例：ERT 均匀半空间、两层 Wenner（镜像级数）、三维逐单元模型；SRT 两层折射；TDEM 中心回线（Ward & Hohmann）；FDEM 半空间与三层（empymod，Anderson 801 点滤波器）；MT 半空间与三层（Wait 递推）；重力棱柱（Bouguer 板）与球体/立方体（点质量）；磁性球体（极点偶极子）；Waxman-Smits 正反变换往返。`tools/yuem/verification_report.py` 生成 `docs/yuem/verification.md`。
 - 回归金标准 `tests/yuem/golden/`（标记 `golden`）10 例：ERT 单次与时移反演、SRT、FDEM 单点、TEM LCI 剖面、MT Occam 1D、MT 处理、重力反演、FDEM+TDEM 联合、重力处理；提取产物、指标与内存模型中的全部数值数组比对；容差按实测的运行间可重复性设定（SRT 因 pyGIMLi 射线追踪约 1e-4 波动取 1e-3，其余 1e-6 至 1e-10）。`tools/yuem/golden.py --update --reason` 更新并记入 `tests/yuem/golden/CHANGES.md`。
+- 随机数确定性：全局 `np.random` 调用由 9 处降为 0（保留的一处为兼容旧版 SimPEG 的设种并保存/恢复全局状态，入白名单）；`kriging_3d` 的变差函数搜索与训练/验证划分接受 `random_seed`。
+- 覆盖率基线 `tools/yuem/coverage.py --record` → `.yuem/metrics/coverage-baseline.json`：全部测试层，含子进程中的工作流运行；全包 37.0%，核心算法路径（data_processing、forward、inversion）49.1%。
 - 新增 `docs/yuem/findings.md`：改造过程中发现的问题、根因、影响与处理状态。
 - 溯源的 BLAS 识别在 threadpoolctl 看不到 Apple Accelerate 时回退到 NumPy 构建配置。
 - 棘轮白名单 `.yuem/metrics_allowlist.toml`：只收边界代码（CLI 前端、诊断边界），逐文件写明理由，命中数单独报告。
@@ -46,6 +48,8 @@
 - 环境自检 `phgx-doctor`（`PyHydroGeophysX/doctor.py`）：Python、包、核心库、pyGIMLi 核心（含 macOS libblas 缺失检测）、证书、Qt 平台插件、VTK/OpenGL、中文字体、工程目录空间与写权限、可选引擎；退出码 0/1/2。Studio“Help > Environment Check…”运行同一套检查。
 
 ### 修复（可回馈上游）
+
+- 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。
 
 - ERT 正演区域映射：`ERTForwardModeling` 在网格含标记 1 区域时把逐单元模型映射到错误单元，二维两层误差 284%，三维正演（`ert3d.forward`）合成数据误差达 90%；改为按模型长度选用区域算子或逐单元算子，长度不符时报错（台账 P-0005）。数值验证发现。
 
