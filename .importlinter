@@ -1,0 +1,45 @@
+; Layer contracts of PyHydroGeophysX (plan M2.2, docs/yuem/adr/0003).
+;
+; Higher layers may import lower ones, never the reverse. Siblings joined by ":"
+; may import each other; "|" makes them independent. Existing violations are
+; listed under ignore_imports as a ratchet: the list may only shrink, and every
+; new entry needs review (tools/yuem/gates.sh runs `lint-imports`).
+
+[importlinter]
+root_package = PyHydroGeophysX
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = Platform layers: UI and assistants > workflows > algorithms > core > internal
+type = layers
+containers =
+    PyHydroGeophysX
+layers =
+    qt_apps : agents : gui : gui_mesh3d : mcp_server : plugins : doctor : em1d : gravmag
+    workflows
+    inversion : forward : data_processing : petrophysics : visualization : model_output : model_input : uncertainty : analysis : assimilation : Hydro_modular : Geophy_modular : joint_api : data_access : table_io
+    core : solvers
+    _internal : _utils : _deprecations : _optional_dependencies
+; Upstream cross-layer imports at the fork base (16930bb). Ratchet: may only shrink.
+ignore_imports =
+    PyHydroGeophysX.core.plt_utils -> PyHydroGeophysX.visualization.axis_units
+    PyHydroGeophysX.core._mesh_3d_builder -> PyHydroGeophysX.data_processing.table_io
+    PyHydroGeophysX.inversion.joint -> PyHydroGeophysX.agents.structure_constraint_agent
+    PyHydroGeophysX.inversion.adtlert_diagnostics -> PyHydroGeophysX.qt_apps.adtlert_probe
+
+[importlinter:contract:no-qt-in-algorithms]
+name = Algorithm layers do not import Qt
+type = forbidden
+source_modules =
+    PyHydroGeophysX.inversion
+    PyHydroGeophysX.forward
+    PyHydroGeophysX.data_processing
+    PyHydroGeophysX.petrophysics
+    PyHydroGeophysX.core
+    PyHydroGeophysX.solvers
+    PyHydroGeophysX.workflows
+    PyHydroGeophysX.model_output
+    PyHydroGeophysX.uncertainty
+forbidden_modules =
+    PySide6
+allow_indirect_imports = True

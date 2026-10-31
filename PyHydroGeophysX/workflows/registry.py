@@ -56,9 +56,9 @@ def register_workflow(descriptor: WorkflowDescriptor, *, replace: bool = False) 
 
 def _load_plugins() -> None:
     """Register installed plugins' workflows (once per process; PyHydroGeophysX.plugins)."""
-    from PyHydroGeophysX import plugins
+    from PyHydroGeophysX._internal.plugin_loader import load_entry_points
 
-    plugins.load_entry_points()
+    load_entry_points()
 
 
 def list_workflows() -> Tuple[WorkflowDescriptor, ...]:

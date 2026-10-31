@@ -53,6 +53,7 @@ DOWN_ONLY = (
     "os_environ",
     "global_np_random",
     "inprocess_worker_modules",
+    "layer_exceptions",
 )
 UP_ONLY = ("tests", "logging_getlogger")
 LONG_FILE = 2000
@@ -121,10 +122,29 @@ def collect() -> dict[str, object]:
         "long_files": sorted(long_files),
         "worker_modules": sorted(worker_modules),
     }
+    metrics["layer_exceptions"] = _layer_exceptions()
     coverage = ROOT / ".yuem" / "metrics" / "coverage-baseline.json"
     if coverage.exists():
         metrics["coverage_percent"] = json.loads(coverage.read_text(encoding="utf-8")).get("percent")
     return metrics
+
+
+def _layer_exceptions() -> int:
+    """Upstream cross-layer imports tolerated in .importlinter (ignore_imports)."""
+    config = ROOT / ".importlinter"
+    if not config.exists():
+        return 0
+    count, inside = 0, False
+    for line in config.read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith("ignore_imports"):
+            inside = True
+            continue
+        if inside:
+            if line.startswith((" ", "\t")) and "->" in line:
+                count += 1
+            elif line.strip() and not line.startswith((" ", "\t", ";")):
+                inside = False
+    return count
 
 
 def file_length_violations() -> list[str]:

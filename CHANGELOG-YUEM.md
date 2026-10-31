@@ -50,6 +50,7 @@
 ### 架构（M2）
 
 - 插件注册中心 `PyHydroGeophysX/plugins.py`：`register_module`（页面、导航顺序与分组、模块描述）、`register_workflow`、`register_reader`（后缀与嗅探）、`register_short_code`；入口分组 `phgx.plugins`、`phgx.modules`、`phgx.workflows`、`phgx.readers`。原有硬编码表保持数据形态、原地更新。页面注册不依赖 Qt，无界面工作进程加载同一插件时工作流照常注册；损坏的插件被记录、不影响其他插件。工作流注册表与 Studio 页面表首次使用时自动加载插件。开发指南 `docs/yuem/plugins.md`。`phgx-doctor` 列出插件与加载失败。
+- 分层契约 `.importlinter`（门禁运行 `lint-imports`）：界面与助手 > 工作流 > 算法 > 核心 > 内部；算法层不得引用 PySide6。上游 4 处跨层依赖列入 `ignore_imports`，由棘轮指标 `layer_exceptions` 保证只减不增。插件加载核心下沉到 `_internal/plugin_loader.py`，使工作流注册表只向下依赖；溯源模块不再导入整个包。
 - `dev_env.sh`：仓库位于 iCloud 同步的 `~/Desktop` 或 `~/Documents` 时，环境建在 `~/Library/Caches/phgx-venvs/`，`.venv` 为符号链接（iCloud 会持续给点目录中的文件打隐藏标志）。
 
 ### 修复（可回馈上游）

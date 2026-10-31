@@ -129,14 +129,19 @@ def _blas() -> list[dict[str, Any]]:
     return pools
 
 
+def _phgx_version() -> str:
+    # The package is always imported before this submodule; reading it from
+    # sys.modules keeps provenance from importing (and depending on) the whole package.
+    package = sys.modules.get("PyHydroGeophysX")
+    return str(getattr(package, "__version__", "unknown"))
+
+
 @cache
 def _environment() -> dict[str, Any]:
-    import PyHydroGeophysX
-
     frozen = bool(getattr(sys, "frozen", False))
     return {
         "schema": SCHEMA,
-        "phgx_version": PyHydroGeophysX.__version__,
+        "phgx_version": _phgx_version(),
         "git": None if frozen else _git_describe(),
         "frozen": frozen,
         "python": {

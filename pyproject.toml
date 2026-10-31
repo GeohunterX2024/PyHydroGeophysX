@@ -291,6 +291,7 @@ module = [
     "PyHydroGeophysX._internal.provenance",
     "PyHydroGeophysX._internal.rng",
     "PyHydroGeophysX._internal.simpeg_compat",
+    "PyHydroGeophysX._internal.plugin_loader",
     "PyHydroGeophysX.visualization.styles.*",
 ]
 ignore_errors = false

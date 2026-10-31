@@ -1,13 +1,13 @@
 {
-  "python_lines": 188657,
-  "tests": 217,
-  "test_files": 7,
+  "python_lines": 189125,
+  "tests": 244,
+  "test_files": 14,
   "broad_except": 805,
   "print_calls": 310,
   "suppressions": 713,
-  "logging_getlogger": 1,
+  "logging_getlogger": 2,
   "os_environ": 23,
-  "global_np_random": 9,
+  "global_np_random": 0,
   "files_over_2000": 17,
   "inprocess_worker_modules": 10,
   "by_class": {
@@ -17,13 +17,13 @@
       "suppressions": 159,
       "logging_getlogger": 1,
       "os_environ": 14,
-      "global_np_random": 9
+      "global_np_random": 0
     },
     "own": {
       "broad_except": 369,
       "print_calls": 11,
       "suppressions": 435,
-      "logging_getlogger": 0,
+      "logging_getlogger": 1,
       "os_environ": 13,
       "global_np_random": 0
     },
@@ -37,9 +37,10 @@
     }
   },
   "allowlisted": {
-    "broad_except": 6,
+    "broad_except": 8,
     "print_calls": 13,
-    "suppressions": 7
+    "suppressions": 8,
+    "global_np_random": 1
   },
   "long_files": [
     "PyHydroGeophysX/agents/context_input_agent.py",
@@ -71,5 +72,7 @@
     "PyHydroGeophysX/qt_apps/modules/mt_processing.py",
     "PyHydroGeophysX/qt_apps/modules/project_map.py",
     "PyHydroGeophysX/qt_apps/modules/seismic_processing.py"
-  ]
+  ],
+  "layer_exceptions": 4,
+  "coverage_percent": 37.0
 }

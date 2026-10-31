@@ -30,14 +30,18 @@ sees plugin entries without change.
 from __future__ import annotations
 
 import importlib
-import logging
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from importlib import metadata
 from pathlib import Path
 from typing import Any
 
+from PyHydroGeophysX._internal.plugin_loader import (
+    ENTRY_POINT_GROUPS,
+    load_entry_points,
+    load_failures,
+    record_failure,
+)
 from PyHydroGeophysX.workflows.registry import (
     MODULE_DESCRIPTORS,
     ModuleDescriptor,
@@ -45,11 +49,6 @@ from PyHydroGeophysX.workflows.registry import (
 )
 from PyHydroGeophysX.workflows.registry import register_workflow as _register_workflow
 
-logger = logging.getLogger(__name__)
-
-#: Entry-point groups read by :func:`load_entry_points`. ``phgx.plugins`` is the
-#: general one; the others exist so a package can split its registrations.
-ENTRY_POINT_GROUPS: tuple[str, ...] = ("phgx.plugins", "phgx.modules", "phgx.workflows", "phgx.readers")
 #: Navigator group a page lands in when it names none.
 DEFAULT_GROUP = "Geophysical Data Processing"
 
@@ -105,8 +104,6 @@ class _State:
     readers: dict[str, ReaderSpec] = field(default_factory=dict)
     pages: dict[str, ModulePage] = field(default_factory=dict)
     applied: set[str] = field(default_factory=set)
-    loaded_groups: set[str] = field(default_factory=set)
-    failures: list[str] = field(default_factory=list)
 
 
 _STATE = _State()
@@ -161,7 +158,7 @@ def apply_pages() -> None:
         entry = (page.import_path, page.class_name, page.title)
         if page.key in MODULE_SPECS and MODULE_SPECS[page.key] != entry:
             if page.key not in _STATE.applied:
-                _STATE.failures.append(f"{page.key}: page key collides with an existing Studio page")
+                record_failure(f"{page.key}: page key collides with an existing Studio page")
             continue
         MODULE_SPECS[page.key] = entry
         if page.key not in MODULE_ORDER:
@@ -212,35 +209,6 @@ def find_reader(path: str | Path, method: str | None = None) -> ReaderSpec | Non
 
 def plugin_pages() -> tuple[ModulePage, ...]:
     return tuple(_STATE.pages.values())
-
-
-def load_failures() -> tuple[str, ...]:
-    """Entry points that failed to load in this process, as ``"name: error"``."""
-    return tuple(_STATE.failures)
-
-
-def load_entry_points(groups: Iterable[str] = ENTRY_POINT_GROUPS) -> int:
-    """Run every not-yet-loaded plugin entry point; return how many ran.
-
-    A plugin that fails to import or register is logged and recorded in
-    :func:`load_failures`; it never stops the others or the Studio.
-    """
-    ran = 0
-    for group in groups:
-        if group in _STATE.loaded_groups:
-            continue
-        _STATE.loaded_groups.add(group)
-        for entry_point in metadata.entry_points(group=group):
-            try:
-                register = entry_point.load()
-                if callable(register):
-                    register()
-                ran += 1
-            except Exception as exc:  # noqa: BLE001 - a broken plugin must not stop the others
-                message = f"{entry_point.name} ({entry_point.value}): {exc}"
-                _STATE.failures.append(message)
-                logger.warning("plugin %s failed to load", message)
-    return ran
 
 
 __all__ = [
