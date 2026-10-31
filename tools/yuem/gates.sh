@@ -67,6 +67,15 @@ fi
 if [ -f .importlinter ]; then
   step "import-linter (layer contracts)" "$BIN/lint-imports" --config .importlinter
 fi
+# A clean checkout (CI, a release build) lacks any source file .gitignore hides.
+no_ignored_sources() {
+  local hidden
+  hidden="$(git ls-files --others --ignored --exclude-standard --directory \
+    -- PyHydroGeophysX/ tests/ tools/ | grep -Ev '__pycache__/|\.pyc$')"
+  # shellcheck disable=SC2086  # one line per hidden path
+  [ -z "$hidden" ] || { printf '      ignored by .gitignore: %s\n' $hidden; return 1; }
+}
+step "no source files hidden by .gitignore" no_ignored_sources
 step "ratchet metrics" "$PY" tools/yuem/metrics.py --check
 step "translations (own UI texts translatable and translated)" "$PY" tools/yuem/i18n.py check
 # CI passes the PR's base (e.g. origin/yuem/main) in PHGX_CHANGELOG_BASE.

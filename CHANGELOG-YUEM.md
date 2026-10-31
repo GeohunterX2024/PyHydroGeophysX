@@ -31,10 +31,6 @@
 - Studio 页面冒烟测试 `tests/yuem/gui/`：15 个页面 offscreen 构建，不得退化为占位页，`agent_describe()` 可用，`stop_workers()` 5 秒内返回；主窗口帮助菜单有环境自检入口；测试期间 Qt 报告 QThread/QProcess 在运行中被销毁即判失败。
 - `phgx-doctor` 增加 macOS 隐藏文件检测（`.pth` 与 Qt 平台插件）；`dev_env.sh` 对整个 `.venv` 递归清除隐藏标志（Qt 也会跳过隐藏的平台插件）。
 
-- 工作流冒烟测试 `tests/yuem/smoke/`：注册表中全部 17 个工作流各有最小 recipe（`recipes.py`，依赖其他工作流输出的先在进程内跑前置），经 `python -m PyHydroGeophysX.workflows.cli run` 子进程执行；断言状态、产物存在且校验和一致、结果可 JSON 序列化、带完整溯源；工程目录名含中文与空格。另有测试保证每个注册的工作流都有 recipe。
-- Studio 页面冒烟测试 `tests/yuem/gui/`：15 个页面 offscreen 构建，不得退化为占位页，`agent_describe()` 可用，`stop_workers()` 5 秒内返回；主窗口帮助菜单有环境自检入口；测试期间 Qt 报告 QThread/QProcess 在运行中被销毁即判失败。
-- `phgx-doctor` 增加 macOS 隐藏文件检测（`.pth` 与 Qt 平台插件）；`dev_env.sh` 对整个 `.venv` 递归清除隐藏标志（Qt 也会跳过隐藏的平台插件）。
-
 - 数值验证集 `tests/yuem/verification/`（标记 `numerical`）14 例：ERT 均匀半空间、两层 Wenner（镜像级数）、三维逐单元模型；SRT 两层折射；TDEM 中心回线（Ward & Hohmann）；FDEM 半空间与三层（empymod，Anderson 801 点滤波器）；MT 半空间与三层（Wait 递推）；重力棱柱（Bouguer 板）与球体/立方体（点质量）；磁性球体（极点偶极子）；Waxman-Smits 正反变换往返。`tools/yuem/verification_report.py` 生成 `docs/yuem/verification.md`。
 - 回归金标准 `tests/yuem/golden/`（标记 `golden`）10 例：ERT 单次与时移反演、SRT、FDEM 单点、TEM LCI 剖面、MT Occam 1D、MT 处理、重力反演、FDEM+TDEM 联合、重力处理；提取产物、指标与内存模型中的全部数值数组比对；容差按实测的运行间可重复性设定（SRT 因 pyGIMLi 射线追踪约 1e-4 波动取 1e-3，其余 1e-6 至 1e-10）。`tools/yuem/golden.py --update --reason` 更新并记入 `tests/yuem/golden/CHANGES.md`。
 - 随机数确定性：全局 `np.random` 调用由 9 处降为 0（保留的一处为兼容旧版 SimPEG 的设种并保存/恢复全局状态，入白名单）；`kriging_3d` 的变差函数搜索与训练/验证划分接受 `random_seed`。
@@ -81,7 +77,8 @@
 - 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。
 - 签名与公证（M5.1）：`build_macos_dmg.sh` 设 `PHGX_SIGN_IDENTITY` 时由内到外以 Developer ID 签名（hardened runtime、时间戳、`packaging/macos/entitlements.plist`），再设 `PHGX_NOTARY_PROFILE` 时签名镜像、`notarytool` 公证、`stapler` 装订并以 `spctl` 核验；未设时保持 ad-hoc 签名，镜像内安装说明随之切换。当前无 Apple Developer 账号与 Windows 证书，按 ad-hoc 发布并在说明中注明。
 - 发布流程（M5.2）：`docs/yuem/release_checklist.md` 与 `tools/yuem/release.sh`（核对版本号与变更记录、全部门禁层、翻译与验证报告、带审计的 DMG 构建、sha256 与发布说明；默认只打印 `gh release create --draft` 命令，`--publish` 须经负责人确认）。`build_macos_dmg.sh` 可选 `PHGX_RELEASE_AUDIT=1`：复用 `packaging/release_audit.py stage` 在镜像根目录写入 `BUILD_INFO.txt`、`SOURCE_CODE.md` 与 `LICENSES/`。
-- 回馈上游候选（M5.5）：`docs/yuem/upstream_prs.md` 列出 9 项（ERT 正演区域映射、SimPEG 0.26 兼容、随机数可复现、依赖修复、rustsolve 缓存、插件注册中心、macOS 测试矩阵、中文路径与中文界面、环境自检），逐项写明文件、证据与依赖；每项提交前单独征得同意。
+- 回馈上游候选（M5.5）：`docs/yuem/upstream_prs.md` 列出 9 项（ERT 正演区域映射、SimPEG 0.26 兼容、随机数可复现、依赖修复、rustsolve 缓存、插件注册中心、macOS 测试矩阵、中文路径与中文界面、环境自检），逐项写明文件、证据与依赖；每项提交前单独征得同意。前三项已提交：[#20](https://github.com/geohang/PyHydroGeophysX/pull/20)（ERT 正演区域映射）、[#21](https://github.com/geohang/PyHydroGeophysX/pull/21)（SimPEG 0.25/0.26 兼容）、[#22](https://github.com/geohang/PyHydroGeophysX/pull/22)（随机数可复现）。
+- `PyHydroGeophysX/results/` 包此前被上游 `.gitignore` 的运行输出规则 `results/` 排除，没有入库，干净检出（CI、发布构建）缺这个包；`.gitignore` 的 YUEM 段放行该目录（台账 P-0001）。门禁新增“源码目录中没有被 `.gitignore` 隐藏的文件”一步，覆盖 `PyHydroGeophysX/`、`tests/`、`tools/`。
 - 工程位置校验（F-10）：工程目录在包源码内时拒绝打开，在源码检出的 `examples/` 内时给出警告（兼容已有工程）。
 - 月度上游同步：`tools/yuem/sync_upstream.sh`（拉取、快进 `upstream`、按 follow 路径列出候选提交、可选创建 `yuem/sync-YYYYMM`；不推送、不自动挑拣）；2026-10-31 检查上游无新提交，记入 `.yuem/SYNC_LOG.md`。
 

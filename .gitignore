@@ -158,6 +158,8 @@ docs/comment_review_inventory_*.csv
 !/.yuem/**/*.md
 !/docs/yuem/**/*.md
 !/tests/yuem/**/*.md
+# The run-output rule `results/` above would also hide the results package.
+!/PyHydroGeophysX/results/
 # Local tool caches and lock-step environments.
 .conda/
 .ruff_cache/
