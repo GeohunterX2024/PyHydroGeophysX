@@ -45,7 +45,54 @@ def _parser() -> argparse.ArgumentParser:
     export = subparsers.add_parser("export-code", help="Generate Python from a recipe.")
     export.add_argument("recipe", type=Path)
     export.add_argument("--output", type=Path, required=True)
+    env_diff = subparsers.add_parser(
+        "env-diff",
+        help="Compare the environment a saved run (run.json or a result JSON) "
+             "was computed in with this one.",
+    )
+    env_diff.add_argument("record", type=Path)
     return parser
+
+
+def _recorded_environment(path: Path) -> dict | None:
+    """The ``provenance.environment`` of a run.json or result JSON, if it has one."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    environment = (document.get("provenance") or {}).get("environment")
+    return environment if isinstance(environment, dict) else None
+
+
+def _warn_environment_change(recipe_dir: Path) -> None:
+    """Before a rerun, say how the environment differs from the recorded run's."""
+    from PyHydroGeophysX._internal.provenance import environment_diff
+
+    recorded = _recorded_environment(recipe_dir / "run.json")
+    if recorded is None:
+        return
+    changes = environment_diff(recorded)
+    if changes:
+        print("Rerunning in a different environment than the recorded run:", file=sys.stderr)
+        for line in changes:
+            print(f"  {line}", file=sys.stderr)
+
+
+def _env_diff(record: Path) -> int:
+    from PyHydroGeophysX._internal.provenance import environment_diff
+
+    recorded = _recorded_environment(record)
+    if recorded is None:
+        print(f"{record}: no recorded environment (provenance.environment)", file=sys.stderr)
+        return 2
+    changes = environment_diff(recorded)
+    if not changes:
+        print("Same environment as the recorded run.")
+        return 0
+    print("Differences from the recorded run:")
+    for line in changes:
+        print(f"  {line}")
+    return 1
 
 
 def _quiet_pygimli_show() -> None:
@@ -137,6 +184,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         for descriptor in list_workflows():
             print(f"{descriptor.workflow_id}\t{descriptor.handler_path}")
         return 0
+    if args.command == "env-diff":
+        return _env_diff(args.record)
     spec = load_recipe(args.recipe)
     if args.command == "validate":
         print(f"valid: {spec.workflow_id}")
@@ -145,6 +194,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(generate_python(spec, args.output))
         return 0
     recipe_dir = args.recipe.resolve().parent
+    _warn_environment_change(recipe_dir)
     _quiet_pygimli_show()
     if args.result_file is not None:
         # Run for a program that waits for the result file - the studio, the

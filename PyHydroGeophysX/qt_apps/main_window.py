@@ -416,6 +416,8 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._add_action(subsurface, "ERT → Water Content", lambda: self.show_module("geo_hydrology"))
 
         help_menu = menubar.addMenu("&Help")
+        self._add_action(help_menu, "Environment Check…", self._environment_check)
+        help_menu.addSeparator()
         self._add_action(help_menu, "About", self._about)
 
     def _build_toolbar(self) -> None:
@@ -1220,6 +1222,38 @@ class PyHydroGeophysXStudio(QMainWindow):
             dock.setFloating(False)
             dock.show()
             self.addDockWidget(area, dock)
+
+    def _environment_check(self) -> None:
+        """Run phgx-doctor's checks and show the report (PyHydroGeophysX.doctor)."""
+        from PySide6.QtGui import QFontDatabase
+        from PySide6.QtWidgets import (
+            QApplication,
+            QDialog,
+            QDialogButtonBox,
+            QPlainTextEdit,
+            QVBoxLayout,
+        )
+
+        from PyHydroGeophysX.doctor import exit_code, format_report, run_checks
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            checks = run_checks(project=self.state.results_store_root)
+        finally:
+            QApplication.restoreOverrideCursor()
+        verdict = {0: "All checks passed.", 1: "Warnings found.", 2: "Errors found."}[exit_code(checks)]
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Environment Check - {verdict}")
+        layout = QVBoxLayout(dialog)
+        text = QPlainTextEdit(format_report(checks))
+        text.setReadOnly(True)
+        text.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        text.setMinimumSize(760, 360)
+        layout.addWidget(text)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.exec()
 
     def _about(self) -> None:
         QMessageBox.about(

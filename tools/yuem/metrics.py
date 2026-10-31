@@ -22,6 +22,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import tomllib
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _repo import ROOT, changed_files, file_at, ownership, tracked_python_files, upstream_ref
@@ -56,14 +58,27 @@ UP_ONLY = ("tests", "logging_getlogger")
 LONG_FILE = 2000
 
 
+ALLOWLIST = ROOT / ".yuem" / "metrics_allowlist.toml"
+
+
 def _rel(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
+
+
+def load_allowlist() -> dict[str, dict[str, str]]:
+    """metric -> {file: reason} from .yuem/metrics_allowlist.toml."""
+    if not ALLOWLIST.exists():
+        return {}
+    data = tomllib.loads(ALLOWLIST.read_text(encoding="utf-8"))
+    return {metric: {str(k): str(v) for k, v in files.items()} for metric, files in data.items()}
 
 
 def collect() -> dict[str, object]:
     """Count every metric over the package and the test tree."""
     own = ownership()
+    allow = load_allowlist()
     totals: dict[str, int] = dict.fromkeys(PATTERNS, 0)
+    allowlisted: dict[str, int] = dict.fromkeys(PATTERNS, 0)
     by_class: dict[str, dict[str, int]] = {}
     long_files: list[str] = []
     worker_modules: list[str] = []
@@ -81,8 +96,14 @@ def collect() -> dict[str, object]:
         bucket = by_class.setdefault(cls, dict.fromkeys(PATTERNS, 0))
         for name, pattern in PATTERNS.items():
             hits = len(pattern.findall(text))
+            if rel in allow.get(name, {}):
+                allowlisted[name] += hits
+                continue
             totals[name] += hits
             bucket[name] += hits
+    # Environment reads are legitimate at the platform boundary (own paths, e.g.
+    # provenance and logging setup); the ratchet targets the algorithm layers.
+    totals["os_environ"] = sum(counts["os_environ"] for cls, counts in by_class.items() if cls != "own")
     tests = sum(
         len(TEST_RE.findall(p.read_text(encoding="utf-8", errors="replace")))
         for p in tracked_python_files("tests")
@@ -96,6 +117,7 @@ def collect() -> dict[str, object]:
         "files_over_2000": len(long_files),
         "inprocess_worker_modules": len(worker_modules),
         "by_class": by_class,
+        "allowlisted": {name: count for name, count in allowlisted.items() if count},
         "long_files": sorted(long_files),
         "worker_modules": sorted(worker_modules),
     }
@@ -154,6 +176,10 @@ def _summary(current: dict[str, object], baseline: dict[str, object] | None) -> 
         base = None if baseline is None else baseline.get(name)
         delta = "" if base is None or cur == base else f"  ({base} -> {cur})"
         rows.append(f"  {name:<26}{cur}{delta}")
+    allowlisted = current.get("allowlisted")
+    if isinstance(allowlisted, dict) and allowlisted:
+        listed = ", ".join(f"{k} {v}" for k, v in sorted(allowlisted.items()))
+        rows.append(f"  {'(allowlisted, not counted)':<26}{listed}")
     return "\n".join(rows)
 
 

@@ -1,0 +1,17 @@
+# Files whose hits a ratchet metric does not count (docs/yuem/adr/0003, plan M2.3).
+#
+# Only boundary code belongs here: command-line front ends whose job is to
+# print, and the outermost handlers whose job is to catch everything and report
+# it (module loader, worker top level, diagnostics). Every entry states why.
+# tools/yuem/metrics.py reports the allowlisted hits separately, so they stay
+# visible; adding an entry is reviewed like a baseline change.
+
+[print_calls]
+"PyHydroGeophysX/workflows/cli.py" = "command-line front end: stdout and stderr are its output"
+"PyHydroGeophysX/doctor.py" = "command-line front end: prints the self-check report"
+
+[broad_except]
+"PyHydroGeophysX/doctor.py" = "diagnostic boundary: a failing check is the finding and is reported, never raised"
+
+[suppressions]
+"PyHydroGeophysX/doctor.py" = "its noqa: BLE001 markers document the diagnostic boundary above"

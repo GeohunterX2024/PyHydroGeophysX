@@ -4,8 +4,25 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from .models import RunContext, WorkflowRunResult, WorkflowSpec
+from PyHydroGeophysX._internal.provenance import collect_environment, parameters_digest
+
+from .models import RunContext, WorkflowRunResult, WorkflowSpec, iter_artifact_refs
 from .registry import get_workflow
+
+
+def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec) -> None:
+    """Stamp what reproduces this run on the result: inputs, seed, parameters, environment.
+
+    The handler's own provenance keys are kept; these are added on top.
+    """
+    provenance = dict(result.provenance)
+    provenance.setdefault("workflow_id", spec.workflow_id)
+    provenance.setdefault("schema_version", spec.schema_version)
+    provenance["seed"] = spec.seed
+    provenance["inputs"] = {ref.artifact_id: ref.checksum for ref in iter_artifact_refs(spec.inputs)}
+    provenance["parameters_digest"] = parameters_digest(spec.to_dict())
+    provenance["environment"] = collect_environment()
+    result.provenance = provenance
 
 
 def run_workflow(
@@ -37,6 +54,7 @@ def run_workflow(
             f"Workflow {spec.workflow_id!r} returned {type(result).__name__}; "
             "handlers must return WorkflowRunResult."
         )
+    _with_provenance(result, spec)
     result.to_dict()
     runtime.progress(f"Finished {spec.workflow_id}: {result.status}")
     return result

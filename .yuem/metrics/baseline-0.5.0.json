@@ -1,12 +1,12 @@
 {
-  "python_lines": 188041,
-  "tests": 197,
-  "test_files": 4,
+  "python_lines": 188657,
+  "tests": 217,
+  "test_files": 7,
   "broad_except": 805,
-  "print_calls": 315,
+  "print_calls": 310,
   "suppressions": 713,
   "logging_getlogger": 1,
-  "os_environ": 33,
+  "os_environ": 23,
   "global_np_random": 9,
   "files_over_2000": 17,
   "inprocess_worker_modules": 10,
@@ -19,6 +19,14 @@
       "os_environ": 14,
       "global_np_random": 9
     },
+    "own": {
+      "broad_except": 369,
+      "print_calls": 11,
+      "suppressions": 435,
+      "logging_getlogger": 0,
+      "os_environ": 13,
+      "global_np_random": 0
+    },
     "frozen": {
       "broad_except": 202,
       "print_calls": 94,
@@ -26,15 +34,12 @@
       "logging_getlogger": 0,
       "os_environ": 9,
       "global_np_random": 0
-    },
-    "own": {
-      "broad_except": 369,
-      "print_calls": 16,
-      "suppressions": 435,
-      "logging_getlogger": 0,
-      "os_environ": 10,
-      "global_np_random": 0
     }
+  },
+  "allowlisted": {
+    "broad_except": 6,
+    "print_calls": 13,
+    "suppressions": 7
   },
   "long_files": [
     "PyHydroGeophysX/agents/context_input_agent.py",

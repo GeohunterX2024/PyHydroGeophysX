@@ -487,6 +487,12 @@ class ResultsStore:
         record.metrics = dict(payload.get("metrics") or {})
         record.warnings = [str(item) for item in payload.get("warnings") or []]
         record.provenance = dict(payload.get("provenance") or {})
+        if "environment" not in record.provenance:
+            # Runs a page computes in-process carry no workflow provenance; the
+            # studio's own environment is what produced them.
+            from PyHydroGeophysX._internal.provenance import collect_environment
+
+            record.provenance["environment"] = collect_environment()
         record.artifacts = [
             dict(item.get("$artifact", item))
             for item in payload.get("artifacts") or []

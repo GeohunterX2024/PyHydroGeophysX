@@ -25,6 +25,14 @@
 - 新增 CI `.github/workflows/yuem-ci.yml`：静态门禁；快速测试（Linux 3.11/3.12、macOS 26 arm64 3.12、Windows 3.12）；GUI 测试（Linux、macOS）；`yuem/main` 推送与手动触发时运行 slow、numerical、golden 三层。
 - 新增 `tools/yuem/build_macos_dmg.sh`：在锁定的 Full 环境中构建、拷出源码树后签名、自检、生成 DMG、挂载复检、输出 SHA-256。
 
+### 质量护栏（M1）
+
+- 棘轮白名单 `.yuem/metrics_allowlist.toml`：只收边界代码（CLI 前端、诊断边界），逐文件写明理由，命中数单独报告。
+
+- 运行溯源 `PyHydroGeophysX/_internal/provenance.py`：每个工作流结果的 `provenance` 记录分叉版本、`git describe`、Python 与平台、关键库版本（取自安装元数据，不读模块 `__version__`，因为 pyGIMLi 的 `__version__` 反映的是当前目录的 git 状态）、BLAS 实现与线程数、种子、输入校验和、参数摘要；Studio 页面在进程内计算的运行由 `ResultsStore.finish_run` 补记环境。
+- `pyhydrogeophysx-workflow env-diff <run.json>` 比较记录环境与当前环境；`run` 重跑时若 recipe 旁有 `run.json`，自动提示环境差异。
+- 环境自检 `phgx-doctor`（`PyHydroGeophysX/doctor.py`）：Python、包、核心库、pyGIMLi 核心（含 macOS libblas 缺失检测）、证书、Qt 平台插件、VTK/OpenGL、中文字体、工程目录空间与写权限、可选引擎；退出码 0/1/2。Studio“Help > Environment Check…”运行同一套检查。
+
 ### 修复（可回馈上游）
 
 - `pftools` 移到独立的 `parflow-tools` extra：它硬锁 `pyyaml==6.0.1`，且部分版本元数据被 pip 拒收，导致 `geophysics` 整组无法安装。

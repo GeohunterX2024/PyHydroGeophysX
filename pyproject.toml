@@ -189,6 +189,7 @@ dev = [
 pyhydrogeophysx-mcp = "PyHydroGeophysX.mcp_server:main"
 pyhydrogeophysx-gui = "PyHydroGeophysX.gui:main"
 pyhydrogeophysx-workflow = "PyHydroGeophysX.workflows.cli:main"
+phgx-doctor = "PyHydroGeophysX.doctor:main"
 
 [project.gui-scripts]
 pyhydrogeophysx-studio = "PyHydroGeophysX.qt_apps.launcher:main"
