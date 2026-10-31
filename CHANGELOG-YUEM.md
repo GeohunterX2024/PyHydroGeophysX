@@ -27,6 +27,14 @@
 
 ### 质量护栏（M1）
 
+- 工作流冒烟测试 `tests/yuem/smoke/`：注册表中全部 17 个工作流各有最小 recipe（`recipes.py`，依赖其他工作流输出的先在进程内跑前置），经 `python -m PyHydroGeophysX.workflows.cli run` 子进程执行；断言状态、产物存在且校验和一致、结果可 JSON 序列化、带完整溯源；工程目录名含中文与空格。另有测试保证每个注册的工作流都有 recipe。
+- Studio 页面冒烟测试 `tests/yuem/gui/`：15 个页面 offscreen 构建，不得退化为占位页，`agent_describe()` 可用，`stop_workers()` 5 秒内返回；主窗口帮助菜单有环境自检入口；测试期间 Qt 报告 QThread/QProcess 在运行中被销毁即判失败。
+- `phgx-doctor` 增加 macOS 隐藏文件检测（`.pth` 与 Qt 平台插件）；`dev_env.sh` 对整个 `.venv` 递归清除隐藏标志（Qt 也会跳过隐藏的平台插件）。
+
+- 工作流冒烟测试 `tests/yuem/smoke/`：注册表中全部 17 个工作流各有最小 recipe（`recipes.py`，依赖其他工作流输出的先在进程内跑前置），经 `python -m PyHydroGeophysX.workflows.cli run` 子进程执行；断言状态、产物存在且校验和一致、结果可 JSON 序列化、带完整溯源；工程目录名含中文与空格。另有测试保证每个注册的工作流都有 recipe。
+- Studio 页面冒烟测试 `tests/yuem/gui/`：15 个页面 offscreen 构建，不得退化为占位页，`agent_describe()` 可用，`stop_workers()` 5 秒内返回；主窗口帮助菜单有环境自检入口；测试期间 Qt 报告 QThread/QProcess 在运行中被销毁即判失败。
+- `phgx-doctor` 增加 macOS 隐藏文件检测（`.pth` 与 Qt 平台插件）；`dev_env.sh` 对整个 `.venv` 递归清除隐藏标志（Qt 也会跳过隐藏的平台插件）。
+
 - 棘轮白名单 `.yuem/metrics_allowlist.toml`：只收边界代码（CLI 前端、诊断边界），逐文件写明理由，命中数单独报告。
 
 - 运行溯源 `PyHydroGeophysX/_internal/provenance.py`：每个工作流结果的 `provenance` 记录分叉版本、`git describe`、Python 与平台、关键库版本（取自安装元数据，不读模块 `__version__`，因为 pyGIMLi 的 `__version__` 反映的是当前目录的 git 状态）、BLAS 实现与线程数、种子、输入校验和、参数摘要；Studio 页面在进程内计算的运行由 `ResultsStore.finish_run` 补记环境。

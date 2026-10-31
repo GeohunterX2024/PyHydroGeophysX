@@ -7,8 +7,9 @@
 # Steps: uv sync against the lock file with the desktop, 3D, geophysics and
 # hydrology extras and the dev group; then the macOS repairs real installs
 # needed, applied only when the problem is actually present:
-#   * .pth files flagged hidden are skipped by Python >= 3.12, so the editable
-#     install imports only from the repository root - clear the flag;
+#   * files flagged hidden (cloned from a uv cache) are skipped: .pth files by
+#     Python >= 3.12, so the editable install imports only from the repository
+#     root, and Qt's platform plugins by Qt - clear the flag in the venv;
 #   * pgcore's macOS wheel links @rpath/libblas.3.dylib but ships only
 #     libopenblas.0.dylib, so pygimli cannot import - link the one to the other;
 #   * an interpreter without a usable CA bundle cannot open HTTPS - point
@@ -47,16 +48,13 @@ fi
 SITE="$("$PY" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 
 if [ "$(uname -s)" = "Darwin" ]; then
-  # Python >= 3.12 skips .pth files carrying the macOS UF_HIDDEN flag, which
-  # files cloned from uv's cache can inherit; the editable install and
-  # coverage's startup hook are both .pth files.
-  for pth in "$SITE"/*.pth; do
-    [ -e "$pth" ] || continue
-    if [ $(( 0x$(stat -f %Xf "$pth") & 0x8000 )) -ne 0 ]; then   # UF_HIDDEN
-      echo "==> repair: clear the hidden flag on $(basename "$pth")"
-      chflags nohidden "$pth"
-    fi
-  done
+  # Files cloned from a uv cache can inherit the macOS UF_HIDDEN flag. Python
+  # >= 3.12 then skips the .pth files (the editable install, coverage's hook)
+  # and Qt skips its platform plugins, so nothing in the venv may be hidden.
+  if [ -n "$(find "$ROOT/.venv" -flags +hidden -print -quit 2>/dev/null)" ]; then
+    echo "==> repair: clear the hidden flag on files in .venv"
+    chflags -R nohidden "$ROOT/.venv"
+  fi
   DYLIBS="$SITE/pgcore/.dylibs"
   if [ -d "$DYLIBS" ] && [ ! -e "$DYLIBS/libblas.3.dylib" ] && [ -e "$DYLIBS/libopenblas.0.dylib" ]; then
     echo "==> repair: pgcore libblas.3.dylib -> libopenblas.0.dylib"

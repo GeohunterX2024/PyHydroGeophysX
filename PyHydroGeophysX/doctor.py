@@ -129,6 +129,28 @@ def _check_pygimli_core() -> Check:
     return Check("pyGIMLi core", "ok", f"pygimli {version}, pgcore at {location}")
 
 
+def _check_hidden_files() -> Check:
+    """macOS: files flagged hidden are skipped by Python (.pth) and Qt (plugins)."""
+    if sys.platform != "darwin":
+        return Check("Hidden files", "ok", "not applicable on this platform")
+    import sysconfig
+
+    site = Path(sysconfig.get_paths()["purelib"])
+    hidden_flag = getattr(__import__("stat"), "UF_HIDDEN", 0x8000)
+    candidates = list(site.glob("*.pth")) + list(site.glob("PySide6/Qt/plugins/platforms/*"))
+    hidden = [p for p in candidates if getattr(p.lstat(), "st_flags", 0) & hidden_flag]
+    if hidden:
+        names = ", ".join(sorted(p.name for p in hidden)[:4])
+        return Check(
+            "Hidden files",
+            "error",
+            f"{len(hidden)} file(s) flagged hidden in {site} ({names}); Python skips hidden .pth "
+            "files and Qt skips hidden plugins",
+            f"chflags -R nohidden {site}  (tools/yuem/dev_env.sh does this)",
+        )
+    return Check("Hidden files", "ok", "no hidden .pth files or Qt platform plugins")
+
+
 def _check_certificates(network: bool) -> Check:
     paths = ssl.get_default_verify_paths()
     configured = os.environ.get("SSL_CERT_FILE") or paths.cafile
@@ -249,6 +271,7 @@ def run_checks(*, project: Path | None = None, network: bool = False) -> list[Ch
         _check_package,
         _check_core_libraries,
         _check_pygimli_core,
+        _check_hidden_files,
         lambda: _check_certificates(network),
         _check_qt,
         _check_vtk,

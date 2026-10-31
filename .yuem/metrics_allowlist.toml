@@ -12,6 +12,7 @@
 
 [broad_except]
 "PyHydroGeophysX/doctor.py" = "diagnostic boundary: a failing check is the finding and is reported, never raised"
+"PyHydroGeophysX/_internal/simpeg_compat.py" = "SimPEG < 0.25 raises a bare Exception for an unknown keyword; anything else is re-raised"
 
 [suppressions]
 "PyHydroGeophysX/doctor.py" = "its noqa: BLE001 markers document the diagnostic boundary above"

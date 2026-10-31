@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
-from PyHydroGeophysX._internal.simpeg_compat import cg_keywords
+from PyHydroGeophysX._internal.simpeg_compat import cg_keywords, in_memory_output
 import simpeg.electromagnetics.frequency_domain as fdem
 from discretize import TensorMesh
 from simpeg import (
@@ -387,7 +387,7 @@ class FDEMInversion:
         directives_list = [
             directives.UpdateSensitivityWeights(),
             directives.BetaEstimate_ByEig(beta0_ratio=float(self.parameters["beta0_ratio"])),
-            directives.SaveOutputEveryIteration(save_txt=False),
+            in_memory_output(directives.SaveOutputEveryIteration),
         ]
 
         if self.parameters["use_irls"]:

@@ -25,7 +25,7 @@ from simpeg import (
 )
 from simpeg.utils import mkvc
 
-from PyHydroGeophysX._internal.simpeg_compat import cg_keywords
+from PyHydroGeophysX._internal.simpeg_compat import cg_keywords, in_memory_output
 
 from ..visualization.axis_units import set_length_axis
 
@@ -287,7 +287,7 @@ class TDEMInversion:
         directives_list = [
             directives.UpdateSensitivityWeights(),
             directives.BetaEstimate_ByEig(beta0_ratio=self.parameters['beta0_ratio']),
-            directives.SaveOutputEveryIteration(save_txt=False),
+            in_memory_output(directives.SaveOutputEveryIteration),
         ]
         
         if self.parameters['use_irls']:
