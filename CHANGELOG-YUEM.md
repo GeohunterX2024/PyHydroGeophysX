@@ -59,6 +59,11 @@
 - Streamlit 桥接解耦：上下文读取与结果文件写出移到 `qt_apps/bridge_compat.py`（`BridgeLink` 持有上下文文件、内容与结果文件路径）；`StudioState` 只保留工程状态，原有 `context`、`context_path`、`result_path`、`load_context`、`build_result`、`save_result` 作为转发保留，调用方不变。行为由 `tests/yuem/test_bridge_compat.py` 锁定（改动前先在原代码上通过）。
 - `dev_env.sh`：仓库位于 iCloud 同步的 `~/Desktop` 或 `~/Documents` 时，环境建在 `~/Library/Caches/phgx-venvs/`，`.venv` 为符号链接（iCloud 会持续给点目录中的文件打隐藏标志）。
 
+### 数据与结果协议（M3）
+
+- 工程数据库 `PyHydroGeophysX/datastore/`（模式 `phgx-dataset-v1`，说明见 `docs/yuem/datastore.md`）：HDF5 六分组（meta、geometry、observations、errors、masks、provenance），每组为可无损往返的树；版本不可变，与上一版本相同的数组以相对路径外链共享，工程目录整体移动后可读；原始文件只读引用并记录 sha256，可校验；JSON 索引可从文件重建。适配器覆盖 pyGIMLi `DataContainerERT`、EM 测深字典、MT `TransferFunction`、`SeismicDataset`。
+- 单位与坐标系 `PyHydroGeophysX/results/units.py`：轻量单位字符串注册表（不引入 pint），`require_unit`/`check_units` 校验、同量纲换算；坐标系以 WKT 加 EPSG 代码保存（如 CGCS2000 的 EPSG:4544）。
+
 ### 修复（可回馈上游）
 
 - 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。
