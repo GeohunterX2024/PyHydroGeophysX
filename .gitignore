@@ -150,3 +150,16 @@ local_plans/
 
 # Internal review data follows the same local-only policy as its report.
 docs/comment_review_inventory_*.csv
+
+# --- YUEM soft fork ---------------------------------------------------------
+# Governance records, Chinese engineering docs and the fork changelog are
+# published; they are the fork's audit trail.
+!/CHANGELOG-YUEM.md
+!/.yuem/**/*.md
+!/docs/yuem/**/*.md
+!/tests/yuem/**/*.md
+# Local tool caches and lock-step environments.
+.ruff_cache/
+.mypy_cache/
+.import_linter_cache/
+.benchmarks/
