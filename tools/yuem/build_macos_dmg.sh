@@ -13,11 +13,15 @@
 #   3. the .app is copied out of the source tree before signing: folders under
 #      ~/Desktop and iCloud carry com.apple.FinderInfo / fileprovider xattrs that
 #      make codesign fail ("resource fork, Finder information ... not allowed");
-#   4. ad-hoc signature, verified with codesign --verify --deep --strict;
+#   4. signature, verified with codesign --verify --deep --strict: Developer ID
+#      with hardened runtime when PHGX_SIGN_IDENTITY names one (e.g.
+#      "Developer ID Application: Name (TEAMID)"), ad-hoc otherwise;
 #   5. --self-test of the signed app;
 #   6. a drag-to-Applications UDZO image with the licence files and a Chinese
 #      install note; 7. the image is mounted and the app self-tested again;
-#   8. SHA-256 of the image. The DMG lands in dist/.
+#   8. with PHGX_SIGN_IDENTITY the image is signed, and with PHGX_NOTARY_PROFILE
+#      (a notarytool keychain profile) notarized, stapled and checked by spctl;
+#   9. SHA-256 of the image. The DMG lands in dist/.
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
@@ -68,13 +72,33 @@ echo "==> 3. copy out of the source tree and strip extended attributes"
 ditto "$APP_SRC" "$APP"
 xattr -cr "$APP"
 
-echo "==> 4. ad-hoc signature"
-codesign --force --deep --sign - --timestamp=none "$APP"
+IDENTITY="${PHGX_SIGN_IDENTITY:-}"
+if [ -n "$IDENTITY" ]; then
+  echo "==> 4. Developer ID signature, hardened runtime: $IDENTITY"
+  ENTITLEMENTS="$ROOT/packaging/macos/entitlements.plist"
+  sign() { codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" "$1"; }
+  # Inside out: every Mach-O file first, then the bundle that seals them.
+  while IFS= read -r -d '' file; do
+    if file -b "$file" | grep -q "Mach-O"; then sign "$file"; fi
+  done < <(find "$APP/Contents" -type f -print0)
+  sign "$APP"
+else
+  echo "==> 4. ad-hoc signature (set PHGX_SIGN_IDENTITY for Developer ID)"
+  codesign --force --deep --sign - --timestamp=none "$APP"
+fi
 codesign --verify --deep --strict "$APP"
 
 EXE="$APP/Contents/MacOS/PyHydroGeophysX-Studio"
 echo "==> 5. self-test"
 QT_QPA_PLATFORM=offscreen "$EXE" --self-test
+
+if [ -n "$IDENTITY" ] && [ -n "${PHGX_NOTARY_PROFILE:-}" ]; then
+  OPEN_NOTE="首次打开：本镜像经 Developer ID 签名并已通过 Apple 公证，双击即可打开。"
+else
+  OPEN_NOTE="首次打开：本镜像为 ad-hoc 签名，未经 Apple 公证。若提示无法验证开发者，
+按住 Control 点按图标选择「打开」，或在终端执行：
+  xattr -cr /Applications/PyHydroGeophysX-Studio.app"
+fi
 
 echo "==> 6. disk image"
 VOL="$STAGE/volume"
@@ -88,12 +112,23 @@ PyHydroGeophysX Desktop Studio ${VERSION}（${VARIANT}，macOS arm64）
 
 安装：把 PyHydroGeophysX-Studio 拖到 Applications。
 
-首次打开：本镜像为 ad-hoc 签名，未经 Apple 公证。若提示无法验证开发者，
-按住 Control 点按图标选择「打开」，或在终端执行：
-  xattr -cr /Applications/PyHydroGeophysX-Studio.app
+${OPEN_NOTE}
 
 仅支持 Apple Silicon。构建信息见 GitHub Release 附带的 sha256 与构建记录。
 EOF
+if [ "${PHGX_RELEASE_AUDIT:-0}" = "1" ]; then
+  # As upstream's release workflow does: BUILD_INFO.txt, SOURCE_CODE.md and
+  # LICENSES/ at the image's root, every bundled file traced to its source.
+  # Needs network (Qt licence sources); PHGX_RELEASE_STRICT=1 stops on a failed check.
+  echo "    release audit (packaging/release_audit.py stage)"
+  audit_args=(--conda-prefix "$ROOT/.conda/phgx-full")
+  if [ "$VARIANT" = "full" ]; then audit_args+=(--rustsolve); fi
+  if [ "${PHGX_RELEASE_STRICT:-0}" = "1" ]; then audit_args+=(--strict); fi
+  mkdir -p "$ROOT/dist"
+  "$PYTHON" packaging/release_audit.py stage --os macos --variant "$VARIANT" \
+    --bundle "$VOL/PyHydroGeophysX-Studio.app" --stage "$VOL" --workpath build/pyinstaller_studio \
+    "${audit_args[@]}" --commit "$(git rev-parse HEAD)" --report "$ROOT/dist/$NAME.audit.md"
+fi
 xattr -cr "$VOL"
 DMG="$STAGE/$NAME.dmg"
 hdiutil create -volname "PyHydroGeophysX Studio" -srcfolder "$VOL" -ov -format UDZO \
@@ -104,7 +139,18 @@ MOUNT="$(hdiutil attach -nobrowse -readonly "$DMG" | awk -F'\t' '/\/Volumes\//{p
 QT_QPA_PLATFORM=offscreen "$MOUNT/PyHydroGeophysX-Studio.app/Contents/MacOS/PyHydroGeophysX-Studio" --self-test
 hdiutil detach "$MOUNT" -quiet
 
-echo "==> 8. checksum"
+if [ -n "$IDENTITY" ]; then
+  echo "==> 8. sign the image"
+  codesign --force --timestamp --sign "$IDENTITY" "$DMG"
+  if [ -n "${PHGX_NOTARY_PROFILE:-}" ]; then
+    echo "    notarize (notarytool profile $PHGX_NOTARY_PROFILE) and staple"
+    xcrun notarytool submit "$DMG" --keychain-profile "$PHGX_NOTARY_PROFILE" --wait
+    xcrun stapler staple "$DMG"
+    spctl --assess --type open --context context:primary-signature --verbose "$DMG"
+  fi
+fi
+
+echo "==> 9. checksum"
 mkdir -p "$ROOT/dist"
 cp -f "$DMG" "$ROOT/dist/$NAME.dmg"
 (cd "$ROOT/dist" && shasum -a 256 "$NAME.dmg" | tee "$NAME.dmg.sha256")

@@ -13,8 +13,8 @@
 | F-07 | `gravmag.invert`、`FDEMInversion`、`TDEMInversion`、MT 二维反演在 SimPEG 0.26 下报错 | 使用了 0.26 已删除的 `maxIterCG`/`tolCG`/`save_txt` | 按上游声明的依赖范围新装即不可用 | `_internal/simpeg_compat` 按版本选参数名 | 已修复（P-0004，可回馈） | 冒烟测试 `gravmag.invert` |
 | F-08 | 逐单元电阻率模型被映射到错误单元（ERT 正演） | `ERTForwardModeling` 未忽略 pyGIMLi 区域管理器，标记 1 区域被视为背景 | 二维两层模型误差 284%；三维正演（`ert3d.forward`，Studio 三维正演）合成数据误差达 90% | 按模型长度选择区域算子或逐单元算子，长度不符时报错 | 已修复（P-0005，可回馈） | 数值验证 V-ERT-02、V-ERT-03 |
 | F-09 | 冒烟用三维网格上，100 Ωm 均匀模型的视电阻率为 184–220 Ωm | 待查：网格外扩只有 1.4 倍且较粗，或三维数据容器的几何因子与带地形网格不一致 | 可能影响三维正演数据的绝对量级 | 用生产级网格参数复核；若几何因子有误，改为数值几何因子 | 待排查 | `/tmp/proto_ert3d.py` 复现 |
-| F-10 | Studio 允许把工程建在 `examples/` 等源码目录下 | 工程路径无约束 | 运行记录混入源码树 | 显式工程上下文中校验 | 计划中（M2.5） | `.yuem/baseline_diff.md` |
-| F-11 | 启动和每个页面都提示缺少 “Segoe UI” 字体 | 主题写死 Windows 字体 | 每次启动多耗约 110 ms，非 Windows 平台字体替换不可控 | 字体回退链 | 计划中（M4.2） | Studio 自检输出 |
+| F-10 | Studio 允许把工程建在 `examples/` 等源码目录下 | 工程路径无约束 | 运行记录混入源码树 | 打开或新建工程时校验：包源码目录内拒绝，源码检出的 `examples/` 内给出警告（兼容已有工程） | 已修复（M5） | `tests/yuem/test_project_location.py` |
+| F-11 | 启动和每个页面都提示缺少 “Segoe UI” 字体 | 主题写死 Windows 字体 | 每次启动多耗约 110 ms，非 Windows 平台字体替换不可控 | 字体回退链，只引用已安装字体 | 已修复（M4.2） | `tests/yuem/gui/test_pages.py::test_the_studio_starts_without_font_warnings` |
 | F-12 | 一次 GUI 测试运行在进程退出时报 “QThread: Destroyed while thread is still running” | 未复现（当时 shell 残留指向旧环境的 `QT_PLUGIN_PATH`） | 退出时可能崩溃 | GUI 测试守护：运行中销毁 QThread/QProcess 即失败 | 已加守护 | `tests/yuem/gui/conftest.py` |
 | F-13 | 重力+磁法联合反演在给定种子下不可复现 | SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 用自身 `seed`，上游只设了全局种子 | 同一种子两次运行结果相差 2.6% | 种子直接赋给 directive，保留全局设种兼容旧版 | 已修复（P-0006，可回馈） | `tests/yuem/test_rng.py`；上游原代码对比 |
 | F-14 | 三维克里金的变差函数搜索与训练/验证划分不可复现 | 使用全局 `np.random` | 结果随运行变化 | 显式 `random_seed` 与 `default_rng` | 已修复（P-0006，可回馈） | 棘轮 global_np_random 9 → 0 |

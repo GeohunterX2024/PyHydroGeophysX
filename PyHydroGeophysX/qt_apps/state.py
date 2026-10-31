@@ -37,6 +37,27 @@ def default_project_root() -> Path:
     return Path.home() / ".pyhydrogeophysx"
 
 
+def project_location_problem(path: str | Path) -> Optional[Tuple[str, str]]:
+    """``("error" | "warn", message)`` when a Project would live inside the source tree, else None.
+
+    Inside the package itself a Project is refused: its runs would be mixed
+    into the code and shipped with it. Inside a source checkout's
+    ``examples/`` it is allowed with a warning, since a Project opened there
+    before must still open.
+    """
+    package = Path(__file__).resolve().parents[1]
+    resolved = Path(path).expanduser().resolve()
+    if resolved == package or package in resolved.parents:
+        return ("error", f"A Project cannot be inside the PyHydroGeophysX package ({package}); "
+                         "choose a folder outside it.")
+    checkout = package.parent
+    examples = checkout / "examples"
+    if (checkout / "pyproject.toml").is_file() and (resolved == examples or examples in resolved.parents):
+        return ("warn", f"This Project is inside the source checkout's examples folder ({examples}): "
+                        "its runs mix with the example data. A folder outside the source tree is safer.")
+    return None
+
+
 @dataclass
 class StudioState:
     """Mutable state shared across the studio main window and its modules."""
@@ -87,6 +108,8 @@ class StudioState:
     #: by ``qt_apps/widgets/borehole_panel.py`` under ``"store"``. In-session
     #: only; adding the wells to the Project Map saves them with the project.
     borehole_settings: Dict[str, Any] = field(default_factory=dict)
+    #: Why the open Project's folder is a poor place for one (project_location_problem), or "".
+    project_warning: str = ""
     _active_run_handles: Dict[Tuple[str, str], RunHandle] = field(
         default_factory=dict, repr=False
     )
@@ -216,6 +239,10 @@ class StudioState:
     def set_results_store(self, root: str | Path, *, read_only: bool = False) -> ResultsStore:
         """Open/create the folder that owns durable Qt run history."""
         requested = Path(root).expanduser().resolve()
+        problem = project_location_problem(requested)
+        if problem is not None and problem[0] == "error" and not read_only:
+            raise ValueError(problem[1])
+        self.project_warning = problem[1] if problem is not None and problem[0] == "warn" else ""
         if (
             self.results_store is not None
             and self.results_store.root == requested

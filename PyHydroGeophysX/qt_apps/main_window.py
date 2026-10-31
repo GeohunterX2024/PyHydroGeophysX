@@ -805,6 +805,8 @@ class PyHydroGeophysXStudio(QMainWindow):
             return False
         self._refresh_output_label()
         self.log(f"Project ready: {store.root}", "success")
+        if self.state.project_warning:
+            self.log(self.state.project_warning, "warn")
         return True
 
     def _reset_pages(self, *, clear_session: bool = False) -> None:

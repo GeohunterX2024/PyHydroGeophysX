@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened-runtime exceptions of PyHydroGeophysX Studio (tools/yuem/build_macos_dmg.sh, plan M5.1):
+     numba compiles the TDEM kernels at run time (JIT, unsigned executable memory), and the bundle
+     loads third-party native libraries (pyGIMLi, VTK, Qt plugins) built outside this signing team. -->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

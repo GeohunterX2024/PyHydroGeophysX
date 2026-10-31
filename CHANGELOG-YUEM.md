@@ -79,6 +79,10 @@
 ### 发行与持续（M5）
 
 - 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。
+- 签名与公证（M5.1）：`build_macos_dmg.sh` 设 `PHGX_SIGN_IDENTITY` 时由内到外以 Developer ID 签名（hardened runtime、时间戳、`packaging/macos/entitlements.plist`），再设 `PHGX_NOTARY_PROFILE` 时签名镜像、`notarytool` 公证、`stapler` 装订并以 `spctl` 核验；未设时保持 ad-hoc 签名，镜像内安装说明随之切换。当前无 Apple Developer 账号与 Windows 证书，按 ad-hoc 发布并在说明中注明。
+- 发布流程（M5.2）：`docs/yuem/release_checklist.md` 与 `tools/yuem/release.sh`（核对版本号与变更记录、全部门禁层、翻译与验证报告、带审计的 DMG 构建、sha256 与发布说明；默认只打印 `gh release create --draft` 命令，`--publish` 须经负责人确认）。`build_macos_dmg.sh` 可选 `PHGX_RELEASE_AUDIT=1`：复用 `packaging/release_audit.py stage` 在镜像根目录写入 `BUILD_INFO.txt`、`SOURCE_CODE.md` 与 `LICENSES/`。
+- 回馈上游候选（M5.5）：`docs/yuem/upstream_prs.md` 列出 9 项（ERT 正演区域映射、SimPEG 0.26 兼容、随机数可复现、依赖修复、rustsolve 缓存、插件注册中心、macOS 测试矩阵、中文路径与中文界面、环境自检），逐项写明文件、证据与依赖；每项提交前单独征得同意。
+- 工程位置校验（F-10）：工程目录在包源码内时拒绝打开，在源码检出的 `examples/` 内时给出警告（兼容已有工程）。
 - 月度上游同步：`tools/yuem/sync_upstream.sh`（拉取、快进 `upstream`、按 follow 路径列出候选提交、可选创建 `yuem/sync-YYYYMM`；不推送、不自动挑拣）；2026-10-31 检查上游无新提交，记入 `.yuem/SYNC_LOG.md`。
 
 ### 修复（可回馈上游）
