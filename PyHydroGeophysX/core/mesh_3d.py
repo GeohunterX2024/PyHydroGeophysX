@@ -1525,8 +1525,7 @@ def create_3d_ert_data_container(electrode_positions: pd.DataFrame,
     # Create data container
     data = ert.createData(sensors, schemeName=scheme)
     
-    # Calculate 3D geometric factors
-    data['k'] = ert.geometricFactors(data, dim=dimension)
+    data['k'] = geometric_factors_3d(data, dim=dimension)
     
     return data
 
@@ -1576,6 +1575,7 @@ from ._mesh_3d_builder import (  # noqa: E402
     e4d_configuration,
     find_gmsh_binary,
     generate_mesh,
+    geometric_factors_3d,
     mesh_summary,
     normalize_box_zones,
     read_sensor_table,

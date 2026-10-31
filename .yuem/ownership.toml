@@ -29,6 +29,7 @@ own = [
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
     "PyHydroGeophysX/_internal/simpeg_compat.py",
+    "PyHydroGeophysX/_internal/ert_factors.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
     "packaging/",
@@ -127,6 +128,7 @@ strict = [
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
     "PyHydroGeophysX/_internal/simpeg_compat.py",
+    "PyHydroGeophysX/_internal/ert_factors.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
 ]
@@ -143,6 +145,7 @@ typed = [
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
     "PyHydroGeophysX/_internal/simpeg_compat.py",
+    "PyHydroGeophysX/_internal/ert_factors.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
 ]

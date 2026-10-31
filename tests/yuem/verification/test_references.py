@@ -133,6 +133,53 @@ def test_ert_3d_per_cell_model_on_a_mesh_with_an_outer_region(verify: Verify, tm
     )
 
 
+def test_ert_3d_homogeneous_half_space_at_an_elevation(verify: Verify, tmp_path: object) -> None:
+    pytest.importorskip("pygimli")
+    import pandas as pd
+
+    from PyHydroGeophysX.core import mesh_3d
+    from PyHydroGeophysX.forward.ert_forward import ERTForwardModeling
+
+    xy = [(x, y) for x in (0.0, 5.0, 10.0) for y in (0.0, 4.0, 8.0)]
+    positions = np.array([(x, y, 100.0) for x, y in xy])
+    built = mesh_3d.generate_mesh(
+        {
+            "array_type": mesh_3d.FILE_ARRAY,
+            "electrode_positions": positions,
+            "mesh_type": "Surface with topography",
+            "mesh_engine": "Structured grid",
+            "topography_type": mesh_3d.SENSOR_GROUND,
+            "electrode_refinement": 0.5,
+            "attractor_distance": 5.0,
+            "boundary_refinement": 2.0,
+            "para_depth": 4.0,
+            "dz_fine": 1.0,
+            "dz_coarse": 2.0,
+            "boundary_extension": 1.4,
+            "output_dir": str(tmp_path),
+        }
+    )
+    mesh = built["mesh"]
+    data = mesh_3d.create_3d_ert_data_container(
+        pd.DataFrame(positions, columns=["x", "y", "z"]), scheme="dd", dimension=3
+    )
+    rhoa = ERTForwardModeling(mesh, data).forward(np.full(mesh.cellCount(), 100.0), log_transform=False)
+    verify(
+        case="V-ERT-04",
+        title="ERT 3D homogeneous half-space, surface grid at 100 m elevation",
+        method="ERT 3D",
+        engine="PHGX create_3d_ert_data_container + ERTForwardModeling (as used by ert3d.forward)",
+        reference="analytic: apparent resistivity equals 100 ohm-m",
+        metric="max relative error of rhoa",
+        value=float(np.max(np.abs(rhoa - 100.0) / 100.0)),
+        tolerance=1e-3,
+        note="With singularity removal a homogeneous model's response is the analytic primary "
+        "field, so the error is that of the geometric factor alone. Before the fix of "
+        "2026-10-31 PyGIMLi's factor treated the array as buried 100 m deep and rhoa was "
+        "about 200 ohm-m (F-09, 台账 P-0007).",
+    )
+
+
 # --------------------------------------------------------------------------- SRT
 def test_srt_two_layer_refraction(verify: Verify) -> None:
     pytest.importorskip("pygimli")

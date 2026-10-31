@@ -177,6 +177,28 @@ def surface_array(config: Dict[str, Any]) -> bool:
     return False
 
 
+def geometric_factors_3d(data: Any, dim: int = 3) -> np.ndarray:
+    """Analytic geometric factors for the electrodes of ``data``.
+
+    PyGIMLi's analytic factor mirrors every electrode across a ground at
+    z = 0. That holds for electrodes below such a ground, but a surface array
+    at an elevation is then taken for one buried that deep, and k comes out
+    close to its full-space value, twice the half-space one. A surface array
+    off z = 0 therefore gets half-space factors with every electrode on the
+    ground, as :func:`PyHydroGeophysX.data_processing.ert_io.analytic_geometric_factors`
+    gives a survey read from a file.
+    """
+    from pygimli.physics import ert
+
+    from PyHydroGeophysX._internal.ert_factors import surface_geometric_factors
+
+    positions = np.asarray(data.sensorPositions(), dtype=float)
+    if (dim == 3 and len(positions) and np.abs(positions[:, 2]).max() > 1e-9
+            and not buried_electrodes(positions)):
+        return surface_geometric_factors(data, positions)
+    return np.asarray(ert.geometricFactors(data, dim=dim), dtype=float)
+
+
 def sensor_spacing(electrodes: Any, config: Optional[Dict[str, Any]] = None) -> float:
     """The spacing of a surface array: the grid's larger step, or for any other
     layout the median distance from a sensor to its nearest neighbour."""

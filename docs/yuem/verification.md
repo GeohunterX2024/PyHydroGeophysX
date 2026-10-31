@@ -3,14 +3,15 @@
 由 `python tools/yuem/verification_report.py` 生成，请勿手工编辑。用例在 `tests/yuem/verification/`，标记 `numerical`。
 
 - 生成日期：2026-10-31
-- 环境：PyHydroGeophysX 0.5.0+yuem.1 (v0.5.0-34-g02528b0-dirty); Python 3.12.6 on Darwin arm64; numpy 2.5.4, scipy 1.18.1, pygimli 1.6.1, pgcore 1.6.0, simpeg 0.26.0, empymod 2.6.1; BLAS accelerate unknown
-- 结果：14/14 通过
+- 环境：PyHydroGeophysX 0.5.0+yuem.1 (v0.5.0-57-gfdd4c79-dirty); Python 3.12.6 on Darwin arm64; numpy 2.5.4, scipy 1.18.1, pygimli 1.6.1, pgcore 1.6.0, simpeg 0.26.0, empymod 2.6.1; BLAS accelerate unknown
+- 结果：15/15 通过
 
 | 编号 | 方法 | 用例 | 被测实现 | 参考解 | 误差指标 | 实测 | 容差 | 结论 |
 |---|---|---|---|---|---|---|---|---|
 | V-ERT-01 | ERT 2.5D | ERT homogeneous half-space, Wenner, 48 electrodes | PHGX ERTForwardModeling (pyGIMLi core) | analytic: apparent resistivity equals 100 ohm-m | max relative error of rhoa | 1.41e-03 | 5e-03 | 通过 |
 | V-ERT-02 | ERT 2.5D | ERT two-layer earth (100/10 ohm-m, h = 5 m), Wenner, per-cell model | PHGX ERTForwardModeling (pyGIMLi core) | image series, Telford et al. (1990) | max relative error of rhoa | 2.96e-03 | 1e-02 | 通过 |
 | V-ERT-03 | ERT 3D | ERT 3D, per-cell layered model on a mesh with a marker-1 outer region | PHGX ERTForwardModeling (as used by ert3d.forward) | pyGIMLi ERTModelling with the region manager ignored (as ert.simulate) | max relative difference of rhoa | 0.00e+00 | 1e-10 | 通过 |
+| V-ERT-04 | ERT 3D | ERT 3D homogeneous half-space, surface grid at 100 m elevation | PHGX create_3d_ert_data_container + ERTForwardModeling (as used by ert3d.forward) | analytic: apparent resistivity equals 100 ohm-m | max relative error of rhoa | 2.80e-10 | 1e-03 | 通过 |
 | V-FDEM-01 | FDEM 1D | FDEM vertical magnetic dipole, 30 m height, 10 m offset, 100 ohm-m half-space, 0.1-10 kHz | PHGX em1d.fdem_forward (SimPEG) | empymod (cross-code) | max relative error of secondary Hz | 2.81e-04 | 1e-03 | 通过 |
 | V-FDEM-02 | FDEM 1D | FDEM vertical magnetic dipole over 50/200/20 ohm-m (10/20 m), 0.1-10 kHz | PHGX em1d.fdem_forward (SimPEG) | empymod (cross-code) | max relative error of secondary Hz | 2.39e-04 | 1e-03 | 通过 |
 | V-GRAV-01 | Gravity | Gravity of a 100 km wide, 10 m thick prism under its centre | PHGX forward.gravmag.gravity_prism (Nagy 1966) | analytic: infinite Bouguer slab 2 pi G drho t | relative error of gz | 2.70e-04 | 1e-03 | 通过 |
@@ -27,6 +28,7 @@
 
 - **V-ERT-02**：Before the fix of 2026-10-31 a per-cell model on a mesh with a marker-1 region was mapped onto the wrong cells (error up to 284 %).
 - **V-ERT-03**：Regression guard for the region-mapping fix (台账 P-0005).
+- **V-ERT-04**：With singularity removal a homogeneous model's response is the analytic primary field, so the error is that of the geometric factor alone. Before the fix of 2026-10-31 PyGIMLi's factor treated the array as buried 100 m deep and rhoa was about 200 ohm-m (F-09, 台账 P-0007).
 - **V-FDEM-01**：Reference: reflected field only (xdirect=None) with the 801-point Anderson filter; empymod's shorter filters disagree with it by several percent above ~5 kHz at this geometry, so the band is limited to 10 kHz.
 - **V-FDEM-02**：Reference: reflected field only (xdirect=None) with the 801-point Anderson filter; empymod's shorter filters disagree with it by several percent above ~5 kHz at this geometry, so the band is limited to 10 kHz.
 - **V-GRAV-01**：The finite width contributes about t/w ~ 1e-4.

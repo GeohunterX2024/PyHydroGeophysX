@@ -15,5 +15,6 @@
 | 7 | macOS 测试矩阵 | `.github/workflows/`（上游 CI） | 上游 CI 只覆盖 Ubuntu 与 Windows；macOS arm64 上 pgcore 只有 cp312 轮子、需 macOS 26，且 libblas 链接缺失（F-03/F-04），应在 CI 中暴露 | 需上游同意增加 runner | 待确认 |
 | 8 | 中文路径与中文界面 | 冒烟测试中的中文目录用例；`qt_apps/i18n.py` 与翻译目录 | 工作流在含中文与空格的目录下运行（`tests/yuem/smoke`）；界面中文化（M4.1） | 中文化改动面大，建议拆成“翻译基础设施”与“中文目录”两个 PR | 待确认 |
 | 9 | 环境自检 `phgx-doctor` | `doctor.py`、`pyproject.toml` 脚本入口、Studio “帮助 > 环境检查” | 一条命令检查 Python、pyGIMLi 核心、证书、Qt、VTK、中文字体、工程目录与可选引擎（`tests/yuem/test_doctor.py`） | 无 | 待确认 |
+| 10 | 三维 ERT 几何因子 | `core/mesh_3d.py`、`core/_mesh_3d_builder.py`、`data_processing/ert_io.py`，以及 `_internal/ert_factors.py` | 电极在高程上的三维地面排列，几何因子与合成数据视电阻率为真值 2 倍（F-09，P-0007；数值验证 V-ERT-04） | 无 | 待确认 |
 
-优先级建议：1、2、3 是数值与可用性问题，影响所有用户，宜最先提交；4、5 改动小，可与前三项同批提交；6 至 9 需要先与上游讨论接口与范围。
+优先级建议：1、2、3 是数值与可用性问题，影响所有用户，宜最先提交；10 同属数值问题，宜紧随其后；4、5 改动小，可与前三项同批提交；6 至 9 需要先与上游讨论接口与范围。

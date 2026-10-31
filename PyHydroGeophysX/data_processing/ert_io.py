@@ -77,20 +77,9 @@ def analytic_geometric_factors(data) -> np.ndarray:
 def _surface_factors(data, positions: np.ndarray) -> np.ndarray:
     """Half-space factors, 2*pi / (1/AM - 1/BM - 1/AN + 1/BN), from the
     electrodes' distances in 3-D; a pole (index -1) adds no term."""
-    index = {token: np.asarray(data[token], dtype=int) for token in "abmn"}
+    from PyHydroGeophysX._internal.ert_factors import surface_geometric_factors
 
-    def inverse(current: str, potential: str) -> np.ndarray:
-        i, j = index[current], index[potential]
-        used = (i >= 0) & (j >= 0)
-        out = np.zeros(len(i))
-        distance = np.linalg.norm(positions[i[used]] - positions[j[used]], axis=1)
-        with np.errstate(divide="ignore"):
-            out[used] = 1.0 / distance
-        return out
-
-    total = inverse("a", "m") - inverse("b", "m") - inverse("a", "n") + inverse("b", "n")
-    with np.errstate(divide="ignore", invalid="ignore"):
-        return np.where(np.abs(total) > 0, 2.0 * np.pi / total, 0.0)
+    return surface_geometric_factors(data, positions)
 
 
 # ---------------------------------------------------------------------------
