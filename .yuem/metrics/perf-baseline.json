@@ -1,0 +1,11 @@
+{
+  "darwin-arm64-19924cc4-8cpu": {
+    "python": "3.12.6",
+    "recorded": "2026-10-31",
+    "seconds": {
+      "ert_single_inversion": 5.182,
+      "mt_occam1d": 0.351,
+      "tem_lci_line": 1.237
+    }
+  }
+}

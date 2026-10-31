@@ -76,6 +76,11 @@
 - 拆分 ERT 页面（样板工程）：7676 行的 `qt_apps/modules/ert_processing.py` 拆为 `qt_apps/modules/ert/` 包：`page.py`（控件与初始化）、`import_panel.py`、`qc_panel.py`、`mesh_panel.py`、`inversion_panel.py`、`timelapse_panel.py`、`results_panel.py`、`presenter.py`（助手接口与电极编辑）与 `common.py`（共用导入、常量与辅助函数），最长 1190 行。方法原样按功能区移入各部分（mixin），`ERTProcessingModule` 组合这些部分，覆盖关系与方法解析顺序不变；`ert_processing.py` 保留为转发入口（`MODULE_SPECS` 键、旧导入名与 0.3.0 兼容名照常可用）。行为由页面构建（中英文）、计算隔离、ERT 金标准与冒烟测试锁定。棘轮指标 `inprocess_worker_modules` 改为按页面计数。
 - 中文字体回退（`qt_apps/theme.py`）：PingFang SC、Hiragino Sans GB、Microsoft YaHei、Noto Sans CJK SC、Segoe UI 依次回退，只引用已安装字体，消除自检的 “missing font family” 警告；Matplotlib 同步中文字体并关闭 unicode 负号。
 
+### 发行与持续（M5）
+
+- 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。
+- 月度上游同步：`tools/yuem/sync_upstream.sh`（拉取、快进 `upstream`、按 follow 路径列出候选提交、可选创建 `yuem/sync-YYYYMM`；不推送、不自动挑拣）；2026-10-31 检查上游无新提交，记入 `.yuem/SYNC_LOG.md`。
+
 ### 修复（可回馈上游）
 
 - 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。

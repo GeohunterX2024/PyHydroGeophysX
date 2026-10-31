@@ -12,6 +12,9 @@ on:
   pull_request:
     branches: ["yuem/main"]
   workflow_dispatch:
+  schedule:
+    # Weekly timing of key workflows against the CI baseline (perf job).
+    - cron: "0 3 * * 1"
 
 concurrency:
   group: yuem-ci-${{ github.ref }}
@@ -62,7 +65,7 @@ jobs:
       - name: Fast tier
         run: >
           uv run --no-sync python -m pytest -q -p no:cacheprovider
-          -m "not slow and not golden and not numerical and not gui and not network and not packaging"
+          -m "not slow and not golden and not numerical and not gui and not network and not packaging and not benchmark"
 
   gui:
     name: "GUI tests (${{ matrix.os }}, py3.12)"
@@ -105,3 +108,32 @@ jobs:
       - name: Verification report
         if: always()
         run: uv run --no-sync python tools/yuem/verification_report.py --check
+
+  perf:
+    name: "Timing of key workflows (ubuntu, py3.12)"
+    # A slowdown warns rather than blocks: CI runners vary run to run.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - name: Development environment
+        run: tools/yuem/dev_env.sh --python 3.12
+      - name: Compare with the baseline (warn at +20 %)
+        run: uv run --no-sync python tools/yuem/perf.py check
+      - name: Record a CI baseline when there is none
+        if: always()
+        run: |
+          uv run --no-sync python - <<'EOF'
+          import json, os, sys
+          sys.path.insert(0, "tools/yuem")
+          import perf
+          if perf.machine_key() not in perf.load():
+              perf.record()
+          EOF
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-baseline
+          path: .yuem/metrics/perf-baseline.json

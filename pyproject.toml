@@ -266,6 +266,7 @@ markers = [
     "golden: regression against recorded golden outputs",
     "network: needs network access",
     "packaging: needs a built desktop bundle",
+    "benchmark: timing of key workflows; run by tools/yuem/perf.py",
 ]
 filterwarnings = [
     "default::DeprecationWarning:PyHydroGeophysX.*",

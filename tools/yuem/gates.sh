@@ -82,7 +82,7 @@ fi
 
 if [ "$TESTS" = 1 ]; then
   step "pytest fast tier" "$PY" -m pytest -q -p no:cacheprovider \
-    -m "not slow and not golden and not numerical and not gui and not network and not packaging"
+    -m "not slow and not golden and not numerical and not gui and not network and not packaging and not benchmark"
   if [ "$FULL" = 1 ]; then
     step "pytest gui tier" "$PY" -m pytest -q -p no:cacheprovider -m "gui and not slow"
     step "pytest slow tier" "$PY" -m pytest -q -p no:cacheprovider -m "slow and not golden and not numerical"
