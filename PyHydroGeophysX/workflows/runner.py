@@ -10,7 +10,7 @@ from .models import RunContext, WorkflowRunResult, WorkflowSpec, iter_artifact_r
 from .registry import get_workflow
 
 
-def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec) -> None:
+def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec, runtime: RunContext) -> None:
     """Stamp what reproduces this run on the result: inputs, seed, parameters, environment.
 
     The handler's own provenance keys are kept; these are added on top.
@@ -25,6 +25,7 @@ def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec) -> None:
     }
     provenance["parameters_digest"] = parameters_digest(spec.to_dict())
     provenance["environment"] = collect_environment()
+    provenance["threads"] = runtime.threads
     result.provenance = provenance
 
 
@@ -35,8 +36,9 @@ def run_workflow(
     """Validate and execute one registered workflow synchronously.
 
     spec may be a WorkflowSpec or its JSON-compatible mapping. Stochastic
-    workflows require an explicit seed. context supplies the project/output
-    paths, progress callback and cancellation predicate; a default context
+    workflows require an explicit seed. context supplies the project, output
+    and cache folders, the thread budget (applied around the handler), the
+    progress callback and cancellation predicate; a default context
     writes under the current directory's workflow_results folder.
 
     The output directory is created before calling the handler. Return a
@@ -51,13 +53,15 @@ def run_workflow(
     runtime = context or RunContext()
     runtime.prepare()
     runtime.progress(f"Starting {spec.workflow_id}")
-    result = descriptor.load_handler()(spec, runtime)
+    handler = descriptor.load_handler()
+    with runtime.thread_limits():
+        result = handler(spec, runtime)
     if not isinstance(result, WorkflowRunResult):
         raise TypeError(
             f"Workflow {spec.workflow_id!r} returned {type(result).__name__}; "
             "handlers must return WorkflowRunResult."
         )
-    _with_provenance(result, spec)
+    _with_provenance(result, spec, runtime)
     result.to_dict()
     runtime.progress(f"Finished {spec.workflow_id}: {result.status}")
     return result

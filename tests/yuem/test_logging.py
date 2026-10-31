@@ -24,6 +24,8 @@ from PyHydroGeophysX._internal.logging_setup import (
     shutdown_app_logging,
 )
 
+from .conftest import load_tool
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -153,8 +155,7 @@ def test_page_log_reaches_logging(caplog: pytest.LogCaptureFixture) -> None:
 
 
 def test_silent_except_metric() -> None:
-    sys.path.insert(0, str(ROOT / "tools" / "yuem"))
-    from metrics import silent_broad_excepts
+    silent_broad_excepts = load_tool("metrics").silent_broad_excepts
 
     source = SimpleNamespace(
         silent="try:\n    f()\nexcept Exception:\n    pass\n",

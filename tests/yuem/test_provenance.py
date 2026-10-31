@@ -112,11 +112,12 @@ def test_results_store_stamps_runs_computed_in_process(tmp_path: Path) -> None:
 
 def test_handler_provenance_keys_are_kept(tmp_path: Path) -> None:
     """A handler's own provenance (e.g. SRT records its input artifacts) survives."""
-    from PyHydroGeophysX.workflows.models import WorkflowRunResult
+    from PyHydroGeophysX.workflows.models import RunContext, WorkflowRunResult
     from PyHydroGeophysX.workflows.runner import _with_provenance
 
     spec = _gravity_spec(tmp_path)
     result = WorkflowRunResult(status="ok", provenance={"inputs": {"traveltime": {"path": "t.dat"}}})
-    _with_provenance(result, spec)
+    _with_provenance(result, spec, RunContext(threads=2))
+    assert result.provenance["threads"] == 2
     assert result.provenance["inputs"] == {"traveltime": {"path": "t.dat"}}
     assert set(result.provenance["input_checksums"]) == {"x", "y"}

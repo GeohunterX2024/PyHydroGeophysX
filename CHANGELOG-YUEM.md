@@ -54,6 +54,7 @@
 - 异常体系 `PyHydroGeophysX/errors.py`：`PHGXError` 及 `DataValidationError`（消息带文件、行号、字段）、`ConvergenceError`、`Cancelled`、`ResourceLimitError`，并转出 `BackendUnavailable`；各类继承调用方已在捕获的内置异常（`ValueError`/`RuntimeError`），替换旧的 raise 不破坏现有 `except`。边界统一处理：`pyhydrogeophysx-workflow run` 遇领域异常输出一行“类型: 消息 (hint: 建议)”并以退出码 2 结束（未知异常仍输出堆栈、退出码 1）；Studio 子进程失败消息与进程内工作线程给出通俗说明。工作流层（`workflows/domain.py`）输入缺失、长度不一致等 12 处校验改抛 `DataValidationError`。`workflows/cli.py` 中 3 处 psutil 宽泛捕获收窄为具体异常。
 - 日志体系 `PyHydroGeophysX/_internal/logging_setup.py`：Studio 应用日志 `phgx.log` 写在 platformdirs 给出的目录（macOS 为 `~/Library/Logs/PHGX`，`PHGX_LOG_DIR` 可覆盖），按 5 MB × 5 轮转；同一位置的重复堆栈只保留前 3 条；上游代码的 `print` 与写到 stderr 的堆栈经旁路捕获进入应用日志（不改上游源码）。每次工作流运行在结果目录写 `run.log.jsonl`（每行一条 JSON 记录：时间、级别、记录器、消息、线程、堆栈），包括运行打印的每一行和失败堆栈；父进程读到的输出不变。页面日志 `BaseModule.log` 同时写入 logging。启动器的 faulthandler 原生崩溃记录移到应用日志目录下的 `diagnostics/`。
 - own 代码中 144 处静默吞掉异常的 `except Exception` 改为带堆栈写入应用日志（DEBUG 级），新增只降不升的棘轮指标 `own_silent_broad_except`（现为 0）。ADR 0003 补充：存量超长文件因横切的可靠性改造增加几行时，在白名单 `[file_length]` 登记只降不升的行数上限。
+- 显式运行上下文：`RunContext` 新增 `threads`（BLAS/OpenMP 与 pyGIMLi 线程数，运行期间生效、结束后恢复，记入溯源 `provenance.threads`）与 `cache_dir`（默认每用户缓存目录 `~/Library/Caches/PHGX`，`PHGX_CACHE_DIR` 可覆盖；`cache_path()` 按类别建子目录）。`pyhydrogeophysx-workflow run --threads N`，缺省读 `PHGX_THREADS`。own 之外的环境变量读取冻结在 `.yuem/environ_reads.toml`（19 个文件 42 处，均为外部程序路径与本地库开关），测试保证只减不增。
 - `dev_env.sh`：仓库位于 iCloud 同步的 `~/Desktop` 或 `~/Documents` 时，环境建在 `~/Library/Caches/phgx-venvs/`，`.venv` 为符号链接（iCloud 会持续给点目录中的文件打隐藏标志）。
 
 ### 修复（可回馈上游）

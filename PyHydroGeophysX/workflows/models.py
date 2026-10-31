@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping, Optional
+import sys
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Mapping, MutableMapping, Optional
 
 
 SCHEMA_VERSION = "1"
@@ -207,18 +209,70 @@ def _never_cancelled() -> bool:
 
 @dataclass
 class RunContext:
-    """Process-local execution settings that are deliberately absent from recipes."""
+    """Process-local execution settings that are deliberately absent from recipes.
+
+    Handlers take their folders and their thread budget from here, not from
+    environment variables or the current directory: ``project_root`` and
+    ``output_dir``, ``cache_dir`` for data that can be rebuilt (default: the
+    per-user cache folder), and ``threads`` - the BLAS/OpenMP and pyGIMLi
+    thread count for the run, None for the libraries' own defaults.
+    """
 
     project_root: Path = field(default_factory=Path.cwd)
     output_dir: Path = field(default_factory=lambda: Path.cwd() / "workflow_results")
     progress: ProgressFn = _noop_progress
     cancelled: CancelledFn = _never_cancelled
     object_cache: MutableMapping[str, Any] = field(default_factory=dict)
+    threads: Optional[int] = None
+    cache_dir: Optional[Path] = None
 
     def prepare(self) -> None:
         self.project_root = Path(self.project_root).resolve()
         self.output_dir = Path(self.output_dir).resolve()
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        if self.cache_dir is None:
+            from PyHydroGeophysX._internal.platform_dirs import cache_dir
+
+            self.cache_dir = cache_dir()
+        self.cache_dir = Path(self.cache_dir).resolve()
+        if self.threads is not None and int(self.threads) < 1:
+            raise WorkflowValidationError(f"threads must be at least 1, got {self.threads}.")
+
+    def cache_path(self, *parts: str) -> Path:
+        """A folder under ``cache_dir`` for one kind of cached data, created on demand."""
+        if self.cache_dir is None:
+            self.prepare()
+        assert self.cache_dir is not None
+        folder = self.cache_dir.joinpath(*parts)
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
+
+    @contextmanager
+    def thread_limits(self) -> Iterator[None]:
+        """Hold BLAS/OpenMP and pyGIMLi to ``threads`` for the block, then restore them."""
+        if self.threads is None:
+            yield
+            return
+        count = int(self.threads)
+        restore: List[Callable[[], None]] = []
+        try:
+            try:
+                from threadpoolctl import threadpool_limits
+            except ImportError:
+                pass
+            else:
+                limiter = threadpool_limits(limits=count)
+                restore.append(limiter.restore_original_limits)
+            pygimli = sys.modules.get("pygimli")
+            core = getattr(pygimli, "core", None)
+            if core is not None and hasattr(core, "threadCount") and hasattr(core, "setThreadCount"):
+                previous = int(core.threadCount())
+                core.setThreadCount(count)
+                restore.append(lambda: core.setThreadCount(previous))
+            yield
+        finally:
+            for undo in reversed(restore):
+                undo()
 
     @staticmethod
     def cache_key(ref: ArtifactRef) -> str:

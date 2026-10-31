@@ -34,6 +34,13 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--project-root", type=Path)
     run.add_argument("--output-dir", type=Path)
     run.add_argument(
+        "--threads",
+        type=int,
+        default=None,
+        help=f"BLAS/OpenMP and pyGIMLi threads for the run (default: ${THREADS_ENV}, "
+             "else the libraries' own defaults).",
+    )
+    run.add_argument(
         "--result-file",
         type=Path,
         help="Write the process-safe result JSON here instead of stdout.",
@@ -115,6 +122,8 @@ def _quiet_pygimli_show() -> None:
 
 #: Set to 0 to let a run with ``--result-file`` outlive the program that started it.
 EXIT_WITH_PARENT_ENV = "PHGX_EXIT_WITH_PARENT"
+#: Default thread budget of a run when ``--threads`` is not given.
+THREADS_ENV = "PHGX_THREADS"
 
 
 def _is_launcher(parent: Any, me: Any) -> bool:
@@ -130,6 +139,17 @@ def _is_launcher(parent: Any, me: Any) -> bool:
                 and parent.cmdline()[1:] == me.cmdline()[1:])
     except (psutil.Error, OSError, IndexError):  # a process already gone, or unreadable
         return False
+
+
+def _threads_from_environment() -> int | None:
+    raw = os.environ.get(THREADS_ENV, "").strip()
+    if not raw:
+        return None
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        print(f"Ignoring {THREADS_ENV}={raw!r}: not a whole number.", file=sys.stderr)
+        return None
 
 
 def _exit_with_parent() -> bool:
@@ -218,6 +238,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     if progress is not None:
         context_kwargs["progress"] = progress
+    threads = args.threads if args.threads is not None else _threads_from_environment()
+    if threads is not None:
+        context_kwargs["threads"] = threads
     context = RunContext(
         **context_kwargs,
     )

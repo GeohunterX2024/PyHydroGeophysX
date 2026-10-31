@@ -288,6 +288,7 @@ module = [
     "PyHydroGeophysX.datastore.*",
     "PyHydroGeophysX.results.*",
     "PyHydroGeophysX._internal.logging_setup",
+    "PyHydroGeophysX._internal.platform_dirs",
     "PyHydroGeophysX._internal.provenance",
     "PyHydroGeophysX._internal.rng",
     "PyHydroGeophysX._internal.simpeg_compat",

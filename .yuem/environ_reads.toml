@@ -1,0 +1,27 @@
+# Environment-variable reads outside own code, frozen at the fork base (plan M2.5).
+#
+# Algorithm layers take folders and thread counts from RunContext; what remains
+# here is upstream's configuration of external programs and libraries (paths of
+# R2, E4D, TetGen, tile caches, native-library switches). A count may only fall:
+# tests/yuem/test_run_context.py fails on a new read and on a stale entry.
+
+[files]
+"PyHydroGeophysX/agents/agent_coordinator.py" = 1  # frozen
+"PyHydroGeophysX/agents/base_agent.py" = 7  # frozen
+"PyHydroGeophysX/agents/mcp_client.py" = 1  # frozen
+"PyHydroGeophysX/agents/runtime/entry.py" = 1  # frozen
+"PyHydroGeophysX/agents/runtime/scratch.py" = 2  # frozen
+"PyHydroGeophysX/agents/skills.py" = 1  # frozen
+"PyHydroGeophysX/core/e4d_mesh.py" = 1  # follow
+"PyHydroGeophysX/core/rustmesh_backend.py" = 1  # follow
+"PyHydroGeophysX/data_processing/em1d.py" = 1  # follow
+"PyHydroGeophysX/forward/tdem_forward.py" = 1  # follow
+"PyHydroGeophysX/inversion/adtlert_diagnostics.py" = 2  # follow
+"PyHydroGeophysX/inversion/e4d.py" = 3  # follow
+"PyHydroGeophysX/inversion/ert_inversion.py" = 1  # follow
+"PyHydroGeophysX/inversion/r2.py" = 1  # follow
+"PyHydroGeophysX/llm/cli_providers.py" = 1  # frozen
+"PyHydroGeophysX/llm/cli_setup.py" = 9  # frozen
+"PyHydroGeophysX/llm/providers.py" = 5  # frozen
+"PyHydroGeophysX/visualization/basemap.py" = 1  # follow
+"PyHydroGeophysX/visualization/pyvista_compat.py" = 2  # follow

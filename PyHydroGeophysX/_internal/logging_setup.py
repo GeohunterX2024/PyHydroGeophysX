@@ -28,6 +28,8 @@ from pathlib import Path
 from types import TracebackType
 from typing import TextIO, cast
 
+from PyHydroGeophysX._internal import platform_dirs
+
 LOGGER_NAME = "PyHydroGeophysX"
 OUTPUT_LOGGER_NAME = f"{LOGGER_NAME}.output"
 APP_LOG_NAME = "phgx.log"
@@ -45,19 +47,7 @@ _original_streams: tuple[TextIO | None, TextIO | None] | None = None
 
 def app_log_dir() -> Path:
     """Folder of the application log; ``PHGX_LOG_DIR`` overrides it."""
-    override = os.environ.get("PHGX_LOG_DIR")
-    if override:
-        return Path(override).expanduser()
-    try:
-        import platformdirs
-    except ImportError:
-        home = Path.home()
-        if sys.platform == "darwin":
-            return home / "Library" / "Logs" / "PHGX"
-        if sys.platform == "win32":
-            return Path(os.environ.get("LOCALAPPDATA", home / "AppData" / "Local")) / "PHGX" / "Logs"
-        return Path(os.environ.get("XDG_STATE_HOME", home / ".local" / "state")) / "PHGX" / "log"
-    return Path(platformdirs.user_log_dir("PHGX", appauthor=False))
+    return platform_dirs.log_dir()
 
 
 class RepeatFilter(logging.Filter):
