@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from PySide6.QtCore import QTimer, Qt, QUrl
+from PySide6.QtCore import QCoreApplication, QTimer, Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -53,7 +53,7 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.core import mesh_3d as mesh3d_builder
 from PyHydroGeophysX.inversion.ert_zones import zone_colors
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -198,7 +198,7 @@ class Mesh3DModule(BaseModule):
             QTimer.singleShot(0, self._refresh_plotter)
 
     def _viewer_placeholder(self, err: str) -> QLabel:
-        msg = QLabel(f"3D preview unavailable:<br><code>{err}</code><br><br>{_INSTALL_MESSAGE}")
+        msg = QLabel(QCoreApplication.translate("PHGX", "3D preview unavailable:<br><code>{0}</code><br><br>{1}").format(err, _INSTALL_MESSAGE))
         msg.setWordWrap(True)
         msg.setAlignment(Qt.AlignCenter)
         msg.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -233,18 +233,18 @@ class Mesh3DModule(BaseModule):
             ("Axes", self._toggle_axes, "fa5s.location-arrow", ""),
             ("Reset view", self._reset_view, "fa5s.expand", ""),
         ):
-            btn = QPushButton(label)
+            btn = QPushButton(i18n.tr(label))
             btn.setIcon(theme.icon(icon))
             if tip:
-                btn.setToolTip(tip)
+                btn.setToolTip(i18n.tr(tip))
             btn.clicked.connect(slot)
             bar.addWidget(btn)
         bar.addStretch(1)
         # As on the ERT page's Mesh tab: the outer region dwarfs the domain.
-        self._show_outer = QCheckBox("Outer region")
+        self._show_outer = QCheckBox(QCoreApplication.translate("PHGX", "Outer region"))
         self._show_outer.setToolTip(
-            "Show the coarse outer region (marker 1) too. Off, the view keeps to the "
-            "cells an inversion solves for, around the sensors.")
+            QCoreApplication.translate("PHGX", "Show the coarse outer region (marker 1) too. Off, the view keeps to the "
+            "cells an inversion solves for, around the sensors."))
         self._show_outer.toggled.connect(self._redraw_mesh)
         bar.addWidget(self._show_outer)
         return bar
@@ -280,7 +280,7 @@ class Mesh3DModule(BaseModule):
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         row.addStretch(1)
-        row.addWidget(QLabel("Colour map"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Colour map")))
         row.addWidget(self._colormap)
         return row
 
@@ -327,7 +327,7 @@ class Mesh3DModule(BaseModule):
     @staticmethod
     def _note(text: str = "", tone: str = "hint") -> QLabel:
         """A wrapped note under a row."""
-        label = QLabel(text)
+        label = QLabel(i18n.tr(text))
         label.setWordWrap(True)
         theme.set_tone(label, tone)
         return label
@@ -338,9 +338,9 @@ class Mesh3DModule(BaseModule):
         the fields, which is what shows or hides a row (``set_rows_visible``)."""
         for label, field in rows:
             if label is None:
-                form.addRow(field)
+                form.addRow(i18n.tr(field))
             else:
-                form.addRow(label, field)
+                form.addRow(i18n.tr(label), field)
         return [field for _, field in rows]
 
     def _build_array_group(self) -> QGroupBox:
@@ -349,27 +349,24 @@ class Mesh3DModule(BaseModule):
         One form holds every array's rows, so that their labels line up, and the
         rows of the arrays not chosen are hidden.
         """
-        box = QGroupBox("1. Sensor array")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "1. Sensor array"))
         self._array_group = box
         form = QFormLayout(box)
         # The shortest way from a table of sensors to a mesh: read it and
         # build with the settings of the steps below.
-        self._quick_btn = QPushButton("Build mesh from sensor file…")
+        self._quick_btn = QPushButton(QCoreApplication.translate("PHGX", "Build mesh from sensor file…"))
         self._quick_btn.setIcon(theme.icon("fa5s.file-import"))
         self._quick_btn.setToolTip(
-            "Pick a CSV or text table of sensor positions (x, y, z in metres, such as "
-            "Cable,Elec,X,Y,Z) and generate the mesh under them straight away, with the "
-            "settings of the steps below. To change the settings first, choose "
-            f"{mesh3d_builder.FILE_ARRAY} as the array and load the file there.")
+            QCoreApplication.translate("PHGX", "Pick a CSV or text table of sensor positions (x, y, z in metres, such as Cable,Elec,X,Y,Z) and generate the mesh under them straight away, with the settings of the steps below. To change the settings first, choose {0} as the array and load the file there.").format(mesh3d_builder.FILE_ARRAY))
         self._quick_btn.clicked.connect(self._mesh_from_sensor_file_dialog)
-        form.addRow(self._quick_btn)
+        form.addRow(i18n.tr(self._quick_btn))
         self._array_type = QComboBox(); self._array_type.addItems(_ARRAY_TYPES)
         self._array_type.setToolTip(
-            "Where the electrodes, geophones or other sensors are: a grid on the surface, "
+            QCoreApplication.translate("PHGX", "Where the electrodes, geophones or other sensors are: a grid on the surface, "
             "one borehole, several boreholes, a line on the surface beside a borehole, or "
-            "the positions a file lists.")
+            "the positions a file lists."))
         self._array_type.currentTextChanged.connect(self._update_visibility)
-        form.addRow("Array", self._array_type)
+        form.addRow(QCoreApplication.translate("PHGX", "Array"), self._array_type)
 
         # Surface grid
         self._nx = self._ispin(2, 200, 10); self._ny = self._ispin(2, 200, 6)
@@ -426,27 +423,27 @@ class Mesh3DModule(BaseModule):
                 ("Sensors from z", merged_row(self._s2b_zs, "to", self._s2b_ze))]
 
         # From a file: the positions a table of sensors gives.
-        load_btn = QPushButton("Load sensor file…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load sensor file…"))
         load_btn.setIcon(theme.icon("fa5s.file-upload"))
         load_btn.setToolTip(
-            "A table of sensor positions, CSV or text: x, y and z in metres, such as "
+            QCoreApplication.translate("PHGX", "A table of sensor positions, CSV or text: x, y and z in metres, such as "
             "Cable,Elec,X,Y,Z. The header says which column is which; without one, a "
             "sensor-number column is set aside. A table of x and z alone is a line "
-            "at y = 0.")
+            "at y = 0."))
         load_btn.clicked.connect(self._load_sensor_file_dialog)
-        self._sensor_file_label = QLabel("No file loaded.")
+        self._sensor_file_label = QLabel(QCoreApplication.translate("PHGX", "No file loaded."))
         self._sensor_file_label.setWordWrap(True)
         from_file = [(None, load_btn), (None, self._sensor_file_label)]
 
         for spin in (self._bh_z_start, self._cross_z_start, self._s2b_zs):
-            spin.setToolTip("Elevation of the top sensor; the rest are spaced evenly down "
-                            "to the bottom one.")
+            spin.setToolTip(QCoreApplication.translate("PHGX", "Elevation of the top sensor; the rest are spaced evenly down "
+                            "to the bottom one."))
         self._array_rows: Dict[str, List[QWidget]] = {
             name: self._add_rows(form, rows)
             for name, rows in zip(_ARRAY_TYPES, (grid, single, cross, line, from_file))}
         # Said here when a loaded E4D configuration sets the electrodes instead.
         self._array_note = self._note(tone="error")
-        form.addRow(self._array_note)
+        form.addRow(i18n.tr(self._array_note))
         return box
 
     def _build_engine_group(self) -> QGroupBox:
@@ -457,33 +454,33 @@ class Mesh3DModule(BaseModule):
         own, and each of the others reads a different part of the settings.
         """
         defaults = mesh3d_builder.E4D_DEFAULTS
-        box = QGroupBox("2. Mesh engine")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "2. Mesh engine"))
         form = QFormLayout(box)
         self._mesh_engine = QComboBox(); self._mesh_engine.addItems(_MESH_ENGINES)
         self._mesh_engine.setToolTip(
-            "Auto: prism for surface+topography, structured otherwise.\n"
+            QCoreApplication.translate("PHGX", "Auto: prism for surface+topography, structured otherwise.\n"
             "Gmsh (tetrahedral): high-quality refined tet mesh (flat top; best for box / borehole / mild terrain).\n"
             "PyGIMLi prism: topography-conforming.\n"
             "Structured grid: fast regular grid.\n"
             "E4D (Triangle + TetGen): a fine zone "
             "around the electrodes inside a coarse outer zone reaching far out, "
-            "written as an E4D .cfg that E4D itself runs on.")
+            "written as an E4D .cfg that E4D itself runs on."))
         self._mesh_engine.currentTextChanged.connect(self._update_visibility)
-        form.addRow("Engine", self._mesh_engine)
+        form.addRow(QCoreApplication.translate("PHGX", "Engine"), self._mesh_engine)
         # What will build the mesh, which is not always the engine picked.
         self._engine_note = self._note()
-        form.addRow(self._engine_note)
+        form.addRow(i18n.tr(self._engine_note))
 
         # An E4D configuration written elsewhere replaces steps 1, 3 and 4.
         self._e4d_config_path = ""
-        load_btn = QPushButton("Load E4D .cfg…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load E4D .cfg…"))
         load_btn.setIcon(theme.icon("fa5s.file-import"))
-        load_btn.setToolTip("Build from an existing E4D mesh configuration file instead "
-                            "of the sensor array, domain and refinement set here.")
+        load_btn.setToolTip(QCoreApplication.translate("PHGX", "Build from an existing E4D mesh configuration file instead "
+                            "of the sensor array, domain and refinement set here."))
         load_btn.clicked.connect(self._load_e4d_config_dialog)
         self._e4d_clear = QPushButton("✕")
         self._e4d_clear.setMaximumWidth(32)
-        self._e4d_clear.setToolTip("Go back to building from steps 1, 3 and 4.")
+        self._e4d_clear.setToolTip(QCoreApplication.translate("PHGX", "Go back to building from steps 1, 3 and 4."))
         self._e4d_clear.setEnabled(False)
         self._e4d_clear.clicked.connect(self._clear_e4d_config)
         source = QWidget()
@@ -491,83 +488,83 @@ class Mesh3DModule(BaseModule):
         source_row.setContentsMargins(0, 0, 0, 0)
         source_row.addWidget(load_btn, 1)
         source_row.addWidget(self._e4d_clear)
-        self._e4d_cfg_label = QLabel(_E4D_FROM_STEPS)
+        self._e4d_cfg_label = QLabel(i18n.tr(_E4D_FROM_STEPS))
         self._e4d_cfg_label.setWordWrap(True)
 
         self._e4d_mesher = QComboBox()
         for label, value in (("Auto (TetGen, else Gmsh)", "auto"), ("TetGen", "tetgen"),
                              ("Gmsh", "gmsh")):
-            self._e4d_mesher.addItem(label, value)
+            self._e4d_mesher.addItem(i18n.tr(label), value)
         self._e4d_mesher.setToolTip(
-            "TetGen is what E4D runs: the program if it is on PATH, otherwise its "
+            QCoreApplication.translate("PHGX", "TetGen is what E4D runs: the program if it is on PATH, otherwise its "
             "Python package (pip install tetgen). Gmsh stands in when TetGen is not "
             "installed; it aims at the zone volumes rather than enforcing them, so the "
-            "log reports each zone's largest element against its limit.")
+            "log reports each zone's largest element against its limit."))
         self._e4d_tetgen = QLineEdit()
-        self._e4d_tetgen.setPlaceholderText("TetGen program (optional)")
-        self._e4d_tetgen.setToolTip("Path to a TetGen executable, when it is neither on "
-                                    "PATH nor installed as the Python package.")
+        self._e4d_tetgen.setPlaceholderText(QCoreApplication.translate("PHGX", "TetGen program (optional)"))
+        self._e4d_tetgen.setToolTip(QCoreApplication.translate("PHGX", "Path to a TetGen executable, when it is neither on "
+                                    "PATH nor installed as the Python package."))
         self._e4d_status = self._note(self._e4d_mesher_status())
         self._e4d_sigma = self._dspin(1e-6, 100.0, defaults["e4d_conductivity"], 0.01, 4, " S/m")
-        self._e4d_sigma.setToolTip("The zones' starting conductivity, written into the "
-                                   "E4D configuration.")
+        self._e4d_sigma.setToolTip(QCoreApplication.translate("PHGX", "The zones' starting conductivity, written into the "
+                                   "E4D configuration."))
         self._e4d_engine_rows = self._add_rows(form, [
             (None, source), (None, self._e4d_cfg_label),
             ("Mesher", self._e4d_mesher), ("TetGen path", self._e4d_tetgen),
             (None, self._e4d_status), ("Starting conductivity", self._e4d_sigma)])
 
         # Every engine honours it.
-        self._single_region = QCheckBox("Single region (one marker)")
+        self._single_region = QCheckBox(QCoreApplication.translate("PHGX", "Single region (one marker)"))
         self._single_region.setToolTip(
-            "Collapse the mesh to one marker instead of preserving the parameter-domain (2) / "
-            "boundary (1) split.")
-        form.addRow(self._single_region)
+            QCoreApplication.translate("PHGX", "Collapse the mesh to one marker instead of preserving the parameter-domain (2) / "
+            "boundary (1) split."))
+        form.addRow(i18n.tr(self._single_region))
         return box
 
     def _build_domain_group(self) -> QGroupBox:
         """Step 3: the volume the mesh fills, and the ground on top of it."""
         defaults = mesh3d_builder.E4D_DEFAULTS
-        box = QGroupBox("3. Domain and topography")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "3. Domain and topography"))
         self._domain_group = box
         form = QFormLayout(box)
         self._mesh_type = QComboBox(); self._mesh_type.addItems(_MESH_TYPES)
         self._mesh_type.setToolTip(
-            "Surface with topography builds the domain around the sensors, under the ground "
-            "set below. Box mesh builds a box of the size set below, from the origin.")
+            QCoreApplication.translate("PHGX", "Surface with topography builds the domain around the sensors, under the ground "
+            "set below. Box mesh builds a box of the size set below, from the origin."))
         self._mesh_type.currentTextChanged.connect(self._update_visibility)
-        form.addRow("Domain", self._mesh_type)
+        form.addRow(QCoreApplication.translate("PHGX", "Domain"), self._mesh_type)
         self._domain_note = self._note()
-        form.addRow(self._domain_note)
+        form.addRow(i18n.tr(self._domain_note))
 
         # Every engine but E4D: how deep the inverted region reaches, and how
         # far the domain reaches around the sensors.
         self._para_depth = self._dspin(1.0, 500.0, 20.0, 1.0, 2, " m")
         self._para_depth.setToolTip(
-            "Depth of the inverted region (marker 2) below the top of the mesh; the cells "
+            QCoreApplication.translate("PHGX", "Depth of the inverted region (marker 2) below the top of the mesh; the cells "
             "below it are the outer region (marker 1), and zones act only above it. Under "
-            "a surface grid it is also how deep the mesh reaches.")
+            "a surface grid it is also how deep the mesh reaches."))
         self._bound_ext = self._dspin(1.0, 3.0, 1.4, 0.1, 2)
         self._bound_ext.setToolTip(
-            "How far the domain reaches beyond a surface grid, as a multiple of the grid's "
-            "size: 1.4 adds a fifth of its length on each side.")
+            QCoreApplication.translate("PHGX", "How far the domain reaches beyond a surface grid, as a multiple of the grid's "
+            "size: 1.4 adds a fifth of its length on each side."))
         self._outer = self._dspin(0.0, 20.0, mesh3d_builder.OUTER_SPREADS, 1.0, 1, " spreads")
         self._outer.setToolTip(
-            "A coarse region (marker 1, not inverted) reaching this many times the "
+            QCoreApplication.translate("PHGX", "A coarse region (marker 1, not inverted) reaching this many times the "
             "domain's larger side beyond it, sideways and down, as on the ERT page's own "
             "mesh: it carries the far boundary away from the sensors. 0 leaves it out; a "
-            "box mesh has none, its walls being the tank's.")
+            "box mesh has none, its walls being the tank's."))
         self._box_length = self._dspin(1.0, 5000.0, 50.0, 1.0, 2, " m")
         self._box_width = self._dspin(1.0, 5000.0, 30.0, 1.0, 2, " m")
         self._box_height = self._dspin(1.0, 1000.0, 25.0, 1.0, 2, " m")
         self._bh_lat_pad = self._dspin(1.0, 500.0, 10.0, 1.0, 2, " m")
-        self._bh_lat_pad.setToolTip("How far the domain reaches beyond the outermost "
-                                    "boreholes, in x and y.")
+        self._bh_lat_pad.setToolTip(QCoreApplication.translate("PHGX", "How far the domain reaches beyond the outermost "
+                                    "boreholes, in x and y."))
         self._bh_top_pad = self._dspin(0.0, 100.0, 2.0, 0.5, 2, " m")
-        self._bh_top_pad.setToolTip("How far the domain reaches above the highest sensor.")
+        self._bh_top_pad.setToolTip(QCoreApplication.translate("PHGX", "How far the domain reaches above the highest sensor."))
         self._bh_bot_pad = self._dspin(0.0, 500.0, 5.0, 1.0, 2, " m")
         self._bh_bot_pad.setToolTip(
-            "How far the domain reaches below the deepest sensor - for Gmsh, below the "
-            "investigation depth under it.")
+            QCoreApplication.translate("PHGX", "How far the domain reaches below the deepest sensor - for Gmsh, below the "
+            "investigation depth under it."))
         self._box_rows = [self._box_length, self._box_width, self._box_height]
         self._add_rows(form, [
             ("Investigation depth", self._para_depth), ("Boundary extension", self._bound_ext),
@@ -582,18 +579,18 @@ class Mesh3DModule(BaseModule):
         # for E4D (Van Nuys): a zone a metre beyond the electrodes, the outer
         # boundary 100 m beyond it and the bottom 150 m down.
         self._e4d_pad = self._dspin(0.0, 1e4, defaults["e4d_fine_padding"], 0.5, 2, " m")
-        self._e4d_pad.setToolTip("How far the fine zone reaches beyond the outermost "
-                                 "electrodes, in x and y.")
+        self._e4d_pad.setToolTip(QCoreApplication.translate("PHGX", "How far the fine zone reaches beyond the outermost "
+                                 "electrodes, in x and y."))
         self._e4d_depth_pad = self._dspin(0.0, 1e4, defaults["e4d_fine_depth_padding"], 0.5, 2, " m")
-        self._e4d_depth_pad.setToolTip("How far the fine zone reaches below the deepest "
-                                       "electrode.")
+        self._e4d_depth_pad.setToolTip(QCoreApplication.translate("PHGX", "How far the fine zone reaches below the deepest "
+                                       "electrode."))
         self._e4d_outer = self._dspin(1.0, 1e6, defaults["e4d_outer_distance"], 10.0, 1, " m")
         self._e4d_outer.setToolTip(
-            "How far beyond the fine zone the outer boundary sits. The potentials "
-            "must have died away there; ten times the survey size is the usual rule.")
+            QCoreApplication.translate("PHGX", "How far beyond the fine zone the outer boundary sits. The potentials "
+            "must have died away there; ten times the survey size is the usual rule."))
         self._e4d_bottom = self._dspin(1.0, 1e6, defaults["e4d_bottom_depth"], 10.0, 1, " m")
-        self._e4d_bottom.setToolTip("Depth of the mesh bottom below the lowest point of "
-                                    "the surface (E4D's m_bot).")
+        self._e4d_bottom.setToolTip(QCoreApplication.translate("PHGX", "Depth of the mesh bottom below the lowest point of "
+                                    "the surface (E4D's m_bot)."))
         self._e4d_domain_rows = self._add_rows(form, [
             ("Fine zone padding", self._e4d_pad),
             ("Below deepest electrode", self._e4d_depth_pad),
@@ -602,10 +599,10 @@ class Mesh3DModule(BaseModule):
 
         # The ground, one set of rows per kind of surface.
         self._topo_type = QComboBox(); self._topo_type.addItems(_TOPO_TYPES)
-        self._topo_type.setToolTip("The ground surface: what the mesh is built under, and "
-                                   "what the sensors of a surface grid are placed on.")
+        self._topo_type.setToolTip(QCoreApplication.translate("PHGX", "The ground surface: what the mesh is built under, and "
+                                   "what the sensors of a surface grid are placed on."))
         self._topo_type.currentTextChanged.connect(self._update_visibility)
-        form.addRow("Topography", self._topo_type)
+        form.addRow(QCoreApplication.translate("PHGX", "Topography"), self._topo_type)
         self._z_flat = self._dspin(-1e5, 1e5, 0.0, 1.0, 2, " m")
         flat = [("Surface elevation", self._z_flat)]
         self._z_base = self._dspin(-1e5, 1e5, 100.0, 1.0, 2, " m")
@@ -622,13 +619,13 @@ class Mesh3DModule(BaseModule):
                 ("Width sigma", self._hill_sigma),
                 ("Centre at", merged_row("x", self._hill_cx, "y", self._hill_cy))]
         self._topo_expr = QLineEdit("0.1*x - 0.05*y + 100")
-        self._topo_expr.setToolTip("z = f(x, y). Allowed: x, y, np, sin, cos, exp, sqrt, abs, pi.")
+        self._topo_expr.setToolTip(QCoreApplication.translate("PHGX", "z = f(x, y). Allowed: x, y, np, sin, cos, exp, sqrt, abs, pi."))
         custom = [("z = f(x, y)", self._topo_expr)]
         # From file (x, y, z): the surface is interpolated from the points.
-        load_btn = QPushButton("Load topography file (x, y, z)…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load topography file (x, y, z)…"))
         load_btn.setIcon(theme.icon("fa5s.file-upload"))
         load_btn.clicked.connect(self._load_topo_file)
-        self._topo_file_label = QLabel("No file loaded. The surface is interpolated from the points.")
+        self._topo_file_label = QLabel(QCoreApplication.translate("PHGX", "No file loaded. The surface is interpolated from the points."))
         self._topo_file_label.setWordWrap(True)
         points = [(None, load_btn), (None, self._topo_file_label)]
         # A surface array read from a file: the ground through its sensors.
@@ -640,7 +637,7 @@ class Mesh3DModule(BaseModule):
         return box
 
     def _load_sensor_file_dialog(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Load sensor positions", "",
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load sensor positions"), "",
                                               _SENSOR_FILTER)
         if path:
             self._load_sensor_file(path)
@@ -651,7 +648,7 @@ class Mesh3DModule(BaseModule):
             self.log("A mesh is being generated; wait for it, or Stop it, first.", "warn")
             return
         path, _ = QFileDialog.getOpenFileName(
-            self, "Build a mesh from sensor positions", "", _SENSOR_FILTER)
+            self, QCoreApplication.translate("PHGX", "Build a mesh from sensor positions"), "", _SENSOR_FILTER)
         if path and self._load_sensor_file(path).get("status") == "ok":
             self._generate_mesh()
 
@@ -667,8 +664,7 @@ class Mesh3DModule(BaseModule):
             positions, how = mesh3d_builder.read_sensor_table(path)
         except Exception as exc:  # noqa: BLE001 - said under the button
             self._sensor_file_label.setText(
-                f"<span style='color:{theme.color('red')}'>{html.escape(name)}: "
-                f"{html.escape(str(exc))}</span>")
+                QCoreApplication.translate("PHGX", "<span style='color:{0}'>{1}: {2}</span>").format(theme.color('red'), html.escape(name), html.escape(str(exc))))
             self.log(f"Could not read the sensor file {name}: {exc}", "error")
             return {"status": "failed", "error": str(exc)}
         self._sensor_points, self._sensor_file = positions, str(path)
@@ -677,9 +673,7 @@ class Mesh3DModule(BaseModule):
         layout = ("some lie below others, so it is meshed around its boreholes"
                   if self._sensors_buried else "all on the surface")
         self._sensor_file_label.setText(
-            f"<b>{html.escape(name)}</b>: {len(positions)} sensors, {layout}. "
-            f"x {x.min():g} to {x.max():g}, y {y.min():g} to {y.max():g}, "
-            f"z {z.min():g} to {z.max():g} m ({html.escape(how)}).")
+            QCoreApplication.translate("PHGX", "<b>{0}</b>: {1} sensors, {2}. x {3:g} to {4:g}, y {5:g} to {6:g}, z {7:g} to {8:g} m ({9}).").format(html.escape(name), len(positions), layout, x.min(), x.max(), y.min(), y.max(), z.min(), z.max(), html.escape(how)))
         self._array_type.setCurrentText(mesh3d_builder.FILE_ARRAY)
         if not self._sensors_buried:
             self._topo_type.setCurrentText(mesh3d_builder.SENSOR_GROUND)
@@ -693,7 +687,7 @@ class Mesh3DModule(BaseModule):
 
     def _load_topo_file(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load topography points (x, y, z)", "",
+            self, QCoreApplication.translate("PHGX", "Load topography points (x, y, z)"), "",
             "Points (*.csv *.txt *.dat *.xyz);;All files (*)")
         if not path:
             return
@@ -701,40 +695,39 @@ class Mesh3DModule(BaseModule):
             table = io_utils.load_xyz_table(path, min_cols=3)
             self._topo_points = table[:, :3]
             self._topo_file_label.setText(
-                f"{Path(path).name}: {len(self._topo_points)} points "
-                f"(z {self._topo_points[:, 2].min():.1f} to {self._topo_points[:, 2].max():.1f} m)")
+                QCoreApplication.translate("PHGX", "{0}: {1} points (z {2:.1f} to {3:.1f} m)").format(Path(path).name, len(self._topo_points), self._topo_points[:, 2].min(), self._topo_points[:, 2].max()))
             self.log(f"Loaded topography: {len(self._topo_points)} points from {Path(path).name}", "success")
         except Exception as exc:  # noqa: BLE001
             self._topo_points = None
-            self._topo_file_label.setText(f"Load failed: {exc}")
+            self._topo_file_label.setText(QCoreApplication.translate("PHGX", "Load failed: {0}").format(exc))
             self.log(f"Could not load topography file: {exc}", "error")
 
     def _build_refinement_group(self) -> QGroupBox:
         """Step 4: how fine the elements are, in the terms of the mesher that runs."""
         defaults = mesh3d_builder.E4D_DEFAULTS
-        box = QGroupBox("4. Mesh refinement")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "4. Mesh refinement"))
         self._refine_group = box
         form = QFormLayout(box)
         self._elec_refine = self._dspin(0.01, 50.0, 0.5, 0.1, 3, " m")
-        self._elec_refine.setToolTip("Gmsh: the element size at the sensors.")
+        self._elec_refine.setToolTip(QCoreApplication.translate("PHGX", "Gmsh: the element size at the sensors."))
         self._attractor = self._dspin(0.1, 200.0, 5.0, 0.5, 2, " m")
-        self._attractor.setToolTip("Gmsh: the distance from the sensors over which the "
-                                   "elements grow from the sensor size to the boundary size.")
+        self._attractor.setToolTip(QCoreApplication.translate("PHGX", "Gmsh: the distance from the sensors over which the "
+                                   "elements grow from the sensor size to the boundary size."))
         self._bound_refine = self._dspin(0.1, 100.0, 2.0, 0.5, 2, " m")
-        self._bound_refine.setToolTip("Gmsh: the element size away from the sensors. The "
+        self._bound_refine.setToolTip(QCoreApplication.translate("PHGX", "Gmsh: the element size away from the sensors. The "
                                       "structured grid under a surface grid: its horizontal "
-                                      "cell size.")
+                                      "cell size."))
         self._dz_fine = self._dspin(0.05, 10.0, 0.5, 0.1, 2, " m")
-        self._dz_fine.setToolTip("The prism mesh: the thickness of its fine layers. The "
-                                 "structured grid under a surface grid: its vertical cell size.")
+        self._dz_fine.setToolTip(QCoreApplication.translate("PHGX", "The prism mesh: the thickness of its fine layers. The "
+                                 "structured grid under a surface grid: its vertical cell size."))
         self._dz_coarse = self._dspin(0.5, 50.0, 2.0, 0.5, 2, " m")
-        self._dz_coarse.setToolTip("The prism mesh: the thickness of its coarse layers.")
+        self._dz_coarse.setToolTip(QCoreApplication.translate("PHGX", "The prism mesh: the thickness of its coarse layers."))
         self._bh_hcell = self._dspin(0.1, 100.0, 2.0, 0.5, 2, " m")
-        self._bh_hcell.setToolTip("The structured grid around boreholes: its horizontal "
-                                  "cell size.")
+        self._bh_hcell.setToolTip(QCoreApplication.translate("PHGX", "The structured grid around boreholes: its horizontal "
+                                  "cell size."))
         self._bh_vcell = self._dspin(0.1, 100.0, 1.0, 0.5, 2, " m")
-        self._bh_vcell.setToolTip("The structured grid around boreholes: its vertical "
-                                  "cell size.")
+        self._bh_vcell.setToolTip(QCoreApplication.translate("PHGX", "The structured grid around boreholes: its vertical "
+                                  "cell size."))
         self._add_rows(form, [
             ("Sensor refinement", self._elec_refine), ("Attractor distance", self._attractor),
             ("Boundary refinement", self._bound_refine), ("Fine layer dz", self._dz_fine),
@@ -744,17 +737,17 @@ class Mesh3DModule(BaseModule):
         # E4D sizes its elements by the largest volume a zone allows and by shape.
         self._e4d_fine_vol = self._dspin(1e-4, 1e6, defaults["e4d_fine_volume"], 0.1, 4, " m³")
         self._e4d_fine_vol.setToolTip(
-            "The largest element allowed in the fine zone - E4D's zone volume. "
-            "Halving it roughly doubles the elements there.")
+            QCoreApplication.translate("PHGX", "The largest element allowed in the fine zone - E4D's zone volume. "
+            "Halving it roughly doubles the elements there."))
         self._e4d_quality = self._dspin(1.05, 3.0, defaults["e4d_quality"], 0.02, 2)
         self._e4d_quality.setToolTip(
-            "Largest radius-edge ratio of any element (TetGen -q). Lower is better "
-            "shaped and costs more elements; the E4D guide recommends 1.3 to 1.5.")
+            QCoreApplication.translate("PHGX", "Largest radius-edge ratio of any element (TetGen -q). Lower is better "
+            "shaped and costs more elements; the E4D guide recommends 1.3 to 1.5."))
         self._e4d_refine = self._dspin(0.0, 10.0, defaults["e4d_refine_offset"], 0.01, 3, " m")
         self._e4d_refine.setToolTip(
-            "Offset of the refinement point placed beside each buried electrode (and "
+            QCoreApplication.translate("PHGX", "Offset of the refinement point placed beside each buried electrode (and "
             "under each borehole top), which forces small elements where the "
-            "potential changes fastest. 0 adds none.")
+            "potential changes fastest. 0 adds none."))
         self._e4d_refine_rows = self._add_rows(form, [
             ("Fine zone element volume", self._e4d_fine_vol),
             ("Quality (radius-edge)", self._e4d_quality),
@@ -780,7 +773,7 @@ class Mesh3DModule(BaseModule):
     def _build_zone_group(self) -> QGroupBox:
         """Step 5: boxes of known or assumed resistivity, and what they do to the mesh."""
         self._zone_editor = ZoneBoxEditor()
-        self._zone_editor.setTitle("5. Zones (optional)")
+        self._zone_editor.setTitle(QCoreApplication.translate("PHGX", "5. Zones (optional)"))
         self._zone_editor.set_region_provider(self._zone_region)
         self._zone_editor.zonesChanged.connect(lambda _zones: self._on_zones_changed())
         self._zone_editor.optionsChanged.connect(self._on_zones_changed)
@@ -795,69 +788,69 @@ class Mesh3DModule(BaseModule):
         What to save comes before the button because the build writes it: there
         is no export afterwards to choose it at.
         """
-        box = QGroupBox("6. Build and save")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "6. Build and save"))
         form = QFormLayout(box)
         self._mesh_name = QLineEdit("my_3d_mesh")
-        self._mesh_name.setToolTip("The name of the saved files, before the extension.")
-        form.addRow("Mesh name", self._mesh_name)
-        self._fmt_bms = QCheckBox("BMS"); self._fmt_bms.setChecked(True)
-        self._fmt_vtk = QCheckBox("VTK"); self._fmt_vtk.setChecked(True)
-        self._fmt_csv = QCheckBox("Sensor CSV"); self._fmt_csv.setChecked(True)
-        form.addRow("Save as", merged_row(self._fmt_bms, self._fmt_vtk, self._fmt_csv))
+        self._mesh_name.setToolTip(QCoreApplication.translate("PHGX", "The name of the saved files, before the extension."))
+        form.addRow(QCoreApplication.translate("PHGX", "Mesh name"), self._mesh_name)
+        self._fmt_bms = QCheckBox(QCoreApplication.translate("PHGX", "BMS")); self._fmt_bms.setChecked(True)
+        self._fmt_vtk = QCheckBox(QCoreApplication.translate("PHGX", "VTK")); self._fmt_vtk.setChecked(True)
+        self._fmt_csv = QCheckBox(QCoreApplication.translate("PHGX", "Sensor CSV")); self._fmt_csv.setChecked(True)
+        form.addRow(QCoreApplication.translate("PHGX", "Save as"), merged_row(self._fmt_bms, self._fmt_vtk, self._fmt_csv))
         self._out_dir = QLineEdit("One outputs/ folder per run")
         self._out_dir.setReadOnly(True)
         self._out_dir.setToolTip(
-            "Mesh files are saved under the active Project's unique run directory."
+            QCoreApplication.translate("PHGX", "Mesh files are saved under the active Project's unique run directory.")
         )
-        open_btn = QPushButton("Open")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open"))
         open_btn.setIcon(theme.icon("fa5s.folder"))
-        open_btn.setToolTip("Open the folder the last build saved to.")
+        open_btn.setToolTip(QCoreApplication.translate("PHGX", "Open the folder the last build saved to."))
         open_btn.clicked.connect(self._open_output_folder)
         folder = QWidget()
         folder_row = QHBoxLayout(folder)
         folder_row.setContentsMargins(0, 0, 0, 0)
         folder_row.addWidget(self._out_dir, 1)
         folder_row.addWidget(open_btn)
-        form.addRow("Folder", folder)
-        form.addRow(self._note(
+        form.addRow(QCoreApplication.translate("PHGX", "Folder"), folder)
+        form.addRow(i18n.tr(self._note(
             "Preview draws the layout without meshing it. Generate builds the mesh in a "
-            "process of its own and saves the files ticked above."))
+            "process of its own and saves the files ticked above.")))
 
         buttons = QWidget()
         button_row = QHBoxLayout(buttons)
         button_row.setContentsMargins(0, 0, 0, 0)
-        self._preview_btn = QPushButton("Preview sensors")
+        self._preview_btn = QPushButton(QCoreApplication.translate("PHGX", "Preview sensors"))
         self._preview_btn.setIcon(theme.icon("fa5s.eye"))
         self._preview_btn.setToolTip(
-            "Draw the sensors, the ground and the zones - with the E4D engine its whole "
-            "layout - before anything is meshed.")
+            QCoreApplication.translate("PHGX", "Draw the sensors, the ground and the zones - with the E4D engine its whole "
+            "layout - before anything is meshed."))
         self._preview_btn.clicked.connect(self._preview_sensors)
         button_row.addWidget(self._preview_btn)
-        self._gen_btn = QPushButton("Generate mesh")
+        self._gen_btn = QPushButton(QCoreApplication.translate("PHGX", "Generate mesh"))
         self._gen_btn.setProperty("primary", True)
         self._gen_btn.setIcon(theme.icon("fa5s.cubes", color="#ffffff"))
         self._gen_btn.clicked.connect(self._generate_mesh)
         button_row.addWidget(self._gen_btn)
-        form.addRow(buttons)
-        self._use_ert_btn = QPushButton("Use for ERT inversion")
+        form.addRow(i18n.tr(buttons))
+        self._use_ert_btn = QPushButton(QCoreApplication.translate("PHGX", "Use for ERT inversion"))
         self._use_ert_btn.setIcon(theme.icon("fa5s.share-square"))
         self._use_ert_btn.setToolTip(
-            "Open the ERT page with this mesh as the mesh its inversion runs on. The page "
+            QCoreApplication.translate("PHGX", "Open the ERT page with this mesh as the mesh its inversion runs on. The page "
             "checks that the mesh holds the loaded survey's electrodes, and shows it on "
-            "its Mesh tab.")
+            "its Mesh tab."))
         self._use_ert_btn.setEnabled(False)
         self._use_ert_btn.clicked.connect(self._use_for_ert)
-        form.addRow(self._use_ert_btn)
+        form.addRow(i18n.tr(self._use_ert_btn))
 
         self._progress = QProgressBar()
         self._progress.setVisible(False)
         # One Stop for the bar's run: the mesh build, or the 3D ERT forward
         # model the assistant asks for, which shares the bar.
         self._stop = self.stop_button("The mesh generation")
-        form.addRow(progress_with_stop(self._progress, self._stop))
-        self._info = QLabel("Work down the steps, preview the layout, then generate the mesh.")
+        form.addRow(i18n.tr(progress_with_stop(self._progress, self._stop)))
+        self._info = QLabel(QCoreApplication.translate("PHGX", "Work down the steps, preview the layout, then generate the mesh."))
         self._info.setWordWrap(True)
-        form.addRow(self._info)
+        form.addRow(i18n.tr(self._info))
         return box
 
     # -- visibility / config -------------------------------------------------
@@ -915,14 +908,13 @@ class Mesh3DModule(BaseModule):
             group.setEnabled(not loaded)
         set_rows_enabled([self._e4d_sigma], not loaded)   # the file has its own
         self._array_note.setText(
-            f"Not used: {Path(self._e4d_config_path).name} sets the electrodes. Clear it "
-            "in step 2 (✕) to build from this array." if loaded else "")
+            QCoreApplication.translate("PHGX", "Not used: {0} sets the electrodes. Clear it in step 2 (✕) to build from this array.").format(Path(self._e4d_config_path).name) if loaded else "")
         self._array_note.setVisible(loaded)
-        self._engine_note.setText(self._engine_note_text(kind))
+        self._engine_note.setText(i18n.tr(self._engine_note_text(kind)))
         domain = self._domain_note_text(kind)
-        self._domain_note.setText(domain)
+        self._domain_note.setText(i18n.tr(domain))
         self._domain_note.setVisible(bool(domain))
-        self._preview_btn.setText("Preview E4D layout" if e4d else "Preview sensors")
+        self._preview_btn.setText(QCoreApplication.translate("PHGX", "Preview E4D layout") if e4d else QCoreApplication.translate("PHGX", "Preview sensors"))
         self._update_zone_note()
 
     def _surface_layout(self) -> bool:
@@ -1028,9 +1020,9 @@ class Mesh3DModule(BaseModule):
         return Path(base) / "mesh3d"
 
     def _browse_output_dir(self) -> None:
-        path = select_directory(self, "Output directory", self._out_dir.text())
+        path = select_directory(self, QCoreApplication.translate("PHGX", "Output directory"), self._out_dir.text())
         if path:
-            self._out_dir.setText(str(path))
+            self._out_dir.setText(i18n.tr(str(path)))
 
     def _collect_config(self) -> dict:
         cfg = {
@@ -1292,14 +1284,13 @@ class Mesh3DModule(BaseModule):
             _, sensors = mesh3d_builder.build_electrodes(cfg)
         except Exception as exc:  # noqa: BLE001
             self.log(f"Sensor preview failed: {exc}", "error")
-            self._info.setText(f"Preview failed: {exc}")
+            self._info.setText(QCoreApplication.translate("PHGX", "Preview failed: {0}").format(exc))
             return
         self._sensors = sensors
         self._render_sensors(sensors, cfg)
         x, y, z = sensors["x"], sensors["y"], sensors["z"]
         self._info.setText(
-            f"{len(sensors)} sensors  ·  x [{x.min():.1f}, {x.max():.1f}]  "
-            f"y [{y.min():.1f}, {y.max():.1f}]  z [{z.min():.2f}, {z.max():.2f}] m"
+            QCoreApplication.translate("PHGX", "{0} sensors  ·  x [{1:.1f}, {2:.1f}]  y [{3:.1f}, {4:.1f}]  z [{5:.2f}, {6:.2f}] m").format(len(sensors), x.min(), x.max(), y.min(), y.max(), z.min(), z.max())
         )
         self.log(f"Previewed {len(sensors)} sensors.", "info")
 
@@ -1368,7 +1359,7 @@ class Mesh3DModule(BaseModule):
             self.log(f"E4D layout render failed: {exc}", "warn")
 
     def _load_e4d_config_dialog(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Load E4D mesh configuration", "",
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load E4D mesh configuration"), "",
                                               _E4D_CONFIG_FILTER)
         if path:
             self._load_e4d_config(path)
@@ -1406,11 +1397,11 @@ class Mesh3DModule(BaseModule):
     def _clear_e4d_config(self) -> None:
         self._e4d_config_path = ""
         self._e4d_clear.setEnabled(False)
-        self._e4d_cfg_label.setText(_E4D_FROM_STEPS)
+        self._e4d_cfg_label.setText(i18n.tr(_E4D_FROM_STEPS))
         self._update_visibility()
 
     def _open_e4d_mesh_dialog(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open E4D mesh", "", _E4D_MESH_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Open E4D mesh"), "", _E4D_MESH_FILTER)
         if path:
             self._open_e4d_mesh(path)
 
@@ -1419,7 +1410,7 @@ class Mesh3DModule(BaseModule):
         and show it by zone."""
         from PyHydroGeophysX.core import e4d_mesh
 
-        self._info.setText(f"Reading {Path(path).name}…")
+        self._info.setText(QCoreApplication.translate("PHGX", "Reading {0}…").format(Path(path).name))
         worker = TaskWorker(e4d_mesh.read_e4d_mesh, path)
         worker.succeeded.connect(lambda mesh, p=path: self._on_e4d_mesh_read(p, mesh))
         worker.failed.connect(lambda message, p=path: self.log(
@@ -1450,8 +1441,7 @@ class Mesh3DModule(BaseModule):
         markers = np.asarray(mesh.cellMarkers(), dtype=int)
         zones = ", ".join(f"zone {int(z)}: {int((markers == z).sum())}" for z in np.unique(markers))
         extra = " · resistivity from the .sig" if mesh.haveData("resistivity") else ""
-        self._info.setText(f"<b>{Path(path).name}</b>: {mesh.cellCount()} cells, "
-                           f"{mesh.nodeCount()} nodes ({zones}){extra}")
+        self._info.setText(QCoreApplication.translate("PHGX", "<b>{0}</b>: {1} cells, {2} nodes ({3}){4}").format(Path(path).name, mesh.cellCount(), mesh.nodeCount(), zones, extra))
         self.log(f"Opened the E4D mesh {Path(path).name}: {mesh.cellCount()} cells, "
                  f"{zones}.", "success")
 
@@ -1461,7 +1451,7 @@ class Mesh3DModule(BaseModule):
         if (cfg["array_type"] == mesh3d_builder.FILE_ARRAY and self._sensor_points is None
                 and not cfg.get("e4d_config_path")):
             self.log("Load a sensor file in step 1 before generating the mesh.", "warn")
-            self._info.setText("Load a sensor file in step 1 first.")
+            self._info.setText(QCoreApplication.translate("PHGX", "Load a sensor file in step 1 first."))
             return
         try:
             run = self.begin_persisted_run("mesh3d.build", "mesh3d.build")
@@ -1516,7 +1506,7 @@ class Mesh3DModule(BaseModule):
         self._mesh_recipe_path = str(recipe_path)
         self._gen_busy = BusyStateController([self._gen_btn])
         self._gen_busy.start()
-        self._gen_btn.setText("Generating…")
+        self._gen_btn.setText(QCoreApplication.translate("PHGX", "Generating…"))
         self._progress.setVisible(True)
         self._progress.setRange(0, 0)
         self.log("Generating 3D mesh…", "info")
@@ -1611,8 +1601,7 @@ class Mesh3DModule(BaseModule):
             self.log("The zones were not used: the loaded E4D configuration defines its own.",
                      "warn")
         self._info.setText(
-            f"<b>{res.get('generator')}</b><br>cells: {cells}  ·  nodes: {nodes}  ·  "
-            f"{points}: {len(sensors)}{zones}{zone_line}"
+            QCoreApplication.translate("PHGX", "<b>{0}</b><br>cells: {1}  ·  nodes: {2}  ·  {3}: {4}{5}{6}").format(res.get('generator'), cells, nodes, points, len(sensors), zones, zone_line)
         )
         self.log(f"Mesh generated: {cells} cells, {nodes} nodes ({res.get('generator')}).", "success")
         for key, path in outputs.items():
@@ -1635,17 +1624,17 @@ class Mesh3DModule(BaseModule):
     def _on_mesh_failed(self, message: str) -> None:
         self.fail_persisted_run(message, "mesh3d.build")
         self.log(f"Mesh generation failed: {message}", "error")
-        self._info.setText(f"Generation failed: {message}")
+        self._info.setText(QCoreApplication.translate("PHGX", "Generation failed: {0}").format(message))
 
     def _reset_gen_button(self) -> None:
         if self._gen_busy is not None:
             self._gen_busy.finish()
             self._gen_busy = None
-        self._gen_btn.setText("Generate mesh")
+        self._gen_btn.setText(QCoreApplication.translate("PHGX", "Generate mesh"))
         self._progress.setVisible(False)
         if self._gen_worker is not None and self._gen_worker.is_cancelled():
-            self._info.setText("Stopped before the mesh was finished. Generate it again "
-                               "to start over.")
+            self._info.setText(QCoreApplication.translate("PHGX", "Stopped before the mesh was finished. Generate it again "
+                               "to start over."))
 
     # -- hidden 3D ERT forward action (AQUAH only) -------------------------
     def _set_ert_forward_param(self, key: str, value: Any) -> None:
@@ -1765,12 +1754,12 @@ class Mesh3DModule(BaseModule):
     def _on_ert_forward_failed(self, message: str) -> None:
         self.fail_persisted_run(message, "ert3d.forward")
         self.log(f"3D ERT forward failed: {message}", "error")
-        self._info.setText(f"3D ERT forward failed: {message}")
+        self._info.setText(QCoreApplication.translate("PHGX", "3D ERT forward failed: {0}").format(message))
 
     def _reset_ert_forward_progress(self) -> None:
         self._progress.setVisible(False)
         if self._ert_fwd_worker is not None and self._ert_fwd_worker.is_cancelled():
-            self._info.setText("The 3D ERT forward model was stopped before it finished.")
+            self._info.setText(QCoreApplication.translate("PHGX", "The 3D ERT forward model was stopped before it finished."))
 
     def _safe_name(self) -> str:
         import re
@@ -1887,7 +1876,7 @@ class Mesh3DModule(BaseModule):
         if self._plotter is None:
             self.log("3D viewer unavailable.", "warn")
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Load mesh", "", _MESH_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load mesh"), "", _MESH_FILTER)
         if not path:
             return
         try:
@@ -1917,7 +1906,7 @@ class Mesh3DModule(BaseModule):
         if self._plotter is None or self._pv is None:
             self.log(f"3D viewer unavailable; '{p.name}' was produced but cannot be "
                      f"shown here ({_INSTALL_MESSAGE}).", "warn")
-            self._info.setText(f"3D viewer unavailable. File ready at:<br><code>{p}</code>")
+            self._info.setText(QCoreApplication.translate("PHGX", "3D viewer unavailable. File ready at:<br><code>{0}</code>").format(p))
             return
         try:
             mesh = self._pv.read(str(p))
@@ -2203,7 +2192,7 @@ class Mesh3DModule(BaseModule):
             "hill_sigma": lambda v: self._hill_sigma.setValue(float(v)),
             "hill_cx": lambda v: self._hill_cx.setValue(float(v)),
             "hill_cy": lambda v: self._hill_cy.setValue(float(v)),
-            "topo_expr": lambda v: self._topo_expr.setText(str(v)),
+            "topo_expr": lambda v: self._topo_expr.setText(i18n.tr(str(v))),
             "elec_refine": lambda v: self._elec_refine.setValue(float(v)),
             "attractor": lambda v: self._attractor.setValue(float(v)),
             "bound_refine": lambda v: self._bound_refine.setValue(float(v)),
@@ -2218,7 +2207,7 @@ class Mesh3DModule(BaseModule):
             "bh_z_start": lambda v: self._bh_z_start.setValue(float(v)),
             "bh_z_end": lambda v: self._bh_z_end.setValue(float(v)),
             "bh_n": lambda v: self._bh_n.setValue(int(v)),
-            "mesh_name": lambda v: self._mesh_name.setText(str(v)),
+            "mesh_name": lambda v: self._mesh_name.setText(i18n.tr(str(v))),
             "fmt_bms": lambda v: self._fmt_bms.setChecked(bool(v)),
             "fmt_vtk": lambda v: self._fmt_vtk.setChecked(bool(v)),
             "fmt_csv": lambda v: self._fmt_csv.setChecked(bool(v)),
@@ -2232,7 +2221,7 @@ class Mesh3DModule(BaseModule):
             "e4d_conductivity": lambda v: self._e4d_sigma.setValue(float(v)),
             "e4d_mesher": lambda v: self._e4d_mesher.setCurrentIndex(
                 ["auto", "tetgen", "gmsh"].index(str(v).strip().lower())),
-            "e4d_tetgen": lambda v: self._e4d_tetgen.setText(str(v)),
+            "e4d_tetgen": lambda v: self._e4d_tetgen.setText(i18n.tr(str(v))),
             "zones": lambda v: (self._zone_editor.set_zones(v), self._on_zones_changed()),
             "conform_to_zones": lambda v: self._zone_editor.set_conform_to_zones(bool(v)),
             "decouple_zones": lambda v: self._zone_editor.set_decouple_zones(bool(v)),

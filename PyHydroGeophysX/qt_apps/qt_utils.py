@@ -6,7 +6,7 @@ import datetime as _dt
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Sequence
 
-from PySide6.QtCore import QEvent, QObject, Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QWidget,
 )
+from PyHydroGeophysX.qt_apps import i18n
 
 #: Qt's QWIDGETSIZE_MAX, the "no maximum" of setMaximumWidth.
 _NO_MAXIMUM = 16777215
@@ -47,7 +48,7 @@ def select_directory(
     title: str,
     initial: str | Path,
 ) -> Optional[Path]:
-    selected = QFileDialog.getExistingDirectory(parent, title, str(initial))
+    selected = QFileDialog.getExistingDirectory(parent, i18n.tr(title), str(initial))
     return Path(selected) if selected else None
 
 
@@ -66,7 +67,7 @@ def make_double_spinbox(
     widget.setDecimals(int(decimals))
     widget.setValue(float(value))
     if suffix:
-        widget.setSuffix(suffix)
+        widget.setSuffix(i18n.tr(suffix))
     return widget
 
 
@@ -94,9 +95,9 @@ def make_spinbox(value: int, minimum: int, maximum: int, *,
     widget.setRange(int(minimum), int(maximum))
     widget.setValue(int(value))
     if suffix:
-        widget.setSuffix(suffix)
+        widget.setSuffix(i18n.tr(suffix))
     if tooltip:
-        widget.setToolTip(tooltip)
+        widget.setToolTip(i18n.tr(tooltip))
     return widget
 
 
@@ -111,7 +112,7 @@ def merged_row(*parts: QWidget | str) -> QWidget:
     row = QHBoxLayout()
     row.setContentsMargins(0, 0, 0, 0)
     for part in parts:
-        row.addWidget(QLabel(part) if isinstance(part, str) else part)
+        row.addWidget(QLabel(i18n.tr(part)) if isinstance(part, str) else part)
     row.addStretch(1)  # pack left; stretched spin boxes leave odd gaps
     holder = QWidget()
     holder.setLayout(row)
@@ -216,16 +217,16 @@ class ReproduceBar(QWidget):
         layout.setContentsMargins(6, 2, 6, 2)
         self._label = QLabel()
         self._label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self._script_button = QPushButton("Open .py")
-        self._notebook_button = QPushButton("Open .ipynb")
-        self._folder_button = QPushButton("Open folder")
+        self._script_button = QPushButton(QCoreApplication.translate("PHGX", "Open .py"))
+        self._notebook_button = QPushButton(QCoreApplication.translate("PHGX", "Open .ipynb"))
+        self._folder_button = QPushButton(QCoreApplication.translate("PHGX", "Open folder"))
         self._script_button.setToolTip(
-            "Step-by-step Python for this run: named parameters, the domain "
-            "calls, and a figure."
+            QCoreApplication.translate("PHGX", "Step-by-step Python for this run: named parameters, the domain "
+            "calls, and a figure.")
         )
-        self._notebook_button.setToolTip("The same walkthrough as a Jupyter notebook.")
+        self._notebook_button.setToolTip(QCoreApplication.translate("PHGX", "The same walkthrough as a Jupyter notebook."))
         self._folder_button.setToolTip(
-            "Reveal the recipe and the exact-rerun script alongside the walkthrough."
+            QCoreApplication.translate("PHGX", "Reveal the recipe and the exact-rerun script alongside the walkthrough.")
         )
         self._script_button.clicked.connect(self.open_script)
         self._notebook_button.clicked.connect(self.open_notebook)
@@ -235,10 +236,10 @@ class ReproduceBar(QWidget):
         # while the run goes on, and the outcome is added when it ends.
         from PySide6.QtWidgets import QMenu
 
-        self._records_button = QPushButton("Run records")
+        self._records_button = QPushButton(QCoreApplication.translate("PHGX", "Run records"))
         self._records_button.setToolTip(
-            "Open this run's settings file, data QC report or log.")
-        self._records_menu = QMenu(self._records_button)
+            QCoreApplication.translate("PHGX", "Open this run's settings file, data QC report or log."))
+        self._records_menu = QMenu(i18n.tr(self._records_button))
         self._records_menu.aboutToShow.connect(self._fill_records_menu)
         self._records_button.setMenu(self._records_menu)
         self._records_button.setVisible(False)
@@ -268,10 +269,10 @@ class ReproduceBar(QWidget):
             action = self._records_menu.addAction(f"{document['label']}  ({document['path']})")
             action.triggered.connect(lambda _checked=False, p=path: self._open(p))
         if folder is not None and (folder / QC_FOLDER).is_dir():
-            action = self._records_menu.addAction(f"Each survey's QC log  ({QC_FOLDER}/)")
+            action = self._records_menu.addAction(QCoreApplication.translate("PHGX", "Each survey's QC log  ({0}/)").format(QC_FOLDER))
             action.triggered.connect(lambda _checked=False, p=folder / QC_FOLDER: self._open(p))
         if self._records_menu.isEmpty():
-            self._records_menu.addAction("Nothing written yet").setEnabled(False)
+            self._records_menu.addAction(QCoreApplication.translate("PHGX", "Nothing written yet")).setEnabled(False)
 
     def set_bundle(self, recipe_path, script_path) -> None:
         """Show the bundle from the run that just finished."""
@@ -290,7 +291,7 @@ class ReproduceBar(QWidget):
         self._notebook_button.setEnabled(self._notebook is not None)
 
         name = (self._walkthrough or target).name
-        self._label.setText(f"Reproduce this run outside the GUI: <b>{name}</b>")
+        self._label.setText(QCoreApplication.translate("PHGX", "Reproduce this run outside the GUI: <b>{0}</b>").format(name))
         lines = []
         if self._walkthrough is not None:
             lines.append(f"Walkthrough: {self._walkthrough}")
@@ -301,7 +302,7 @@ class ReproduceBar(QWidget):
             lines.append(f"Exact rerun: {self._script}")
         if self._recipe is not None:
             lines.append(f"Recipe: {self._recipe}")
-        self.setToolTip("\n".join(lines))
+        self.setToolTip(i18n.tr("\n".join(lines)))
         self._records_button.setVisible(self._run_folder() is not None)
         self.setVisible(True)
 

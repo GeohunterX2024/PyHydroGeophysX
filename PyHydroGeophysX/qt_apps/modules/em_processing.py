@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -45,7 +45,7 @@ from PyHydroGeophysX.data_processing import em1d as em_data
 from PyHydroGeophysX.forward import em1d as em_forward
 from PyHydroGeophysX.inversion import em1d as em_inversion
 from PyHydroGeophysX.inversion import em1d_line as em_line
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -237,15 +237,15 @@ class EMProcessingModule(BaseModule):
         mlay = QVBoxLayout(self._model_tab); mlay.setContentsMargins(0, 0, 0, 0)
         self._view_row = QWidget()
         vr = QHBoxLayout(self._view_row); vr.setContentsMargins(6, 2, 6, 2)
-        vr.addWidget(QLabel("View:"))
+        vr.addWidget(QLabel(QCoreApplication.translate("PHGX", "View:")))
         self._view_mode = QComboBox()
         self._view_mode.addItems(
             ["Section", "Volume view"])
         self._view_mode.setToolTip(
-            "View the recovered section or volume, and - for a survey of several "
+            QCoreApplication.translate("PHGX", "View the recovered section or volume, and - for a survey of several "
             "lines - resistivity kriged in plan view at several depths with its "
             "kriging uncertainty. Use Add to Map for interactive depth slices in "
-            "Project Map.")
+            "Project Map."))
         self._view_mode.currentIndexChanged.connect(self._on_view_mode)
         vr.addWidget(self._view_mode); vr.addStretch(1)
         self._view_row.setVisible(False)
@@ -274,11 +274,11 @@ class EMProcessingModule(BaseModule):
         # Nothing is loaded yet, and the gate view has nothing to draw until a
         # project is; the curve viewer at least shows its axes.
         self._sounding_stack.setCurrentIndex(1)
-        self._tabs.addTab(self._sounding_stack, "Sounding")
-        self._tabs.addTab(self._survey_view, "Survey and QC")
-        self._tabs.addTab(self._signal_view, "Signal and noise")
-        self._tabs.addTab(self._model_tab, "Resistivity model")
-        self._tabs.addTab(self._quality_view, "Inversion quality")
+        self._tabs.addTab(self._sounding_stack, QCoreApplication.translate("PHGX", "Sounding"))
+        self._tabs.addTab(self._survey_view, QCoreApplication.translate("PHGX", "Survey and QC"))
+        self._tabs.addTab(self._signal_view, QCoreApplication.translate("PHGX", "Signal and noise"))
+        self._tabs.addTab(self._model_tab, QCoreApplication.translate("PHGX", "Resistivity model"))
+        self._tabs.addTab(self._quality_view, QCoreApplication.translate("PHGX", "Inversion quality"))
         self._reproduce = ReproduceBar()
         center = QWidget()
         center_layout = QVBoxLayout(center)
@@ -424,23 +424,23 @@ class EMProcessingModule(BaseModule):
         return scroll
 
     def _build_loader_group(self) -> QGroupBox:
-        box = QGroupBox("Load sounding data"); v = QVBoxLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Load sounding data")); v = QVBoxLayout(box)
         self._method = QComboBox(); self._method.addItems(list(em_line.METHODS))
         self._method.currentTextChanged.connect(self._on_method_changed)
         self._data_format = QComboBox()
         self._data_format.addItems(["Generic table", _TEM2GO_FORMAT, _TTEM_FORMAT])
         self._data_format.currentTextChanged.connect(self._on_data_format_changed)
         mrow = QFormLayout()
-        mrow.addRow("Method", self._method)
-        mrow.addRow("Data format", self._data_format)
+        mrow.addRow(QCoreApplication.translate("PHGX", "Method"), self._method)
+        mrow.addRow(QCoreApplication.translate("PHGX", "Data format"), self._data_format)
         v.addLayout(mrow)
 
         row = QHBoxLayout()
-        load_btn = QPushButton("Load data…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load data…"))
         load_btn.setProperty("primary", True)
         load_btn.setIcon(theme.icon("fa5s.folder-open", color="#ffffff"))
         load_btn.clicked.connect(self._load)
-        fmt_btn = QPushButton("Format help")
+        fmt_btn = QPushButton(QCoreApplication.translate("PHGX", "Format help"))
         fmt_btn.setIcon(theme.icon("fa5s.file-alt"))
         fmt_btn.clicked.connect(self._show_format_help)
         row.addWidget(load_btn); row.addWidget(fmt_btn)
@@ -452,39 +452,39 @@ class EMProcessingModule(BaseModule):
         self._tem_moment = QComboBox()
         self._tem_moment.addItems(list(em_data.TEMCOMPANY_MOMENTS))
         self._tem_moment.setToolTip(
-            "LM+HM fits all available gates to one shared model. HM uses later-time "
-            "gates and LM uses early-time gates. In-use flags are applied automatically.")
+            QCoreApplication.translate("PHGX", "LM+HM fits all available gates to one shared model. HM uses later-time "
+            "gates and LM uses early-time gates. In-use flags are applied automatically."))
         self._tem_moment.currentTextChanged.connect(self._on_tem_moment_changed)
-        moment_form.addRow("Moment(s)", self._tem_moment)
-        self._use_flags = QCheckBox("Use the project's in-use flags")
+        moment_form.addRow(QCoreApplication.translate("PHGX", "Moment(s)"), self._tem_moment)
+        self._use_flags = QCheckBox(QCoreApplication.translate("PHGX", "Use the project's in-use flags"))
         self._use_flags.setChecked(True)
         self._use_flags.setToolTip(
-            "On: only the gates the project file marks as in use are imported.\n\n"
+            QCoreApplication.translate("PHGX", "On: only the gates the project file marks as in use are imported.\n\n"
             "Off: every gate holding a finite, non-dummy value is imported, "
             "including those the project marks unused. On a noisy survey that can "
             "be several times as many gates. Each one keeps its recorded stack "
-            "error, so its weight in the fit is unchanged.")
+            "error, so its weight in the fit is unchanged."))
         self._use_flags.toggled.connect(self._on_use_flags_changed)
         moment_form.addRow("", self._use_flags)
         # Keep noisy, project-enabled gates; their errors control their influence.
         # Users can still explicitly opt into an import-time hard cut.
         self._tail_cut = self._dspin(0.0, 0.0, 5.0, 0.05, 2)
-        self._tail_cut.setSpecialValueText("off")
+        self._tail_cut.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._tail_cut.setToolTip(
-            "Condemns a gate whose relative stack error exceeds this value, and "
+            QCoreApplication.translate("PHGX", "Condemns a gate whose relative stack error exceeds this value, and "
             "(unless sign reversals are kept below) one whose value is negative.\n\n"
             "The stack error is the scatter of the repeat transients divided by "
             "their mean, so a gate near or above 0.3 disagrees with itself by as "
             "much as the quantity being measured.\n\n"
-            "0 turns the cut off entirely.")
+            "0 turns the cut off entirely."))
         self._tail_cut.valueChanged.connect(self._on_use_flags_changed)
-        moment_form.addRow("Tail cut (σ)", self._tail_cut)
+        moment_form.addRow(QCoreApplication.translate("PHGX", "Tail cut (σ)"), self._tail_cut)
         self._gate_rejection = QComboBox()
         for label, key in (("Truncate the tail", "truncate"),
                            ("Reject gates individually", "individual")):
-            self._gate_rejection.addItem(label, key)
+            self._gate_rejection.addItem(i18n.tr(label), key)
         self._gate_rejection.setToolTip(
-            "What a failed stack-error test above removes. It governs that test "
+            QCoreApplication.translate("PHGX", "What a failed stack-error test above removes. It governs that test "
             "only: a sign reversal always costs its own gate and no other.\n\n"
             "Truncate the tail: the first failing gate ends the sounding and every "
             "later gate goes with it. Safe, because past the first bad gate the "
@@ -493,13 +493,13 @@ class EMProcessingModule(BaseModule):
             "later ones are kept. Diffusion depth grows with time, so the latest "
             "usable gate sets how deep the sounding can see; this keeps it when a "
             "neighbour is spoiled by a local interference spike, at the risk of "
-            "keeping a gate that looks clean by chance.")
+            "keeping a gate that looks clean by chance."))
         self._gate_rejection.currentIndexChanged.connect(self._on_use_flags_changed)
-        moment_form.addRow("Cut removes", self._gate_rejection)
-        self._keep_negative = QCheckBox("Keep sign reversals")
+        moment_form.addRow(QCoreApplication.translate("PHGX", "Cut removes"), self._gate_rejection)
+        self._keep_negative = QCheckBox(QCoreApplication.translate("PHGX", "Keep sign reversals"))
         self._keep_negative.setChecked(True)
         self._keep_negative.setToolTip(
-            "On (the default): a negative gate is judged on its stack error "
+            QCoreApplication.translate("PHGX", "On (the default): a negative gate is judged on its stack error "
             "alone. This is what the TEMcompany inversion does: its gate "
             "selection is exactly the stored in-use flags, and it keeps "
             "non-positive gates.\n\n"
@@ -515,15 +515,15 @@ class EMProcessingModule(BaseModule):
             "it says the crossing falls far earlier than the first gate, a "
             "negative gate is something a layered earth cannot produce, and "
             "keeping it lets the fit trade the rest of the sounding against a "
-            "value it can never reach.")
+            "value it can never reach."))
         self._keep_negative.toggled.connect(self._on_use_flags_changed)
         moment_form.addRow("", self._keep_negative)
         self._min_hm_gates = QSpinBox()
         self._min_hm_gates.setRange(0, 20)
         self._min_hm_gates.setValue(0)
-        self._min_hm_gates.setSpecialValueText("off")
+        self._min_hm_gates.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._min_hm_gates.setToolTip(
-            "Drops the deep (HM) moment from a station that survives gate "
+            QCoreApplication.translate("PHGX", "Drops the deep (HM) moment from a station that survives gate "
             "selection with fewer than this many gates. LM is never dropped.\n\n"
             "A moment reduced to one or two gates still costs a forward call and "
             "still enters the misfit, and two points cannot separate the level of "
@@ -533,9 +533,9 @@ class EMProcessingModule(BaseModule):
             "station stripped of its HM keeps its shallow model and loses its "
             "depth. Which argument wins depends on the survey, so this is off by "
             "default. A station that has no LM gates either is left with no data "
-            "at all.")
+            "at all."))
         self._min_hm_gates.valueChanged.connect(self._on_use_flags_changed)
-        moment_form.addRow("Min HM gates", self._min_hm_gates)
+        moment_form.addRow(QCoreApplication.translate("PHGX", "Min HM gates"), self._min_hm_gates)
         self._tem_moment_row.setVisible(False)
         v.addWidget(self._tem_moment_row)
 
@@ -543,21 +543,21 @@ class EMProcessingModule(BaseModule):
         calibration_form = QFormLayout(self._ttem_calibration_row)
         calibration_form.setContentsMargins(0, 0, 0, 0)
         self._gex_path_edit = QLineEdit(); self._gex_path_edit.setReadOnly(True)
-        self._gex_path_edit.setPlaceholderText("Auto-detect or select .gex")
-        gex_button = QPushButton("Browse…")
+        self._gex_path_edit.setPlaceholderText(QCoreApplication.translate("PHGX", "Auto-detect or select .gex"))
+        gex_button = QPushButton(QCoreApplication.translate("PHGX", "Browse…"))
         gex_button.clicked.connect(self._select_ttem_gex)
         gex_row = QWidget(); gex_layout = QHBoxLayout(gex_row)
         gex_layout.setContentsMargins(0, 0, 0, 0)
         gex_layout.addWidget(self._gex_path_edit, stretch=1); gex_layout.addWidget(gex_button)
-        calibration_form.addRow("System GEX", gex_row)
+        calibration_form.addRow(QCoreApplication.translate("PHGX", "System GEX"), gex_row)
         self._tfi_path_edit = QLineEdit(); self._tfi_path_edit.setReadOnly(True)
-        self._tfi_path_edit.setPlaceholderText("Auto-detect or select .tfi")
-        tfi_button = QPushButton("Browse…")
+        self._tfi_path_edit.setPlaceholderText(QCoreApplication.translate("PHGX", "Auto-detect or select .tfi"))
+        tfi_button = QPushButton(QCoreApplication.translate("PHGX", "Browse…"))
         tfi_button.clicked.connect(self._select_ttem_tfi)
         tfi_row = QWidget(); tfi_layout = QHBoxLayout(tfi_row)
         tfi_layout.setContentsMargins(0, 0, 0, 0)
         tfi_layout.addWidget(self._tfi_path_edit, stretch=1); tfi_layout.addWidget(tfi_button)
-        calibration_form.addRow("Import filter TFI", tfi_row)
+        calibration_form.addRow(QCoreApplication.translate("PHGX", "Import filter TFI"), tfi_row)
         self._ttem_calibration_row.setVisible(False)
         v.addWidget(self._ttem_calibration_row)
 
@@ -566,23 +566,23 @@ class EMProcessingModule(BaseModule):
         self._geom_row = QWidget()
         gv = QVBoxLayout(self._geom_row); gv.setContentsMargins(0, 0, 0, 0)
         grow = QHBoxLayout()
-        self._geom_btn = QPushButton("Load geometry…")
+        self._geom_btn = QPushButton(QCoreApplication.translate("PHGX", "Load geometry…"))
         self._geom_btn.setIcon(theme.icon("fa5s.map-marker-alt"))
-        self._geom_btn.setToolTip("Load a file of along-line positions (and optional sensor "
+        self._geom_btn.setToolTip(QCoreApplication.translate("PHGX", "Load a file of along-line positions (and optional sensor "
                                   "height), one row per sounding, so the section uses real "
-                                  "distances instead of uniform spacing. See Data format.")
+                                  "distances instead of uniform spacing. See Data format."))
         self._geom_btn.clicked.connect(self._load_geometry)
         grow.addWidget(self._geom_btn); grow.addStretch(1)
         gv.addLayout(grow)
-        self._geom_info = QLabel("Geometry: uniform spacing.")
+        self._geom_info = QLabel(QCoreApplication.translate("PHGX", "Geometry: uniform spacing."))
         theme.set_tone(self._geom_info, "hint"); self._geom_info.setWordWrap(True)
         gv.addWidget(self._geom_info)
         self._geom_row.setVisible(False)
         v.addWidget(self._geom_row)
 
-        hint = QLabel("Choose a data format, then load a file or project folder. "
+        hint = QLabel(QCoreApplication.translate("PHGX", "Choose a data format, then load a file or project folder. "
                       "FDEM: columns freq, real, imag. TDEM: columns time, response. "
-                      "Several soundings are inverted into a resistivity section/map.")
+                      "Several soundings are inverted into a resistivity section/map."))
         hint.setWordWrap(True); theme.set_tone(hint, "hint")
         v.addWidget(hint)
 
@@ -591,14 +591,14 @@ class EMProcessingModule(BaseModule):
         srow = QFormLayout(self._sounding_row); srow.setContentsMargins(0, 0, 0, 0)
         self._sounding = QSpinBox(); self._sounding.setRange(1, 1); self._sounding.setValue(1)
         self._sounding.setToolTip(
-            "Selects which of the file's soundings the preview shows. A line "
-            "inversion uses the whole survey regardless of this setting.")
+            QCoreApplication.translate("PHGX", "Selects which of the file's soundings the preview shows. A line "
+            "inversion uses the whole survey regardless of this setting."))
         self._sounding.valueChanged.connect(self._on_sounding_changed)
-        srow.addRow("Preview sounding #", self._sounding)
+        srow.addRow(QCoreApplication.translate("PHGX", "Preview sounding #"), self._sounding)
         self._sounding_row.setVisible(False)
         v.addWidget(self._sounding_row)
 
-        self._info = QLabel("No sounding loaded.")
+        self._info = QLabel(QCoreApplication.translate("PHGX", "No sounding loaded."))
         self._info.setWordWrap(True)
         v.addWidget(self._info)
         self._example_note = QLabel("")
@@ -609,24 +609,24 @@ class EMProcessingModule(BaseModule):
         return box
 
     def _build_geometry_group(self) -> QGroupBox:
-        box = QGroupBox("Survey geometry (system)"); form = QFormLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Survey geometry (system)")); form = QFormLayout(box)
         f = em_forward.DEFAULT_FDEM
         self._src_radius = self._dspin(f["source_radius"], 0.01, 200.0, 0.1, 3)
         self._loop_area = self._dspin(8.0, 0.01, 10000.0, 0.25, 2)
         self._loop_area.setToolTip(
-            "Physical transmitter-loop area. For raw tTEM this also re-normalizes "
-            "dB/dt by the chosen area, so changing it affects both data and forward model."
+            QCoreApplication.translate("PHGX", "Physical transmitter-loop area. For raw tTEM this also re-normalizes "
+            "dB/dt by the chosen area, so changing it affects both data and forward model.")
         )
         self._loop_area.editingFinished.connect(self._on_ttem_loop_area_changed)
         self._tx_rx = self._dspin(f["tx_rx_sep"], 0.0, 500.0, 0.05, 2)
         self._tx_rx.setToolTip(
-            "Distance from the transmitter loop to the receiver coil.\n\n"
+            QCoreApplication.translate("PHGX", "Distance from the transmitter loop to the receiver coil.\n\n"
             "A walking ground survey records its own for every station, and "
             "those are used in preference to this while the box below is "
             "ticked. The separation varies from station to station around its "
             "nominal value, so a single number here cannot describe the survey; "
             "it is the value for a format that records none, and the override "
-            "when the box is cleared.")
+            "when the box is cleared."))
         # The loop and the coil have their own heights and the forward reads
         # them separately, so one field for both could only set them equal.
         self._tx_height = self._dspin(f["height"], 0.0, 500.0, 0.05, 2)
@@ -634,15 +634,13 @@ class EMProcessingModule(BaseModule):
         for widget, which in ((self._tx_height, "transmitter loop"),
                               (self._rx_height, "receiver coil")):
             widget.setToolTip(
-                f"Height of the {which} above the ground. TEMcompany "
-                "projects normally record the two equal, but the forward "
-                "places them separately, so a frame that does not can say so.")
+                QCoreApplication.translate("PHGX", "Height of the {0} above the ground. TEMcompany projects normally record the two equal, but the forward places them separately, so a frame that does not can say so.").format(which))
         self._height_row = merged_row(self._tx_height, "Rx", self._rx_height)
         self._per_station_geometry = QCheckBox(
-            "Use each station's own recorded geometry")
+            QCoreApplication.translate("PHGX", "Use each station's own recorded geometry"))
         self._per_station_geometry.setChecked(True)
         self._per_station_geometry.setToolTip(
-            "A project records the separation and the two heights per station, "
+            QCoreApplication.translate("PHGX", "A project records the separation and the two heights per station, "
             "and with this ticked those are what the run uses; the fields above "
             "then show the loaded station rather than the survey, and editing "
             "them changes nothing.\n\n"
@@ -651,47 +649,47 @@ class EMProcessingModule(BaseModule):
             "format recording no per-station geometry does anyway.\n\n"
             "The separation is rounded to a quarter of a metre so that stations "
             "sharing a geometry share one warmed-up forward operator, which is "
-            "well inside what the response can resolve.")
+            "well inside what the response can resolve."))
         self._orient = QComboBox(); self._orient.addItems(["z", "x", "y"])
         # No "both": this page inverts, and a sounding carries one field per
         # frequency. Fitting secondary and total values alternately against
         # successive frequencies is meaningless, so the inversion refuses it.
         self._component = QComboBox(); self._component.addItems(["secondary", "total"])
         self._component.setToolTip(
-            "Which field the sounding's values are: the secondary field alone, or the "
-            "total field including the primary. The inversion fits the one chosen.")
+            QCoreApplication.translate("PHGX", "Which field the sounding's values are: the secondary field alone, or the "
+            "total field including the primary. The inversion fits the one chosen."))
         self._waveform = QComboBox()
-        self._src_radius_label = QLabel("Source radius (m)")
-        form.addRow(self._src_radius_label, self._src_radius)
-        self._loop_area_label = QLabel("Tx loop area (m²)")
-        form.addRow(self._loop_area_label, self._loop_area)
-        self._tx_rx_label = QLabel("Tx-Rx sep (m)")
-        form.addRow(self._tx_rx_label, self._tx_rx)
-        self._height_label = QLabel("Height Tx / Rx (m)")
-        form.addRow(self._height_label, self._height_row)
+        self._src_radius_label = QLabel(QCoreApplication.translate("PHGX", "Source radius (m)"))
+        form.addRow(i18n.tr(self._src_radius_label), self._src_radius)
+        self._loop_area_label = QLabel(QCoreApplication.translate("PHGX", "Tx loop area (m²)"))
+        form.addRow(i18n.tr(self._loop_area_label), self._loop_area)
+        self._tx_rx_label = QLabel(QCoreApplication.translate("PHGX", "Tx-Rx sep (m)"))
+        form.addRow(i18n.tr(self._tx_rx_label), self._tx_rx)
+        self._height_label = QLabel(QCoreApplication.translate("PHGX", "Height Tx / Rx (m)"))
+        form.addRow(i18n.tr(self._height_label), self._height_row)
         form.addRow("", self._per_station_geometry)
-        form.addRow("Orientation", self._orient)
-        self._component_label = QLabel("Component")
-        form.addRow(self._component_label, self._component)
-        form.addRow("Waveform", self._waveform)
+        form.addRow(QCoreApplication.translate("PHGX", "Orientation"), self._orient)
+        self._component_label = QLabel(QCoreApplication.translate("PHGX", "Component"))
+        form.addRow(i18n.tr(self._component_label), self._component)
+        form.addRow(QCoreApplication.translate("PHGX", "Waveform"), self._waveform)
         self._system_note = QLabel("")
         self._system_note.setWordWrap(True)
         self._system_note.setStyleSheet("color:#9b5a00; font-size:8pt;")
         self._system_note.setVisible(False)
-        form.addRow(self._system_note)
+        form.addRow(i18n.tr(self._system_note))
         return box
 
     # The controls are split the same way as the ERT page: what defines the
     # model, how the data are weighted, what couples the line, and what the
     # software may change on its own. Everything configurable comes before Run.
     def _build_inversion_group(self) -> QGroupBox:
-        box = QGroupBox("Inversion"); form = QFormLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Inversion")); form = QFormLayout(box)
         d = em_inversion.DEFAULT_INVERSION
         self._preset = QComboBox()
-        self._preset.addItem("Ground TEM (TEM2Go, tTEM)", "ground_tem")
-        self._preset.addItem("Generic / airborne", "generic")
+        self._preset.addItem(QCoreApplication.translate("PHGX", "Ground TEM (TEM2Go, tTEM)"), "ground_tem")
+        self._preset.addItem(QCoreApplication.translate("PHGX", "Generic / airborne"), "generic")
         self._preset.setToolTip(
-            "A starting point for the settings below, which stay editable.\n\n"
+            QCoreApplication.translate("PHGX", "A starting point for the settings below, which stay editable.\n\n"
             "Ground TEM carries what a walking ground survey was found to want: "
             "twenty layers over a hundred metres, fixed regularisation rather "
             "than a chi-square chase, robust errors keeping all imported gates, and a resistivity "
@@ -700,12 +698,12 @@ class EMProcessingModule(BaseModule):
             "a ground project is loaded.\n\n"
             "Generic is the framework default, which has to serve an airborne "
             "line that sees several hundred metres as well as a ground sounding "
-            "that sees thirty, so it is deliberately unopinionated.")
+            "that sees thirty, so it is deliberately unopinionated."))
         self._preset.currentIndexChanged.connect(self._on_preset_changed)
         self._n_layers = self._ispin(d["n_layers"], 3, 60)
         self._n_layers.setToolTip(
-            "Fixed layers in the model. The grid is shared by every sounding on a "
-            "line, which is what lets them be coupled layer by layer.")
+            QCoreApplication.translate("PHGX", "Fixed layers in the model. The grid is shared by every sounding on a "
+            "line, which is what lets them be coupled layer by layer."))
         self._min_thick = self._dspin(d["min_thickness"], 0.2, 50.0, 0.5, 2)
         # Two decimals, like the minimum: a project's saved layer grid is only
         # reused when both ends still match it (see _collect_inv), and rounding
@@ -716,9 +714,9 @@ class EMProcessingModule(BaseModule):
         # 0 is "auto": the search below picks the half-space. One control rather
         # than a number plus a checkbox, because the two can never both apply.
         self._start_res = self._dspin(0.0, 0.0, 1e5, 10.0, 1)
-        self._start_res.setSpecialValueText("auto")
+        self._start_res.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
         self._start_res.setToolTip(
-            "Uniform resistivity assigned to every layer at the start of the "
+            QCoreApplication.translate("PHGX", "Uniform resistivity assigned to every layer at the start of the "
             "inversion. It sets the optimizer's initial model and does not "
             "also supplies the reference for model damping.\n\n"
             "auto tries a set of uniform half-spaces on a sample of the "
@@ -731,20 +729,20 @@ class EMProcessingModule(BaseModule):
             "40 Ω·m run drove a tenth of the section onto the 1 Ω·m bound.\n\n"
             "A value uses that resistivity, which is what a project file "
             "carries. For a line inversion this seeds the first solve; later "
-            "refinement passes warm-start from the preceding result.")
+            "refinement passes warm-start from the preceding result."))
         self._smooth = self._dspin(d["smoothness"], 0.0, 10.0, 0.1, 2)
         self._smooth.setToolTip(
-            "Vertical smoothness down each sounding's layer stack. Higher gives a "
-            "smoother profile and fits the data less well.")
+            QCoreApplication.translate("PHGX", "Vertical smoothness down each sounding's layer stack. Higher gives a "
+            "smoother profile and fits the data less well."))
         self._max_iter = self._ispin(d["max_iterations"], 3, 200)
         self._max_iter.setToolTip(
-            "Iteration budget for Gauss-Newton and independent 1D solves. "
+            QCoreApplication.translate("PHGX", "Iteration budget for Gauss-Newton and independent 1D solves. "
             "Simultaneous TRF uses its separate forward-evaluation budget in "
-            "the Line group.")
+            "the Line group."))
         self._doi_threshold = self._dspin(
             float(DOI_SENSITIVITY_THRESHOLD), 0.1, 50.0, 0.5, 2)
         self._doi_threshold.setToolTip(
-            "Cumulative sensitivity below which a cell is reported as "
+            QCoreApplication.translate("PHGX", "Cumulative sensitivity below which a cell is reported as "
             "unresolved.\n\n"
             "The quantity is summed from the base of the model upward, and the "
             "deepest layer is the thickest, so a low threshold saturates: on "
@@ -752,15 +750,15 @@ class EMProcessingModule(BaseModule):
             "investigation at the very bottom of the model for more than half "
             "the stations, which is the metric running out rather than the data "
             "reaching that deep. Six to eight keeps the reported depth inside "
-            "the model.")
-        form.addRow("Preset", self._preset)
-        form.addRow("Layers", self._n_layers)
-        form.addRow("Thickness", self._thick_row)
-        form.addRow("Initial model ρ (Ω·m)", self._start_res)
+            "the model."))
+        form.addRow(QCoreApplication.translate("PHGX", "Preset"), self._preset)
+        form.addRow(QCoreApplication.translate("PHGX", "Layers"), self._n_layers)
+        form.addRow(QCoreApplication.translate("PHGX", "Thickness"), self._thick_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Initial model ρ (Ω·m)"), self._start_res)
         self._lateral_smooth = self._dspin(
             float(d.get("lateral_smoothness", 0.0)), 0.0, 20.0, 0.1, 2)
         self._lateral_smooth.setToolTip(
-            "The other half of the regularisation: how tightly neighbouring "
+            QCoreApplication.translate("PHGX", "The other half of the regularisation: how tightly neighbouring "
             "soundings on the same survey line are tied to each other, where "
             "Smoothness above ties the layers within one sounding. It applies "
             "to a line inversion only, never crosses a survey line, and 0 "
@@ -773,18 +771,18 @@ class EMProcessingModule(BaseModule):
             "A settings file may also carry lateral_weight_scale. That is a "
             "multiplier on this value rather than a second control, so the "
             "effective weight is the product of the two; it stays at 1.0 and "
-            "this is the number to change.")
+            "this is the number to change."))
         self._model_damping = self._dspin(d["model_damping"], 0.0, 10.0, 0.1, 2)
         self._model_damping.setToolTip(
-            "Pull log resistivity toward the starting reference model. "
+            QCoreApplication.translate("PHGX", "Pull log resistivity toward the starting reference model. "
             "Weight relative to vertical smoothness; default 0.4, zero disables it. "
             "With automatic start, the reference is chosen from the data. "
-            "Applies to single soundings and line inversions; zero smoothness disables this term.")
-        form.addRow("Smoothness", self._smooth)
-        form.addRow("Model damping", self._model_damping)
-        form.addRow("Lateral smoothness", self._lateral_smooth)
-        form.addRow("Max iterations", self._max_iter)
-        form.addRow("DOI sensitivity", self._doi_threshold)
+            "Applies to single soundings and line inversions; zero smoothness disables this term."))
+        form.addRow(QCoreApplication.translate("PHGX", "Smoothness"), self._smooth)
+        form.addRow(QCoreApplication.translate("PHGX", "Model damping"), self._model_damping)
+        form.addRow(QCoreApplication.translate("PHGX", "Lateral smoothness"), self._lateral_smooth)
+        form.addRow(QCoreApplication.translate("PHGX", "Max iterations"), self._max_iter)
+        form.addRow(QCoreApplication.translate("PHGX", "DOI sensitivity"), self._doi_threshold)
         return box
 
     #: Preset key to the control that carries it. Only settings the panel
@@ -957,57 +955,57 @@ class EMProcessingModule(BaseModule):
         self._sync_lci_mode()
 
     def _build_errors_group(self) -> QGroupBox:
-        box = QGroupBox("Data errors and calibration"); form = QFormLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Data errors and calibration")); form = QFormLayout(box)
         self._rel_err = self._dspin(0.03, 0.0, 1.0, 0.01, 3)
         self._rel_err.setToolTip(
-            "Uncertainty applied to every gate alike: system calibration, and the "
+            QCoreApplication.translate("PHGX", "Uncertainty applied to every gate alike: system calibration, and the "
             "error in representing the ground as 1D layers. Where the file carries a "
             "per-gate stack error, this is added in quadrature rather than replacing "
             "it, so a noisy gate stays noisy and a clean one takes this as its "
             "floor.\n\n"
             "χ² is measured against the combined uncertainty, so this value is what "
             "\"fitting the data\" is measured against. A larger value makes the same "
-            "model fit better; a smaller one makes it fit worse.")
+            "model fit better; a smaller one makes it fit worse."))
         self._data_scale = self._dspin(1.0, 1e-4, 1e6, 0.1, 4)
         self._data_scale.setToolTip(
-            "Multiplies the observed data before inversion, for data in normalized "
+            QCoreApplication.translate("PHGX", "Multiplies the observed data before inversion, for data in normalized "
             "units such as moment-normalized airborne dB/dt that carry a system "
-            "calibration constant. 1.0 leaves the data unscaled.")
-        self._auto_scale = QCheckBox("Auto-calibrate")
+            "calibration constant. 1.0 leaves the data unscaled."))
+        self._auto_scale = QCheckBox(QCoreApplication.translate("PHGX", "Auto-calibrate"))
         self._auto_scale.setChecked(True)
         self._auto_scale.setToolTip(
-            "Estimates the amplitude scale from the shape of the decay. This keeps "
+            QCoreApplication.translate("PHGX", "Estimates the amplitude scale from the shape of the decay. This keeps "
             "the inversion off the bounds; the absolute resistivity level it "
-            "produces is approximate, since the shape alone does not fix it.")
+            "produces is approximate, since the shape alone does not fix it."))
         self._ref_res = self._dspin(0.0, 0.0, 1e5, 10.0, 1)
         self._ref_res.setToolTip(
-            "Ties the amplitude scale to a half-space of this resistivity, in Ω·m, "
+            QCoreApplication.translate("PHGX", "Ties the amplitude scale to a half-space of this resistivity, in Ω·m, "
             "so the recovered model lands near this level. The data alone do not "
             "determine the absolute level, and the same value is applied the same "
             "way to every dataset.\n\n"
             "0 turns this off. A non-zero value takes precedence over "
-            "Auto-calibrate.")
+            "Auto-calibrate."))
         # Bounds on the per-gate stack error the file supplies, applied before it
         # joins the value above in quadrature. Both off by default.
         self._err_floor = self._dspin(0.0, 0.0, 1.0, 0.01, 3)
-        self._err_floor.setSpecialValueText("off")
+        self._err_floor.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._err_floor.setToolTip(
-            "Smallest stack error a gate is allowed to claim. A gate that happens "
+            QCoreApplication.translate("PHGX", "Smallest stack error a gate is allowed to claim. A gate that happens "
             "to stack quietly arrives at a few tenths of a percent, and on a "
             "station carrying four or five gates it then outweighs its neighbours "
             "by two orders of magnitude and drags the model onto itself.\n\n"
             "A stack error is itself estimated from a finite number of repeats, "
             "so it scatters; floor it at the repeatability the instrument can "
             "actually resolve, typically a few percent. 0 turns the floor off and "
-            "uses the recorded value.")
+            "uses the recorded value."))
         self._err_ceiling = self._dspin(0.0, 0.0, 2.0, 0.05, 3)
-        self._err_ceiling.setSpecialValueText("off")
+        self._err_ceiling.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._err_ceiling.setToolTip(
-            "Largest stack error used as an uncertainty. Capping a larger recorded "
+            QCoreApplication.translate("PHGX", "Largest stack error used as an uncertainty. Capping a larger recorded "
             "error makes that noisy gate carry more weight than its file requests; "
             "it limits down-weighting and does not reject the gate.\n\n"
             "0 turns the cap off. To remove noisy gates, use the stack-error cut "
-            "on the loader panel instead.")
+            "on the loader panel instead."))
         self._err_bounds_row = merged_row(
             self._err_floor, "to", self._err_ceiling)
         # Recovered resistivity is bounded too, by bounds the user can set. On
@@ -1015,105 +1013,105 @@ class EMProcessingModule(BaseModule):
         # bound, into tens of thousands of ohm-m, and dominates the colour scale.
         self._rho_min = self._dspin(1.0, 1e-3, 1e4, 1.0, 3)
         self._rho_min.setToolTip(
-            "Lower bound on recovered resistivity, in Ω·m. The solver works in "
-            "log10 resistivity and this is its box constraint.")
+            QCoreApplication.translate("PHGX", "Lower bound on recovered resistivity, in Ω·m. The solver works in "
+            "log10 resistivity and this is its box constraint."))
         self._rho_max = self._dspin(1e5, 10.0, 1e7, 1000.0, 0)
         self._rho_max.setToolTip(
-            "Upper bound on recovered resistivity, in Ω·m. A layer the data cannot "
+            QCoreApplication.translate("PHGX", "Upper bound on recovered resistivity, in Ω·m. A layer the data cannot "
             "resolve is driven only by the regularisation, so it walks until this "
             "bound stops it. Set it to the highest value the target geology can "
             "plausibly reach; a section whose deepest cells sit exactly on it is "
-            "reporting the bound rather than the ground.")
+            "reporting the bound rather than the ground."))
         self._rho_row = merged_row(self._rho_min, "to", self._rho_max)
-        form.addRow("Relative error", self._rel_err)
-        form.addRow("Stack error bounds", self._err_bounds_row)
-        form.addRow("Resistivity bounds", self._rho_row)
-        form.addRow("Data scale / calib.", self._data_scale)
+        form.addRow(QCoreApplication.translate("PHGX", "Relative error"), self._rel_err)
+        form.addRow(QCoreApplication.translate("PHGX", "Stack error bounds"), self._err_bounds_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Resistivity bounds"), self._rho_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Data scale / calib."), self._data_scale)
         form.addRow("", self._auto_scale)
-        form.addRow("Reference ρ (Ω·m)", self._ref_res)
+        form.addRow(QCoreApplication.translate("PHGX", "Reference ρ (Ω·m)"), self._ref_res)
         return box
 
     def _build_line_group(self) -> QGroupBox:
         """Line-only controls, shown when the file holds several soundings."""
-        box = QGroupBox("Line"); form = QFormLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Line")); form = QFormLayout(box)
         d = em_inversion.DEFAULT_INVERSION
         self._line_spacing = self._dspin(50.0, 0.1, 100000.0, 10.0, 2)
-        self._line_spacing.setToolTip("Uniform sounding spacing used for the section's x-axis "
-                                      "when no geometry file is loaded.")
+        self._line_spacing.setToolTip(QCoreApplication.translate("PHGX", "Uniform sounding spacing used for the section's x-axis "
+                                      "when no geometry file is loaded."))
         # "all" by default. A default cap would drop soundings with only a log
         # line saying so; a cap is something set on purpose, for a quick test,
         # and the Run group says what it leaves out. The ceiling is far above
         # any survey, because a QSpinBox clamps silently: a value above its
         # maximum reads as the maximum.
         self._line_max = self._ispin(0, 0, 1_000_000)
-        self._line_max.setSpecialValueText("all")
+        self._line_max.setSpecialValueText(QCoreApplication.translate("PHGX", "all"))
         self._line_max.setToolTip(
-            "How many soundings to invert, counted from the first station of "
+            QCoreApplication.translate("PHGX", "How many soundings to invert, counted from the first station of "
             "the survey (or of the chosen line). \"all\" inverts every one; a "
             "number is for a quick test, and the Run group says how many it "
             "leaves out. Stations are ordered by line, so a cap drops the last "
-            "lines rather than thinning the survey.")
+            "lines rather than thinning the survey."))
         self._line_max.valueChanged.connect(lambda _value: self._update_run_scope())
         # Which survey lines to run. A survey whose lines differ in data quality
         # cannot be served by one set of settings, and the lateral constraint
         # never crosses a line anyway, so a line inverted on its own is tied
         # exactly as it would be inside a whole-survey run.
         self._line_pick = QComboBox()
-        self._line_pick.addItem("All lines", None)
+        self._line_pick.addItem(QCoreApplication.translate("PHGX", "All lines"), None)
         self._line_pick.setToolTip(
-            "Invert one survey line rather than the whole file. The lateral "
+            QCoreApplication.translate("PHGX", "Invert one survey line rather than the whole file. The lateral "
             "constraint never crosses a line, so a line run on its own is tied "
             "exactly as it would be in a full run; what changes is that it can "
             "carry its own gate selection and rejection settings, and that the "
             "other lines are not re-solved.\n\n"
             "Use it where one line is noisier than the rest: run the good lines "
             "at the usual settings, then that line with a lower retention "
-            "floor, and export each section separately.")
+            "floor, and export each section separately."))
         self._line_pick.currentIndexChanged.connect(lambda _index: self._update_run_scope())
         self._lci_mode = QComboBox()
         for label, key in (("Simultaneous", "simultaneous"),
                            ("Block-coordinate", "sequential"),
                            ("Off", "off")):
-            self._lci_mode.addItem(label, key)
+            self._lci_mode.addItem(i18n.tr(label), key)
         self._lci_mode.setCurrentIndex(0)
         self._lci_mode.setToolTip(
-            "Simultaneous solves the whole line as one system, so the lateral "
+            QCoreApplication.translate("PHGX", "Simultaneous solves the whole line as one system, so the lateral "
             "constraint is enforced while each sounding is being fitted; it uses the "
             "analytic sensitivity, which makes it faster than inverting the "
             "soundings one at a time. Block-coordinate re-inverts one sounding at a "
             "time against its neighbours' models from the previous pass. Off "
-            "inverts each sounding alone.")
+            "inverts each sounding alone."))
         self._lci_passes = self._ispin(int(d.get("lci_passes", 1)), 0, 10)
         self._lci_passes.setToolTip(
-            "Number of block-coordinate passes. The simultaneous solver does not "
-            "use this setting.")
-        self._lci_passes_label = QLabel("passes")
+            QCoreApplication.translate("PHGX", "Number of block-coordinate passes. The simultaneous solver does not "
+            "use this setting."))
+        self._lci_passes_label = QLabel(QCoreApplication.translate("PHGX", "passes"))
         self._lci_mode_row = merged_row(
             self._lci_mode, self._lci_passes_label, self._lci_passes)
         self._lci_mode.currentIndexChanged.connect(self._sync_lci_mode)
         self._lci_solver = QComboBox()
         for label, key in (("TRF (formal, bound-aware)", "trf"),
                            ("Gauss-Newton (fast / legacy)", "gauss_newton")):
-            self._lci_solver.addItem(label, key)
+            self._lci_solver.addItem(i18n.tr(label), key)
         self._set_lci_solver(str(d.get("lci_solver", "trf")),
                              block_signals=True)
         self._lci_solver.setToolTip(
-            "TRF is the formal default: its trust-region step respects the "
+            QCoreApplication.translate("PHGX", "TRF is the formal default: its trust-region step respects the "
             "resistivity bounds while solving. Gauss-Newton is retained for "
-            "fast previews and exact reproduction of older project results.")
+            "fast previews and exact reproduction of older project results."))
         self._lci_solver.currentIndexChanged.connect(self._sync_lci_mode)
         self._trf_nfev = self._ispin(int(d.get("lci_max_nfev", 90)), 1, 1000)
         self._trf_nfev.setToolTip(
-            "Maximum forward evaluations in each fixed-error TRF stage. This "
+            QCoreApplication.translate("PHGX", "Maximum forward evaluations in each fixed-error TRF stage. This "
             "is not the Gauss-Newton iteration count. Budget exhaustion is "
-            "reported as incomplete and prevents error inflation.")
+            "reported as incomplete and prevents error inflation."))
         self._trf_ftol = self._dspin(
             float(d.get("lci_ftol", 1e-4)), 1e-8, 1e-2, 1e-4, 8)
         self._trf_ftol.setToolTip(
-            "TRF relative full-objective stopping tolerance. A tolerance far "
+            QCoreApplication.translate("PHGX", "TRF relative full-objective stopping tolerance. A tolerance far "
             "below the 1e-4 default can use up the evaluation budget before "
             "robust reweighting. The Ground TEM preset uses the looser 1e-3, "
-            "which runs faster with nearly the same chi-squared.")
+            "which runs faster with nearly the same chi-squared."))
         import os as _os
 
         cores = getattr(_os, "process_cpu_count", None)
@@ -1121,123 +1119,117 @@ class EMProcessingModule(BaseModule):
         # BaseModule._workers is the live QThread registry. Keep this widget on
         # a distinct name or line inversion replaces that list with a QSpinBox.
         self._parallel_workers_spin = self._ispin(0, 0, max(1, available))
-        self._parallel_workers_spin.setSpecialValueText("auto")
+        self._parallel_workers_spin.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
         self._parallel_workers_spin.setToolTip(
-            f"Threads used for the per-sounding forward and Jacobian. This "
-            f"machine reports {available} usable cores; auto takes one thread "
-            f"per sounding up to that number.\n\n"
-            "Each sounding owns its forward operator and the threads only read "
-            "the shared model, so the models come back identical whatever this "
-            "is set to. The work is NumPy underneath and releases the GIL for "
-            "most of its duration, so scaling is real but short of linear.")
-        form.addRow("Sounding spacing (m)", self._line_spacing)
-        form.addRow("Max soundings", self._line_max)
-        form.addRow("Survey line", self._line_pick)
-        form.addRow("Coupling", self._lci_mode_row)
-        form.addRow("Solver", self._lci_solver)
-        form.addRow("TRF max evaluations", self._trf_nfev)
-        form.addRow("TRF ftol", self._trf_ftol)
-        form.addRow("CPU threads", self._parallel_workers_spin)
+            QCoreApplication.translate("PHGX", "Threads used for the per-sounding forward and Jacobian. This machine reports {0} usable cores; auto takes one thread per sounding up to that number.\n\nEach sounding owns its forward operator and the threads only read the shared model, so the models come back identical whatever this is set to. The work is NumPy underneath and releases the GIL for most of its duration, so scaling is real but short of linear.").format(available))
+        form.addRow(QCoreApplication.translate("PHGX", "Sounding spacing (m)"), self._line_spacing)
+        form.addRow(QCoreApplication.translate("PHGX", "Max soundings"), self._line_max)
+        form.addRow(QCoreApplication.translate("PHGX", "Survey line"), self._line_pick)
+        form.addRow(QCoreApplication.translate("PHGX", "Coupling"), self._lci_mode_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Solver"), self._lci_solver)
+        form.addRow(QCoreApplication.translate("PHGX", "TRF max evaluations"), self._trf_nfev)
+        form.addRow(QCoreApplication.translate("PHGX", "TRF ftol"), self._trf_ftol)
+        form.addRow(QCoreApplication.translate("PHGX", "CPU threads"), self._parallel_workers_spin)
         self._sync_lci_mode()
         self._line_rows = box
         box.setVisible(False)
         return box
 
     def _build_assist_group(self) -> QGroupBox:
-        box = QGroupBox("Fit assistance"); form = QFormLayout(box)
-        self._auto_lam = QCheckBox("Auto-λ (re-solve for target χ²)")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Fit assistance")); form = QFormLayout(box)
+        self._auto_lam = QCheckBox(QCoreApplication.translate("PHGX", "Auto-λ (re-solve for target χ²)"))
         self._auto_lam.setChecked(True)
         self._auto_lam.setToolTip(
-            "The solve at the smoothness above always runs first and is always kept. "
+            QCoreApplication.translate("PHGX", "The solve at the smoothness above always runs first and is always kept. "
             "If its χ² misses the target band, the line is re-solved with the "
             "vertical and lateral smoothness scaled together by a single factor (λ "
             "here), and the closest result is displayed. Each trial warm-starts from "
             "the nearest factor already solved. Applies to the simultaneous line "
-            "solver.")
+            "solver."))
         self._auto_lam.toggled.connect(self._sync_lci_mode)
-        form.addRow(self._auto_lam)
+        form.addRow(i18n.tr(self._auto_lam))
 
         self._target_chi2 = self._dspin(1.0, 0.1, 100.0, 0.1, 2)
         self._target_chi2.setToolTip(
-            "χ² = 1 means the model explains the data to within the assumed relative "
-            "error. The solve stops on reaching the band rather than fitting past it.")
+            QCoreApplication.translate("PHGX", "χ² = 1 means the model explains the data to within the assumed relative "
+            "error. The solve stops on reaching the band rather than fitting past it."))
         self._chi2_tol = self._dspin(0.2, 0.01, 10.0, 0.05, 2)
         self._chi2_tol.setToolTip(
-            "Half-width of the accepted band. A step that would overshoot below it is "
-            "shortened instead, so the reported χ² is not an accident of step length.")
+            QCoreApplication.translate("PHGX", "Half-width of the accepted band. A step that would overshoot below it is "
+            "shortened instead, so the reported χ² is not an accident of step length."))
         self._chi2_row = merged_row(self._target_chi2, "±", self._chi2_tol)
-        form.addRow("Target χ²", self._chi2_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Target χ²"), self._chi2_row)
 
         self._lam_trials = self._ispin(5, 1, 20)
         self._lam_trials.setToolTip(
-            "Upper bound on the extra line solves the search may run, on top of the "
-            "first one at the smoothness set above.")
-        form.addRow("Max trials", self._lam_trials)
+            QCoreApplication.translate("PHGX", "Upper bound on the extra line solves the search may run, on top of the "
+            "first one at the smoothness set above."))
+        form.addRow(QCoreApplication.translate("PHGX", "Max trials"), self._lam_trials)
 
         # How far the search may move the smoothness. The default span is four
         # decades either way, and on a station carrying four or five gates a large
         # relaxation buys a low χ² with a model that swings to match noise.
         self._lam_min = self._dspin(1e-4, 1e-6, 1.0, 0.1, 4)
         self._lam_min.setToolTip(
-            "Smallest factor the search may apply to the smoothness. Values well "
-            "below 1 let it relax the model a long way to chase the target χ².")
+            QCoreApplication.translate("PHGX", "Smallest factor the search may apply to the smoothness. Values well "
+            "below 1 let it relax the model a long way to chase the target χ²."))
         self._lam_max = self._dspin(1e4, 1.0, 1e6, 10.0, 1)
         self._lam_max.setToolTip(
-            "Largest factor the search may apply to the smoothness, used when the "
-            "first solve fits better than the target and a stiffer model is wanted.")
+            QCoreApplication.translate("PHGX", "Largest factor the search may apply to the smoothness, used when the "
+            "first solve fits better than the target and a stiffer model is wanted."))
         self._lam_range_row = merged_row(self._lam_min, "to", self._lam_max)
-        form.addRow("λ scale range", self._lam_range_row)
+        form.addRow(QCoreApplication.translate("PHGX", "λ scale range"), self._lam_range_row)
 
-        self._robust = QCheckBox("Robust errors (keep all gates)")
+        self._robust = QCheckBox(QCoreApplication.translate("PHGX", "Robust errors (keep all gates)"))
         self._robust.setToolTip(
-            "Keep every imported gate. After an initial fit, Huber weights "
+            QCoreApplication.translate("PHGX", "Keep every imported gate. After an initial fit, Huber weights "
             "increase the effective error of large residuals without changing the "
             "recorded measurement error. A gate can regain weight on later passes. "
             "A large residual can also mean an inadequate model, not bad data. "
-            "The quality report keeps original-error χ² separate from effective χ².")
-        form.addRow(self._robust)
+            "The quality report keeps original-error χ² separate from effective χ²."))
+        form.addRow(i18n.tr(self._robust))
         self._robust_sigma = self._dspin(3.0, 0.5, 20.0, 0.5, 1)
         self._robust_sigma.setToolTip(
-            "Start downweighting when |prediction - data| / original error exceeds "
+            QCoreApplication.translate("PHGX", "Start downweighting when |prediction - data| / original error exceeds "
             "this threshold. With the target off, effective error = original error × "
             "sqrt(|residual| / cut). With a target, bounded inflation is calibrated on "
-            "eligible gates only. Below the cut, errors are unchanged.")
+            "eligible gates only. Below the cut, errors are unchanged."))
         self._robust_passes = self._ispin(3, 1, 10)
         self._robust_passes.setToolTip(
-            "Maximum reweight-and-solve passes after the initial fit. Reuses the "
-            "previous model and stops early if error factors are stable within 1%.")
+            QCoreApplication.translate("PHGX", "Maximum reweight-and-solve passes after the initial fit. Reuses the "
+            "previous model and stops early if error factors are stable within 1%."))
         self._robust_row = merged_row(
             self._robust_sigma, "σ, passes", self._robust_passes)
-        form.addRow("Downweight beyond", self._robust_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Downweight beyond"), self._robust_row)
         self._robust_max_factor = self._dspin(10.0, 1.0, 100.0, 1.0, 1)
         self._robust_max_factor.setToolTip(
-            "Maximum effective/original error ratio. 10 limits the inverse-variance "
+            QCoreApplication.translate("PHGX", "Maximum effective/original error ratio. 10 limits the inverse-variance "
             "weight to at least 1/100 of its original value; it is never zero. "
-            "Set to 1 to disable inflation without changing other settings.")
-        form.addRow("Max error factor", self._robust_max_factor)
+            "Set to 1 to disable inflation without changing other settings."))
+        form.addRow(QCoreApplication.translate("PHGX", "Max error factor"), self._robust_max_factor)
         self._robust_fixed_fraction = self._dspin(0.70, 0.0, 1.0, 0.05, 2)
         self._robust_fixed_fraction.setToolTip(
-            "Minimum fraction of gates whose effective error stays EXACTLY original "
+            QCoreApplication.translate("PHGX", "Minimum fraction of gates whose effective error stays EXACTLY original "
             "on each pass. 0.70 protects at least 70%; only the worst remaining "
             "residuals above the sigma cut can be inflated. The protected identities "
-            "may change. Applies to the whole simultaneous run, or each independent sounding.")
-        form.addRow("Keep original errors (fraction)", self._robust_fixed_fraction)
+            "may change. Applies to the whole simultaneous run, or each independent sounding."))
+        form.addRow(QCoreApplication.translate("PHGX", "Keep original errors (fraction)"), self._robust_fixed_fraction)
         self._robust_target = self._dspin(1.75, 0.0, 100.0, 0.25, 2)
-        self._robust_target.setSpecialValueText("off (Huber only)")
+        self._robust_target.setSpecialValueText(QCoreApplication.translate("PHGX", "off (Huber only)"))
         self._robust_target.setToolTip(
-            "Optional EFFECTIVE chi2 target, reached by bounded error calibration on "
+            QCoreApplication.translate("PHGX", "Optional EFFECTIVE chi2 target, reached by bounded error calibration on "
             "eligible gates and refitting. This is NOT independent evidence of fit quality. "
-            "Original-error chi2 is still reported. 0 uses Huber-only weights.")
+            "Original-error chi2 is still reported. 0 uses Huber-only weights."))
         self._robust_target_tol = self._dspin(0.25, 0.0, 10.0, 0.05, 2)
         self._robust_target_row = merged_row(self._robust_target, "±", self._robust_target_tol)
-        form.addRow("Effective χ² target", self._robust_target_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Effective χ² target"), self._robust_target_row)
         self._robust.toggled.connect(self._sync_robust)
         self._sync_robust()
         # This is deliberately nested in a collapsed advanced group. It is an
         # empirical, niche prior rather than a routine inversion control, and a
         # weak LM response is not a shallow-depth observation.
         self._prior_advanced = QGroupBox(
-            "Advanced: empirical resistive-background prior")
+            QCoreApplication.translate("PHGX", "Advanced: empirical resistive-background prior"))
         self._prior_advanced.setCheckable(True)
         self._prior_advanced.setChecked(False)
         self._prior_inner = QWidget()
@@ -1247,51 +1239,51 @@ class EMProcessingModule(BaseModule):
         prior_layout.addWidget(self._prior_inner)
         self._prior_inner.setVisible(False)
         self._prior_advanced.toggled.connect(self._prior_inner.setVisible)
-        form.addRow(self._prior_advanced)
+        form.addRow(i18n.tr(self._prior_advanced))
 
-        self._prior_enabled = QCheckBox("Enable empirical background tendency")
+        self._prior_enabled = QCheckBox(QCoreApplication.translate("PHGX", "Enable empirical background tendency"))
         self._prior_enabled.setToolTip(
-            "A sustained weak absolute LM response can be consistent with a resistive "
+            QCoreApplication.translate("PHGX", "A sustained weak absolute LM response can be consistent with a resistive "
             "background, but it cannot locate that resistivity in a shallow layer. "
             "This adds a weak one-sided tendency across the whole 1-D model. It is an "
             "empirical assumption, not independent geology, and is excluded from data "
-            "chi2 and sensitivity/DOI evidence.")
-        prior_form.addRow(self._prior_enabled)
+            "chi2 and sensitivity/DOI evidence."))
+        prior_form.addRow(i18n.tr(self._prior_enabled))
         self._prior_mode = QComboBox()
-        self._prior_mode.addItem("Weak absolute LM signal", "signal_threshold")
-        self._prior_mode.addItem("Declining LM quality", "quality_trend")
-        self._prior_mode.addItem("Manual (all selected stations)", "manual")
+        self._prior_mode.addItem(QCoreApplication.translate("PHGX", "Weak absolute LM signal"), "signal_threshold")
+        self._prior_mode.addItem(QCoreApplication.translate("PHGX", "Declining LM quality"), "quality_trend")
+        self._prior_mode.addItem(QCoreApplication.translate("PHGX", "Manual (all selected stations)"), "manual")
         self._prior_signal_limit = self._dspin(0., 0., 1., 1e-9, 14)
-        self._prior_signal_limit.setSpecialValueText("Auto (instrument forward)")
+        self._prior_signal_limit.setSpecialValueText(QCoreApplication.translate("PHGX", "Auto (instrument forward)"))
         self._prior_signal_limit.setToolTip(
-            "Raw project-response units, BEFORE inversion data_scale. 0 computes the "
+            QCoreApplication.translate("PHGX", "Raw project-response units, BEFORE inversion data_scale. 0 computes the "
             "LM response of a fixed 1000 Ω·m homogeneous reference half-space, "
             "using each station's actual waveform, filters, gate and geometry. A positive "
             "value overrides that limit; e.g. 3e-9 for a raw LM gate near 8.95 µs. "
             "The fixed trigger reference is deliberately separate from the soft model "
             "target. 80% of a full rolling window must lie below the limit; missing "
-            "gates do not count.")
-        prior_form.addRow("Prior trigger", self._prior_mode)
-        prior_form.addRow("LM signal threshold", self._prior_signal_limit)
+            "gates do not count."))
+        prior_form.addRow(QCoreApplication.translate("PHGX", "Prior trigger"), self._prior_mode)
+        prior_form.addRow(QCoreApplication.translate("PHGX", "LM signal threshold"), self._prior_signal_limit)
         # Hidden carriers that keep old saved configurations loadable.
         # Depth is unused; zero explicit rho selects the factor below.
         self._prior_depth = self._dspin(0., 0., 100., 1., 1)
         self._prior_rho = self._dspin(0., 0., 1e6, 100., 1)
         self._prior_factor = self._dspin(2., 1., 20., .25, 2)
         self._prior_factor.setToolTip(
-            "Automatic one-sided target divided by the effective starting half-space. "
+            QCoreApplication.translate("PHGX", "Automatic one-sided target divided by the effective starting half-space. "
             "2 is deliberately modest: it expresses a resistive tendency without "
             "forcing an order-of-magnitude jump. The target is capped at rho_max. "
-            "When auto-start is active, this uses the half-space selected from the data.")
+            "When auto-start is active, this uses the half-space selected from the data."))
         self._prior_weight = self._dspin(1., 0., 100., .25, 2)
         self._prior_window = self._ispin(11, 3, 201)
         self._prior_ratio = self._dspin(.6, .01, .99, .05, 2)
-        self._prior_weight.setToolTip("Residual multiplier; squared in the penalty. 0 disables its influence.")
-        self._prior_ratio.setToolTip("Activate below this fraction of the first window's median early LM SNR.")
-        prior_form.addRow("Target / initial model", self._prior_factor)
-        prior_form.addRow("Prior strength", self._prior_weight)
-        prior_form.addRow("Quality window (stations)", self._prior_window)
-        prior_form.addRow("SNR / initial SNR trigger", self._prior_ratio)
+        self._prior_weight.setToolTip(QCoreApplication.translate("PHGX", "Residual multiplier; squared in the penalty. 0 disables its influence."))
+        self._prior_ratio.setToolTip(QCoreApplication.translate("PHGX", "Activate below this fraction of the first window's median early LM SNR."))
+        prior_form.addRow(QCoreApplication.translate("PHGX", "Target / initial model"), self._prior_factor)
+        prior_form.addRow(QCoreApplication.translate("PHGX", "Prior strength"), self._prior_weight)
+        prior_form.addRow(QCoreApplication.translate("PHGX", "Quality window (stations)"), self._prior_window)
+        prior_form.addRow(QCoreApplication.translate("PHGX", "SNR / initial SNR trigger"), self._prior_ratio)
         self._prior_enabled.toggled.connect(self._sync_prior)
         self._prior_mode.currentIndexChanged.connect(self._sync_prior)
         self._sync_prior()
@@ -1317,37 +1309,37 @@ class EMProcessingModule(BaseModule):
                          self._robust.isChecked())
 
     def _build_run_group(self) -> QGroupBox:
-        box = QGroupBox("Run"); form = QFormLayout(box)
-        self._inv_btn = QPushButton("Run inversion")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Run")); form = QFormLayout(box)
+        self._inv_btn = QPushButton(QCoreApplication.translate("PHGX", "Run inversion"))
         self._inv_btn.setProperty("primary", True)
         self._inv_btn.setIcon(theme.icon("fa5s.bullseye", color="#ffffff"))
         self._inv_btn.clicked.connect(self._run_inversion)
-        form.addRow(self._inv_btn)
+        form.addRow(i18n.tr(self._inv_btn))
         # How much of the survey the next run takes, said where Run is pressed.
         self._run_scope = QLabel("")
         self._run_scope.setWordWrap(True)
         self._run_scope.setVisible(False)
-        form.addRow(self._run_scope)
+        form.addRow(i18n.tr(self._run_scope))
         self._backend_label = QLabel()
         self._backend_label.setWordWrap(True)
         self._backend_label.setStyleSheet("font-size:8pt;")
-        form.addRow("Backend", self._backend_label)
+        form.addRow(QCoreApplication.translate("PHGX", "Backend"), self._backend_label)
         self._inv_progress = QProgressBar(); self._inv_progress.setVisible(False)
         self._inv_stop = self.stop_button()
-        form.addRow(progress_with_stop(self._inv_progress, self._inv_stop))
-        self._inv_export = QPushButton("Export recovered model (csv)…")
+        form.addRow(i18n.tr(progress_with_stop(self._inv_progress, self._inv_stop)))
+        self._inv_export = QPushButton(QCoreApplication.translate("PHGX", "Export recovered model (csv)…"))
         self._inv_export.setIcon(theme.icon("fa5s.file-export"))
         self._inv_export.setEnabled(False)
         self._inv_export.setToolTip(
-            "After a line inversion: model_cells.csv, one row per layer per "
+            QCoreApplication.translate("PHGX", "After a line inversion: model_cells.csv, one row per layer per "
             "sounding with its map coordinate, elevation, resistivity, "
             "sensitivity and χ², plus soundings.csv, one row per station. "
             "After a single sounding: the recovered model as npy and csv.\n\n"
             "Both are written next to the section automatically. This writes a "
-            "second copy to a chosen folder.")
+            "second copy to a chosen folder."))
         self._inv_export.clicked.connect(self._export_inversion)
-        form.addRow(self._inv_export)
-        form.addRow(self.map_export_button())
+        form.addRow(i18n.tr(self._inv_export))
+        form.addRow(i18n.tr(self.map_export_button()))
         return box
 
     # -- method switch -------------------------------------------------------
@@ -1374,17 +1366,17 @@ class EMProcessingModule(BaseModule):
             self._method.setCurrentText("TDEM")
         self._use_flags.setEnabled(selected == _TEM2GO_FORMAT)
         self._use_flags.setToolTip(
-            "Raw tTEM SKB files do not contain TEM2Go inversion flags."
+            QCoreApplication.translate("PHGX", "Raw tTEM SKB files do not contain TEM2Go inversion flags.")
             if selected == _TTEM_FORMAT else
-            "Use the enabled-gate flags stored by the TEM2Go project."
+            QCoreApplication.translate("PHGX", "Use the enabled-gate flags stored by the TEM2Go project.")
         )
         self._sync_gate_rejection()
         self._system_note.setVisible(selected == _TTEM_FORMAT)
         self._ttem_calibration_row.setVisible(selected == _TTEM_FORMAT)
         if selected == _TTEM_FORMAT:
             self._system_note.setText(
-                "Raw tTEM geometry is editable below. Manual defaults are only a "
-                "fallback until the instrument-specific GEX/TFI files are supplied."
+                QCoreApplication.translate("PHGX", "Raw tTEM geometry is editable below. Manual defaults are only a "
+                "fallback until the instrument-specific GEX/TFI files are supplied.")
             )
         self._tem_moment_row.setVisible(
             temcompany and self._method.currentText() == "TDEM")
@@ -1399,10 +1391,10 @@ class EMProcessingModule(BaseModule):
         resolved = path.resolve() if path else None
         if kind == "gex":
             self._ttem_gex_path = resolved
-            self._gex_path_edit.setText(str(resolved or ""))
+            self._gex_path_edit.setText(i18n.tr(str(resolved or "")))
         else:
             self._ttem_tfi_path = resolved
-            self._tfi_path_edit.setText(str(resolved or ""))
+            self._tfi_path_edit.setText(i18n.tr(str(resolved or "")))
 
     def _auto_detect_ttem_calibration(self, source: Path) -> None:
         root = source if source.is_dir() else source.parent
@@ -1412,7 +1404,7 @@ class EMProcessingModule(BaseModule):
 
     def _select_ttem_calibration(self, kind: str) -> None:
         selected, _ = QFileDialog.getOpenFileName(
-            self, f"Select tTEM {kind.upper()}",
+            self, QCoreApplication.translate("PHGX", "Select tTEM {0}").format(kind.upper()),
             str(self._source_path or Path.cwd()),
             f"tTEM {kind.upper()} (*.{kind});;All files (*)",
         )
@@ -1460,15 +1452,14 @@ class EMProcessingModule(BaseModule):
         status = self._backend_status()
         available = bool(status["available"])
         if status.get("pending"):
-            self._backend_label.setText("Checking SimPEG backend… You can keep using the studio.")
+            self._backend_label.setText(QCoreApplication.translate("PHGX", "Checking SimPEG backend… You can keep using the studio."))
             theme.set_tone(self._backend_label, None)
         elif available:
-            self._backend_label.setText("Ready: SimPEG backend available.")
+            self._backend_label.setText(QCoreApplication.translate("PHGX", "Ready: SimPEG backend available."))
             theme.set_tone(self._backend_label, "ok")
         else:
             self._backend_label.setText(
-                "Unavailable: check the geophysics extra (SimPEG + discretize). "
-                f"{status['error']}")
+                QCoreApplication.translate("PHGX", "Unavailable: check the geophysics extra (SimPEG + discretize). {0}").format(status['error']))
             theme.set_tone(self._backend_label, "warn")
         running = any(worker is not None and worker.isRunning()
                       for worker in (self._inv_worker, self._line_worker))
@@ -1669,8 +1660,8 @@ class EMProcessingModule(BaseModule):
         labels = [temcompany_project.describe_project(item["path"])
                   for item in candidates]
         choice, accepted = QInputDialog.getItem(
-            self, "Select TEMcompany project",
-            f"{folder.name} holds {len(candidates)} projects:",
+            self, QCoreApplication.translate("PHGX", "Select TEMcompany project"),
+            QCoreApplication.translate("PHGX", "{0} holds {1} projects:").format(folder.name, len(candidates)),
             labels, 0, False)
         if not accepted:
             return None
@@ -1684,7 +1675,7 @@ class EMProcessingModule(BaseModule):
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
         if self._data_format.currentText() in _TEM_FORMATS:
-            selected = select_directory(self, "Load EM project folder", Path.cwd())
+            selected = select_directory(self, QCoreApplication.translate("PHGX", "Load EM project folder"), Path.cwd())
             if selected is None:
                 return
             chosen = self._choose_project_file(selected)
@@ -1692,7 +1683,7 @@ class EMProcessingModule(BaseModule):
                 return
             path = str(chosen)
         else:
-            path, _ = QFileDialog.getOpenFileName(self, "Load EM data", "", _FILE_FILTER)
+            path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load EM data"), "", _FILE_FILTER)
         if not path:
             return
         if em_data.is_ttem_source(path):
@@ -1789,7 +1780,7 @@ class EMProcessingModule(BaseModule):
             # An example's own count is "all" of it; left as a number it
             # would cap the next survey loaded after it.
             self._line_max.setValue(0)
-        self._example_note.setText(f"Example: {spec['note']}")
+        self._example_note.setText(QCoreApplication.translate("PHGX", "Example: {0}").format(spec['note']))
         self._example_note.setVisible(True)
         channels = (
             sum(np.asarray(item["times"]).size
@@ -1920,7 +1911,7 @@ class EMProcessingModule(BaseModule):
         except Exception as exc:  # noqa: BLE001
             self._data = None
             self.log(f"Could not load sounding: {exc}", "error")
-            self._info.setText(f"Load failed: {exc}")
+            self._info.setText(QCoreApplication.translate("PHGX", "Load failed: {0}").format(exc))
             return
         self._loaded_key = key
         if int(self._data.get("n_soundings", 1)) > 1:
@@ -1952,7 +1943,7 @@ class EMProcessingModule(BaseModule):
             # A new file invalidates any previously loaded per-sounding geometry.
             self._geom_positions = None; self._geom_heights = None
             self._geom_x = None; self._geom_y = None
-            self._geom_info.setText("Geometry: uniform spacing.")
+            self._geom_info.setText(QCoreApplication.translate("PHGX", "Geometry: uniform spacing."))
             if is_temcompany:
                 self._apply_temcompany_metadata()
             elif n_snd > 1:
@@ -1965,8 +1956,7 @@ class EMProcessingModule(BaseModule):
         format_txt = str(self._data.get("source_format", self._method.currentText()))
         moment_txt = f", {self._data.get('tem_moment')}" if is_temcompany else ""
         self._info.setText(
-            f"{self._source_path.name}<br>{n} enabled channels "
-            f"({format_txt}{moment_txt}, {kind}){snd_txt}")
+            QCoreApplication.translate("PHGX", "{0}<br>{1} enabled channels ({2}{3}, {4}){5}").format(self._source_path.name, n, format_txt, moment_txt, kind, snd_txt))
         self.log(f"Loaded sounding {self._source_path.name}{snd_txt}", "success")
         self._register_observed_resource()
         self._update_run_scope()
@@ -1986,7 +1976,7 @@ class EMProcessingModule(BaseModule):
             (self._data or {}).get("line_numbers", []), dtype=int).ravel()
         self._line_pick.blockSignals(True)
         self._line_pick.clear()
-        self._line_pick.addItem("All lines", None)
+        self._line_pick.addItem(QCoreApplication.translate("PHGX", "All lines"), None)
         for value in sorted(set(numbers.tolist())):
             count = int(np.count_nonzero(numbers == value))
             self._line_pick.addItem("Line %d  (%d soundings)" % (value, count),
@@ -2049,7 +2039,7 @@ class EMProcessingModule(BaseModule):
         if scope is None:
             self._run_scope.setVisible(False)
             return
-        self._run_scope.setText(self._scope_text(scope))
+        self._run_scope.setText(i18n.tr(self._scope_text(scope)))
         theme.set_tone(self._run_scope,
                        "hint" if scope["count"] >= scope["available"] else "warn")
         self._run_scope.setVisible(True)
@@ -2173,8 +2163,7 @@ class EMProcessingModule(BaseModule):
         protocol_note = (f", protocol {protocol['protocol_file']}"
                          if protocol.get("protocol_file") else "")
         self._geom_info.setText(
-            f"Geometry (TEMcompany): {n} soundings, {span:.1f} m path, "
-            f"{crs}{protocol_note}.")
+            QCoreApplication.translate("PHGX", "Geometry (TEMcompany): {0} soundings, {1:.1f} m path, {2}{3}.").format(n, span, crs, protocol_note))
         self.log(
             "Applied TEMcompany geometry and system settings "
             f"(loop radius {self._src_radius.value():.3f} m, "
@@ -2192,18 +2181,12 @@ class EMProcessingModule(BaseModule):
                     tib = float(first_filter.get("tib_cutoff_hz", 0.0)) / 1e3
                     order = int(first_filter.get("tib_order", 0))
                     self._system_note.setText(
-                        f"Applied {Path(calibration['gex_path']).name} and "
-                        f"{Path(calibration['tfi_path']).name}. Geometry, waveform, gates, "
-                        "import FIR, and the GEX analog response are active in both the "
-                        f"SimPEG forward response and Jacobian (receiver 2-pole {receiver:g} "
-                        f"kHz; TiB {order}-pole {tib:g} kHz)."
+                        QCoreApplication.translate("PHGX", "Applied {0} and {1}. Geometry, waveform, gates, import FIR, and the GEX analog response are active in both the SimPEG forward response and Jacobian (receiver 2-pole {2:g} kHz; TiB {3}-pole {4:g} kHz).").format(Path(calibration['gex_path']).name, Path(calibration['tfi_path']).name, receiver, order, tib)
                     )
                     self._system_note.setStyleSheet("color:#2f6f3e; font-size:8pt;")
                 else:
                     self._system_note.setText(
-                        f"Applied {Path(calibration['gex_path']).name} and "
-                        f"{Path(calibration['tfi_path']).name}, but the GEX has no supported "
-                        "RxCoilLPFilter/TiBLowPassFilter definition."
+                        QCoreApplication.translate("PHGX", "Applied {0} and {1}, but the GEX has no supported RxCoilLPFilter/TiBLowPassFilter definition.").format(Path(calibration['gex_path']).name, Path(calibration['tfi_path']).name)
                     )
                     self._system_note.setStyleSheet("color:#9b5a00; font-size:8pt;")
             else:
@@ -2212,8 +2195,7 @@ class EMProcessingModule(BaseModule):
                     if not calibration.get(key)
                 )
                 self._system_note.setText(
-                    f"Missing {missing}. Area, Tx–Rx separation and height below are "
-                    "active, but full instrument calibration is incomplete."
+                    QCoreApplication.translate("PHGX", "Missing {0}. Area, Tx–Rx separation and height below are active, but full instrument calibration is incomplete.").format(missing)
                 )
                 self._system_note.setStyleSheet("color:#9b5a00; font-size:8pt;")
             complete = (
@@ -2248,14 +2230,14 @@ class EMProcessingModule(BaseModule):
         self._geom_heights = g["heights"] if g["has_heights"] else None
         self._geom_x = g.get("x"); self._geom_y = g.get("y")
         extra = (" + height" if g["has_heights"] else "") + (" + map x,y" if g.get("has_xy") else "")
-        self._geom_info.setText(f"Geometry (auto): {found.name}, {g['n']} soundings{extra}.")
+        self._geom_info.setText(QCoreApplication.translate("PHGX", "Geometry (auto): {0}, {1} soundings{2}.").format(found.name, g['n'], extra))
         self.log(f"Auto-loaded companion geometry {found.name}{extra}.", "info")
 
     def _load_geometry(self) -> None:
         if self._source_path is None:
             self.log("Load the sounding file first.", "warn")
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Load line geometry", "", _FILE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load line geometry"), "", _FILE_FILTER)
         if not path:
             return
         try:
@@ -2272,7 +2254,7 @@ class EMProcessingModule(BaseModule):
             extra += " + height"
         if g.get("has_xy"):
             extra += " + map x,y"
-        self._geom_info.setText(f"Geometry: {g['n']} soundings, {span:.0f} m span{extra}.")
+        self._geom_info.setText(QCoreApplication.translate("PHGX", "Geometry: {0} soundings, {1:.0f} m span{2}.").format(g['n'], span, extra))
         self._register_observed_resource()
         self.log(f"Loaded line geometry: {g['n']} positions{extra}.", "success")
 
@@ -2330,7 +2312,7 @@ class EMProcessingModule(BaseModule):
                          f"{self._data_scale.value():g}", "warn")
         self._inv_busy = BusyStateController([self._inv_btn])
         self._inv_busy.start()
-        self._inv_btn.setText("Inverting…")
+        self._inv_btn.setText(QCoreApplication.translate("PHGX", "Inverting…"))
         self._inv_progress.setVisible(True); self._inv_progress.setRange(0, 0)
         if n_snd > 1:
             self._start_line(method)
@@ -2550,7 +2532,7 @@ class EMProcessingModule(BaseModule):
         if self._inv_busy is not None:
             self._inv_busy.finish()
             self._inv_busy = None
-        self._inv_btn.setText("Run inversion")
+        self._inv_btn.setText(QCoreApplication.translate("PHGX", "Run inversion"))
         self._inv_progress.setVisible(False)
         self._refresh_backend_state()
 
@@ -2892,15 +2874,15 @@ class EMProcessingModule(BaseModule):
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.5, 4.4))
             ax1.plot(result["resistivity_step"], result["depth"], "-", color="tab:red")
             ax1.invert_yaxis(); ax1.set_xscale("log")
-            ax1.set_xlabel("Resistivity (Ω·m)"); set_length_axis(ax1, "y", "Depth")
-            ax1.set_title("Recovered model"); ax1.grid(True, which="both", alpha=0.3)
+            ax1.set_xlabel(QCoreApplication.translate("PHGX", "Resistivity (Ω·m)")); set_length_axis(ax1, "y", "Depth")
+            ax1.set_title(QCoreApplication.translate("PHGX", "Recovered model")); ax1.grid(True, which="both", alpha=0.3)
             if result["method"] == "FDEM":
                 f = result["frequencies"]
                 ax2.plot(f, result["obs_real"], "o", ms=4, color="tab:blue", label="obs real")
                 ax2.plot(f, result["pred_real"], "-", color="tab:blue", label="pred real")
                 ax2.plot(f, result["obs_imag"], "s", ms=4, color="tab:green", label="obs imag")
                 ax2.plot(f, result["pred_imag"], "-", color="tab:green", label="pred imag")
-                ax2.set_xlabel("Frequency (Hz)")
+                ax2.set_xlabel(QCoreApplication.translate("PHGX", "Frequency (Hz)"))
             else:
                 if result.get("joint_moments"):
                     for index, name in enumerate(("LM", "HM")):
@@ -2918,8 +2900,8 @@ class EMProcessingModule(BaseModule):
                              color="tab:blue", label="obs")
                     ax2.plot(t, result["pred"], "-",
                              color="tab:blue", label="pred")
-                ax2.set_xlabel("Time (s)")
-            ax2.set_xscale("log"); ax2.set_title(f"Data fit (chi2={result['chi2']:.2f})")
+                ax2.set_xlabel(QCoreApplication.translate("PHGX", "Time (s)"))
+            ax2.set_xscale("log"); ax2.set_title(QCoreApplication.translate("PHGX", "Data fit (chi2={0:.2f})").format(result['chi2']))
             ax2.grid(True, which="both", alpha=0.3); ax2.legend(fontsize=8, frameon=False)
             fig.tight_layout()
             # A redraw in another length unit replaces the figure on screen, not
@@ -2941,7 +2923,7 @@ class EMProcessingModule(BaseModule):
             self.log("Run an inversion first.", "warn")
             return
         folder = select_directory(
-            self, "Export recovered model to folder",
+            self, QCoreApplication.translate("PHGX", "Export recovered model to folder"),
             self.state.output_dir or Path.cwd(),
         )
         if not folder:
@@ -2976,7 +2958,7 @@ class EMProcessingModule(BaseModule):
         except Exception:  # noqa: BLE001
             _logger.debug("EMProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "EM sounding — FDEM: frequency, real, imag · TDEM: time, response."
-        dlg = QDialog(self); dlg.setWindowTitle("EM sounding input format")
+        dlg = QDialog(self); dlg.setWindowTitle(QCoreApplication.translate("PHGX", "EM sounding input format"))
         dlg.resize(720, 600); lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
         try:
@@ -2985,7 +2967,7 @@ class EMProcessingModule(BaseModule):
             _logger.debug("EMProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)
+        close = QPushButton(QCoreApplication.translate("PHGX", "Close")); close.clicked.connect(dlg.accept); lay.addWidget(close)
         dlg.exec()
 
     # -- AQUAH agent interface ----------------------------------------------
@@ -3403,7 +3385,7 @@ class EMProcessingModule(BaseModule):
         self._geom_x = g.get("x"); self._geom_y = g.get("y")
         extra = (" + height" if g["has_heights"] else "") + (" + map x,y" if g.get("has_xy") else "")
         span = float(g["positions"][-1] - g["positions"][0]) if g["n"] else 0.0
-        self._geom_info.setText(f"Geometry: {g['n']} soundings, {span:.0f} m span{extra}.")
+        self._geom_info.setText(QCoreApplication.translate("PHGX", "Geometry: {0} soundings, {1:.0f} m span{2}.").format(g['n'], span, extra))
         self._register_observed_resource()
         return {"status": "ok", "n": g["n"], "has_heights": g["has_heights"],
                 "has_xy": bool(g.get("has_xy"))}

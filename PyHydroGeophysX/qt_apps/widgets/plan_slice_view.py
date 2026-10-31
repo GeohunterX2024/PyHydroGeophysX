@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
 
 from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
@@ -23,6 +23,7 @@ from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout
 from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
 from PyHydroGeophysX.visualization.axis_units import set_length_axis, to_display_length
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class PlanSliceView(QWidget):
         layout.addWidget(bar)
         layout.addWidget(self._canvas, stretch=1)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Depth"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Depth")))
         self._z = QSlider(Qt.Horizontal)
         # A drag emits a value per mouse move. Each relabels the depth at once
         # and asks for a drawing; the requests of one turn of the event loop
@@ -162,7 +163,7 @@ class PlanSliceView(QWidget):
     def _on_depth_changed(self, _value: int = 0) -> None:
         if self._depths is not None and self._depths.size:
             j = min(max(self._z.value(), 0), self._depths.size - 1)
-            self._z_label.setText(self._depth_text(j))
+            self._z_label.setText(i18n.tr(self._depth_text(j)))
         if self._z.isSliderDown():
             self._pending_draw.request()
         else:
@@ -251,7 +252,7 @@ class PlanSliceView(QWidget):
         # with the depth. The full drawing puts both back.
         drawn["scatter"].set_edgecolor("none")
         self._fig.set_layout_engine(None)
-        drawn["axes"].set_title(f"Resistivity at depth {self._depth_text(j)}")
+        drawn["axes"].set_title(QCoreApplication.translate("PHGX", "Resistivity at depth {0}").format(self._depth_text(j)))
         self._canvas.draw_idle()
         return True
 
@@ -283,8 +284,8 @@ class PlanSliceView(QWidget):
                 ha="center", va="center", transform=ax.transAxes,
             )
             self._label_axes(ax)
-            ax.set_title(f"Depth {self._depth_text(j)}")
-            self._z_label.setText(self._depth_text(j))
+            ax.set_title(QCoreApplication.translate("PHGX", "Depth {0}").format(self._depth_text(j)))
+            self._z_label.setText(i18n.tr(self._depth_text(j)))
             self._canvas.draw_idle()
             self._toolbar.update()      # Home and Back go to the new axes
             return
@@ -304,7 +305,7 @@ class PlanSliceView(QWidget):
         if mappable is None:
             mappable = sc
         self._label_axes(ax)
-        ax.set_title(f"Resistivity at depth {self._depth_text(j)}")
+        ax.set_title(QCoreApplication.translate("PHGX", "Resistivity at depth {0}").format(self._depth_text(j)))
         if not collinear:
             ax.set_aspect("equal", "box")
         ax.grid(True, alpha=0.3)
@@ -317,7 +318,7 @@ class PlanSliceView(QWidget):
             bar.ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0, 2.0, 5.0)))
             bar.ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
             bar.ax.yaxis.set_minor_formatter(FuncFormatter(lambda _v, _p: ""))
-        self._z_label.setText(self._depth_text(j))
+        self._z_label.setText(i18n.tr(self._depth_text(j)))
         self._drawn = {"axes": ax, "scatter": sc, "surface": surface}
         self._canvas.draw_idle()
         self._toolbar.update()          # Home and Back go to the new axes

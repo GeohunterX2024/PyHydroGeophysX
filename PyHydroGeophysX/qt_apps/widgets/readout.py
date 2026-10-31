@@ -18,6 +18,7 @@ from typing import Any, Optional, Tuple
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QHBoxLayout, QSizePolicy, QWidget
+from PyHydroGeophysX.qt_apps import i18n
 
 __all__ = ["ReadoutLabel", "navigation_toolbar", "toolbar_row"]
 
@@ -39,7 +40,7 @@ class ReadoutLabel(QWidget):
         self._alignment = alignment
         self._sample = str(sample if sample is not None else text)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.setText(text)
+        self.setText(i18n.tr(text))
 
     def text(self) -> str:
         return self._text
@@ -85,7 +86,7 @@ def _toolbar_class() -> Any:
             def set_message(self, s: str) -> None:
                 readout = getattr(self, "readout", None)
                 if readout is not None:
-                    readout.setText(s)
+                    readout.setText(i18n.tr(s))
 
         _TOOLBAR_CLASS = ReadoutToolbar
     return _TOOLBAR_CLASS

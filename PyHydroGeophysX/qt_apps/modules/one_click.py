@@ -2,7 +2,7 @@
 from pathlib import Path
 import time
 
-from PySide6.QtCore import Qt, QUrl, Signal, QTimer, QElapsedTimer
+from PySide6.QtCore import QCoreApplication, Qt, QUrl, Signal, QTimer, QElapsedTimer
 from PySide6.QtGui import QDesktopServices, QImage, QTextCursor, QTextDocument
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QPlainTextEdit, QProgressBar,
@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QHeaderView)
 
 from .base import BaseModule
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.agents import assistants as assistant_registry
 from PyHydroGeophysX.qt_apps.agent.one_click_worker import OneClickWorker
 from PyHydroGeophysX.qt_apps.widgets import ai_presence as presence
@@ -313,11 +313,11 @@ class OneClickModule(BaseModule):
         self.goal.setWordWrap(True)
         form.addWidget(self.goal)
         folder_row = QHBoxLayout()
-        choose_folder = QPushButton('Choose data folder · AI classification…')
+        choose_folder = QPushButton(QCoreApplication.translate("PHGX", 'Choose data folder · AI classification…'))
         choose_folder.clicked.connect(self._choose_folder)
         folder_row.addWidget(choose_folder)
         self._choose_folder_btn = choose_folder
-        self.folder_label = QLabel('No data folder selected')
+        self.folder_label = QLabel(QCoreApplication.translate("PHGX", 'No data folder selected'))
         self.folder_label.setWordWrap(True)
         folder_row.addWidget(self.folder_label, 1)
         form.addLayout(folder_row)
@@ -325,7 +325,7 @@ class OneClickModule(BaseModule):
         self._folder_note.setWordWrap(True)
         form.addWidget(self._folder_note)
         self.catalog_table = QTableWidget(0, 4)
-        self.catalog_table.setHorizontalHeaderLabels(['File', 'Role (editable)', 'Confidence', 'Evidence'])
+        self.catalog_table.setHorizontalHeaderLabels([QCoreApplication.translate("PHGX", 'File'), QCoreApplication.translate("PHGX", 'Role (editable)'), QCoreApplication.translate("PHGX", 'Confidence'), QCoreApplication.translate("PHGX", 'Evidence')])
         self.catalog_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.catalog_table.horizontalHeader().setStretchLastSection(True)
         self.catalog_table.setVisible(False)
@@ -334,21 +334,21 @@ class OneClickModule(BaseModule):
         # Choosing a folder and letting the assistant classify it is how this is meant
         # to be used, but classification needs a model - without an API key it
         # cannot run at all - and files are not always gathered in one folder.
-        manual = QLabel('<b>Or add files yourself</b><br>'
+        manual = QLabel(QCoreApplication.translate("PHGX", '<b>Or add files yourself</b><br>'
                         'For data spread across several folders, or when no AI '
                         'model is configured (folder classification needs one). '
-                        'Pick what the file is, then Add data.')
+                        'Pick what the file is, then Add data.'))
         manual.setWordWrap(True)
         form.addWidget(manual)
         row = QHBoxLayout()
         # What the files can be is the assistant's to say (Assistant.input_roles).
         self.role = QComboBox()
         row.addWidget(self.role)
-        add = QPushButton('Add data…')
+        add = QPushButton(QCoreApplication.translate("PHGX", 'Add data…'))
         self._add_input_button = add
         add.clicked.connect(self._choose_files)
         row.addWidget(add)
-        remove = QPushButton('Remove selected')
+        remove = QPushButton(QCoreApplication.translate("PHGX", 'Remove selected'))
         self._remove_input_button = remove
         remove.clicked.connect(self._remove_input)
         row.addWidget(remove)
@@ -358,13 +358,13 @@ class OneClickModule(BaseModule):
         order = QHBoxLayout()
         self._ordered_buttons = []
         for label, offset in [('Move survey up', -1), ('Move survey down', 1)]:
-            button = QPushButton(label)
+            button = QPushButton(i18n.tr(label))
             self._ordered_buttons.append(button)
             button.clicked.connect(lambda checked=False, delta=offset: self._move_survey(delta))
             order.addWidget(button)
         form.addLayout(order)
         form.addStretch(1)
-        note = QLabel('Time-lapse surveys run in the displayed order; select a survey and move it up or down to reorder. Your request and workflow context are sent to the selected AI provider.')
+        note = QLabel(QCoreApplication.translate("PHGX", 'Time-lapse surveys run in the displayed order; select a survey and move it up or down to reorder. Your request and workflow context are sent to the selected AI provider.'))
         note.setWordWrap(True)
         form.addWidget(note)
         self._generic_intro = [choose_folder, self.folder_label, self._folder_note, manual, note]
@@ -373,7 +373,7 @@ class OneClickModule(BaseModule):
         scroll.setWidget(setup)
         self._data_tab = scroll
         scroll.setAlignment(Qt.AlignHCenter)
-        self.tabs.addTab(scroll, '1 · Data')
+        self.tabs.addTab(scroll, QCoreApplication.translate("PHGX", '1 · Data'))
         # The run as the assistant sees it: one card per step it decided on, with its
         # reason, its module, its time and what it found. This is where a run
         # is watched; the raw event log stays in its own tab.
@@ -419,7 +419,7 @@ class OneClickModule(BaseModule):
         self.steer.noteSent.connect(self._send_note)
         self.steer.pauseRequested.connect(self._request_pause)
         live_layout.addWidget(self.steer)
-        self.tabs.addTab(self._live_tab, '2 · Live')
+        self.tabs.addTab(self._live_tab, QCoreApplication.translate("PHGX", '2 · Live'))
         self.report = _FittedReportBrowser()
         self.report.setOpenLinks(False)
         self.report.anchorClicked.connect(self._open_link)
@@ -434,19 +434,19 @@ class OneClickModule(BaseModule):
         self.result_summary.hide()
         self._result_layout.addWidget(self.result_summary)
         self._result_layout.addWidget(self.report, 1)
-        self.tabs.addTab(self._result_page, '3 · Results && report')
+        self.tabs.addTab(self._result_page, QCoreApplication.translate("PHGX", '3 · Results && report'))
         self.files = QListWidget()
         self.files.itemDoubleClicked.connect(lambda item: self._preview(item.data(Qt.UserRole)))
-        self.tabs.addTab(self.files, 'Output files')
+        self.tabs.addTab(self.files, QCoreApplication.translate("PHGX", 'Output files'))
         self.details = QPlainTextEdit()
         self.details.setReadOnly(True)
         self.details.document().setMaximumBlockCount(3000)
-        self.tabs.addTab(self.details, 'Raw log')
+        self.tabs.addTab(self.details, QCoreApplication.translate("PHGX", 'Raw log'))
         layout.addWidget(self.tabs, 1)
-        self.status = QLabel('Ready · Select data and describe your goal.')
+        self.status = QLabel(QCoreApplication.translate("PHGX", 'Ready · Select data and describe your goal.'))
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
-        self.live_detail = QLabel('Actual workflow events will appear here.')
+        self.live_detail = QLabel(QCoreApplication.translate("PHGX", 'Actual workflow events will appear here.'))
         self.live_detail.setWordWrap(True)
         theme.set_tone(self.live_detail, 'mono')
         layout.addWidget(self.live_detail)
@@ -465,11 +465,11 @@ class OneClickModule(BaseModule):
         # and figures on this page, and a window that keeps switching panels
         # under the user is the worse way to show a run. Available as an option
         # for anyone who wants to see each module's own panel as well.
-        self.follow = QCheckBox('Also bring each module to the front as it runs')
+        self.follow = QCheckBox(QCoreApplication.translate("PHGX", 'Also bring each module to the front as it runs'))
         self.follow.setChecked(False)
         self.follow.setToolTip(
-            'The run is followed in the Live tab on this page. Tick this to have '
-            'the studio also switch to the module doing each step.')
+            QCoreApplication.translate("PHGX", 'The run is followed in the Live tab on this page. Tick this to have '
+            'the studio also switch to the module doing each step.'))
         self._follow_enabled = False
         self._current_followed = None
         self.follow.toggled.connect(self._on_follow_toggled)
@@ -479,10 +479,10 @@ class OneClickModule(BaseModule):
         # list because this is where the approval appears, and because a run is
         # always started from chat - a button here could not start one, since
         # the chat clears the API key from this page as soon as it has used it.
-        self.step_through = QCheckBox('Approve each step before it runs')
+        self.step_through = QCheckBox(QCoreApplication.translate("PHGX", 'Approve each step before it runs'))
         self.step_through.setToolTip(
-            'Pause before every step so you can approve it, skip it, or stop '
-            'the run. The steps and their order are the same either way.')
+            QCoreApplication.translate("PHGX", 'Pause before every step so you can approve it, skip it, or stop '
+            'the run. The steps and their order are the same either way.'))
         layout.addWidget(self.step_through)
         # Where the run stops and waits: for approval of the next step, or for
         # an answer to something it cannot decide. Hidden until it is needed,
@@ -499,31 +499,31 @@ class OneClickModule(BaseModule):
         layout.addWidget(self.pause_box)
         actions = QHBoxLayout()
         actions.addStretch(1)
-        self.run = QPushButton('Run without AI')
-        self.run.setToolTip('Run numerical processing and inspect the evidence without contacting an AI provider.')
+        self.run = QPushButton(QCoreApplication.translate("PHGX", 'Run without AI'))
+        self.run.setToolTip(QCoreApplication.translate("PHGX", 'Run numerical processing and inspect the evidence without contacting an AI provider.'))
         self.run.clicked.connect(self._start_offline)
-        self.stop = QPushButton('Stop')
+        self.stop = QPushButton(QCoreApplication.translate("PHGX", 'Stop'))
         self.stop.setEnabled(False)
         self.stop.clicked.connect(self._cancel)
-        self.folder = QPushButton('Open output folder')
+        self.folder = QPushButton(QCoreApplication.translate("PHGX", 'Open output folder'))
         self.folder.setEnabled(False)
         self.folder.clicked.connect(lambda: self._open_path(self._output))
-        self.replay_button = QPushButton('Replay a run…')
-        self.replay_button.setToolTip('Watch a finished run again, from the live_replay.json '
-                                      'in its output folder. Nothing is recomputed.')
+        self.replay_button = QPushButton(QCoreApplication.translate("PHGX", 'Replay a run…'))
+        self.replay_button.setToolTip(QCoreApplication.translate("PHGX", 'Watch a finished run again, from the live_replay.json '
+                                      'in its output folder. Nothing is recomputed.'))
         self.replay_button.clicked.connect(self._choose_replay)
         self.run.hide()
         for button in (self.run, self.stop, self.folder, self.replay_button):
             actions.addWidget(button)
         layout.addLayout(actions)
         result_actions = QHBoxLayout()
-        self.save_result = QPushButton('Save this run to Project')
+        self.save_result = QPushButton(QCoreApplication.translate("PHGX", 'Save this run to Project'))
         self.save_result.clicked.connect(self._save_current_run)
-        self.view_result = QPushButton('View models && compare runs')
+        self.view_result = QPushButton(QCoreApplication.translate("PHGX", 'View models && compare runs'))
         self.view_result.clicked.connect(lambda: self.viewRunRequested.emit(self._current_run_id or ''))
-        self.view_fit = QPushButton('View data fit')
+        self.view_fit = QPushButton(QCoreApplication.translate("PHGX", 'View data fit'))
         self.view_fit.clicked.connect(lambda: self.viewArtifactRequested.emit(self._current_run_id or '', 'fit'))
-        self.read_report = QPushButton('Read interpretation')
+        self.read_report = QPushButton(QCoreApplication.translate("PHGX", 'Read interpretation'))
         self.read_report.clicked.connect(self._read_current_report)
         self.view_result.setProperty('primary', True)
         self.result_state = QLabel()
@@ -544,10 +544,10 @@ class OneClickModule(BaseModule):
         self.next_step = QWidget()
         next_layout = QHBoxLayout(self.next_step)
         next_layout.setContentsMargins(0, 0, 0, 0)
-        self.continue_result = QPushButton('Interpret these models…')
+        self.continue_result = QPushButton(QCoreApplication.translate("PHGX", 'Interpret these models…'))
         self.continue_result.clicked.connect(self._prepare_continuation)
         next_layout.addWidget(self.continue_result)
-        next_note = QLabel('Reuse the completed numerical models. Review the next task before starting.')
+        next_note = QLabel(QCoreApplication.translate("PHGX", 'Reuse the completed numerical models. Review the next task before starting.'))
         self._next_note = next_note
         next_note.setWordWrap(True)
         next_layout.addWidget(next_note, 1)
@@ -616,13 +616,12 @@ class OneClickModule(BaseModule):
         self.run.setVisible(getattr(assistant, 'offline_workflow', False))
         name = assistant.name
         self._title_label.setText(
-            f'<h2>Workflow</h2>Data, progress, results and report · {name} '
-            f'({assistant.domain}) works from the assistant panel on the right')
+            QCoreApplication.translate("PHGX", "<h2>Workflow</h2>Data, progress, results and report · {0} ({1}) works from the assistant panel on the right").format(name, assistant.domain))
         if not self._request_text:
-            self.goal.setText(self._goal_hint())
+            self.goal.setText(i18n.tr(self._goal_hint()))
         self.role.clear()
         for label, key in assistant.input_roles:
-            self.role.addItem(label, key)
+            self.role.addItem(i18n.tr(label), key)
         roles = {key for _label, key in assistant.input_roles}
         dropped = [key for key in self._inputs if key not in roles]
         for key in dropped:
@@ -632,13 +631,11 @@ class OneClickModule(BaseModule):
         classify = bool(assistant.folder_classifier)
         self._choose_folder_btn.setEnabled(classify)
         self._choose_folder_btn.setToolTip(
-            '' if classify else f'{name} does not sort folders; add files below.')
+            '' if classify else QCoreApplication.translate("PHGX", "{0} does not sort folders; add files below.").format(name))
         self._folder_note.setText(
-            f'{name} scans filenames and short text previews in this folder using your '
-            'selected AI model. Review file roles below before sending “continue”. '
-            'No files are moved.' if classify else
-            f'{name} does not sort a folder for you: add each file below with its role.')
-        self.header.headline.setText(name)
+            QCoreApplication.translate("PHGX", "{0} scans filenames and short text previews in this folder using your selected AI model. Review file roles below before sending “continue”. No files are moved.").format(name) if classify else
+            QCoreApplication.translate("PHGX", "{0} does not sort a folder for you: add each file below with its role.").format(name))
+        self.header.headline.setText(i18n.tr(name))
         self.steer.set_name(name)
         self._sync_setup_task()
         self._set_compact_details(False)
@@ -657,13 +654,13 @@ class OneClickModule(BaseModule):
         self.inputs.setVisible(detailed or bool(self._inputs))
         if compact:
             self.header.hide()
-            self._title_label.setText('<h1>GeoSAGE</h1>')
-            self.tabs.setTabText(0, 'Start')
-            self.tabs.setTabText(1, 'Activity')
-            self.tabs.setTabText(2, 'Results')
-            self._add_input_button.setText('Add input…' if expanded else
-                                            'Choose configuration…' if self._workflow_setup.primary_role == 'config_file'
-                                            else 'Choose results folder…')
+            self._title_label.setText(QCoreApplication.translate("PHGX", '<h1>GeoSAGE</h1>'))
+            self.tabs.setTabText(0, QCoreApplication.translate("PHGX", 'Start'))
+            self.tabs.setTabText(1, QCoreApplication.translate("PHGX", 'Activity'))
+            self.tabs.setTabText(2, QCoreApplication.translate("PHGX", 'Results'))
+            self._add_input_button.setText(QCoreApplication.translate("PHGX", 'Add input…') if expanded else
+                                            QCoreApplication.translate("PHGX", 'Choose configuration…') if self._workflow_setup.primary_role == 'config_file'
+                                            else QCoreApplication.translate("PHGX", 'Choose results folder…'))
             self._add_input_button.setMinimumHeight(44)
             self.stop.setVisible(self._worker is not None)
             self.run.setProperty('primary', True)
@@ -671,40 +668,40 @@ class OneClickModule(BaseModule):
             self.run.style().polish(self.run)
             self.run.setMaximumWidth(200)
             self.run.setMinimumHeight(42)
-            self.view_result.setText('Explore model')
-            self.view_fit.setText('Data fit')
-            self.save_result.setText('Save')
+            self.view_result.setText(QCoreApplication.translate("PHGX", 'Explore model'))
+            self.view_fit.setText(QCoreApplication.translate("PHGX", 'Data fit'))
+            self.save_result.setText(QCoreApplication.translate("PHGX", 'Save'))
             self._next_note.hide()
             if not expanded:
                 self.role.setCurrentIndex(self.role.findData(self._workflow_setup.primary_role))
         else:
-            self._add_input_button.setText('Add data…')
+            self._add_input_button.setText(QCoreApplication.translate("PHGX", 'Add data…'))
             self.stop.show()
             self.run.setMaximumWidth(16777215)
 
     def _sync_setup_task(self):
         setup = self._workflow_setup
         if setup is None:
-            self.run.setText('Run without AI')
+            self.run.setText(QCoreApplication.translate("PHGX", 'Run without AI'))
             self.goal.show()
             return
         self.role.clear()
         for label, key in self._assistant.input_roles:
             if key in setup.allowed_roles():
-                self.role.addItem(label, key)
+                self.role.addItem(i18n.tr(label), key)
         # An existing-results task starts with its primary input, not a JSON file.
         index = self.role.findData(getattr(setup, 'primary_role', ''))
         if index >= 0:
             self.role.setCurrentIndex(index)
-        self.run.setText(setup.action_label)
-        self.run.setToolTip('Use the provider configured in Assistant settings to interpret these results.'
-                            if setup.needs_ai else 'Process locally without contacting an AI provider.')
+        self.run.setText(i18n.tr(setup.action_label))
+        self.run.setToolTip(QCoreApplication.translate("PHGX", 'Use the provider configured in Assistant settings to interpret these results.')
+                            if setup.needs_ai else QCoreApplication.translate("PHGX", 'Process locally without contacting an AI provider.'))
         if self._worker is None:
-            self.status.setText('Choose your inputs to begin.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Choose your inputs to begin.'))
         self.goal.hide()
         self._request_text = ''
         self._refresh_inputs()
-        self._title_label.setText(f'<h2>{self._name()}</h2>Choose a task, check the inputs, then explore the results.')
+        self._title_label.setText(QCoreApplication.translate("PHGX", "<h2>{0}</h2>Choose a task, check the inputs, then explore the results.").format(self._name()))
         self._set_compact_details(bool(getattr(setup, 'options', None) and setup.options.isChecked()))
 
     def _read_current_report(self):
@@ -724,14 +721,14 @@ class OneClickModule(BaseModule):
         try:
             inputs = prepare(self._continuation_result)
         except (OSError, ValueError, KeyError, TypeError) as exc:
-            self.result_state.setText(f'Could not prepare the next task: {exc}')
+            self.result_state.setText(QCoreApplication.translate("PHGX", "Could not prepare the next task: {0}").format(exc))
             return
         self._inputs = dict(inputs)
         self._catalog_inputs = {}
         self._request_text = ''
         self._refresh_inputs()
         self.tabs.setCurrentWidget(self._data_tab)
-        self.status.setText('Existing models selected · Check the inputs and AI settings, then start when ready.')
+        self.status.setText(QCoreApplication.translate("PHGX", 'Existing models selected · Check the inputs and AI settings, then start when ready.'))
         self._presence(presence.IDLE, 'Next task ready to configure',
                        'Completed models are selected. Nothing new has started.')
         self.header.set_clock(0, 0, running=False)
@@ -739,7 +736,7 @@ class OneClickModule(BaseModule):
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
         self.elapsed_label.clear()
-        self.live_detail.setText('The previous run remains available in Results and Project history.')
+        self.live_detail.setText(QCoreApplication.translate("PHGX", 'The previous run remains available in Results and Project history.'))
 
     def _sync_result_storage(self):
         if not self._current_run_id:
@@ -747,7 +744,7 @@ class OneClickModule(BaseModule):
         store = self.state.results_store
         record = store.get_run(self._current_run_id) if store else None
         if record is None:
-            self.result_state.setText('This run is not in the current Project. Reopen its Project to view or save it.')
+            self.result_state.setText(QCoreApplication.translate("PHGX", 'This run is not in the current Project. Reopen its Project to view or save it.'))
             for button in self._result_buttons:
                 button.setEnabled(False)
             self.continue_result.setEnabled(False)
@@ -759,8 +756,8 @@ class OneClickModule(BaseModule):
         self.continue_result.setEnabled(bool(self._continuation_result) and
                                         self._continuation_assistant is self._assistant and
                                         record.status != 'running')
-        self.result_state.setText('Files are local · Not saved to Project history yet' if pending else
-                                  'Saved locally in Project history')
+        self.result_state.setText(QCoreApplication.translate("PHGX", 'Files are local · Not saved to Project history yet') if pending else
+                                  QCoreApplication.translate("PHGX", 'Saved locally in Project history'))
 
     def showEvent(self, event):  # noqa: N802 - Qt override
         super().showEvent(event)
@@ -777,13 +774,13 @@ class OneClickModule(BaseModule):
                 if self.state.on_runs_changed:
                     self.state.on_runs_changed()
             except (OSError, KeyError, RuntimeError, ValueError, TypeError) as exc:
-                self.result_state.setText(f'Could not save: {exc}. Your output files remain available.')
+                self.result_state.setText(QCoreApplication.translate("PHGX", "Could not save: {0}. Your output files remain available.").format(exc))
 
     def _choose_folder(self):
         from PyHydroGeophysX.qt_apps.widgets.project_dialogs import confirm_project_for_data
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
-        folder = QFileDialog.getExistingDirectory(self, 'Select the folder containing survey data and supporting files')
+        folder = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", 'Select the folder containing survey data and supporting files'))
         if folder:
             for key, value in self._catalog_inputs.items():
                 if self._inputs.get(key) == value:
@@ -795,8 +792,8 @@ class OneClickModule(BaseModule):
             self._catalog = None
             self.catalog_table.setRowCount(0)
             self.catalog_table.setVisible(False)
-            self.folder_label.setText(folder)
-            self.status.setText(f'Folder selected · Send your goal to {self._name()} to scan and classify files.')
+            self.folder_label.setText(i18n.tr(folder))
+            self.status.setText(QCoreApplication.translate("PHGX", "Folder selected · Send your goal to {0} to scan and classify files.").format(self._name()))
 
     def _catalog_rows(self):
         rows = []
@@ -807,7 +804,7 @@ class OneClickModule(BaseModule):
     def _tick(self):
         self._refresh_activity()
         seconds = self._elapsed.elapsed() / 1000
-        self.elapsed_label.setText(f'Running · {seconds:.0f}s elapsed · Latest backend event shown above')
+        self.elapsed_label.setText(QCoreApplication.translate("PHGX", "Running · {0:.0f}s elapsed · Latest backend event shown above").format(seconds))
         self.header.set_clock(seconds, self._steps_done(), running=True,
                               ahead=self.route.counts()[1])
         self._collect_figures()
@@ -841,11 +838,11 @@ class OneClickModule(BaseModule):
             for column, text in [(0, row['name']), (2, f"{row.get('confidence', 0):.0%}"), (3, row.get('reason', ''))]:
                 item = QTableWidgetItem(text)
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                item.setToolTip(row['path'] if column == 0 else text)
+                item.setToolTip(i18n.tr(row['path']) if column == 0 else i18n.tr(text))
                 self.catalog_table.setItem(index, column, item)
             role = QComboBox()
             for key in ROLES:
-                role.addItem(ROLE_LABELS[key], key)
+                role.addItem(i18n.tr(ROLE_LABELS[key]), key)
             role.setCurrentIndex(role.findData(row['role']))
             self.catalog_table.setCellWidget(index, 1, role)
         self.catalog_table.setVisible(True)
@@ -856,15 +853,15 @@ class OneClickModule(BaseModule):
             return
         role = self.role.currentData()
         if role.endswith('_dir'):
-            path = QFileDialog.getExistingDirectory(self, 'Select model output folder')
+            path = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", 'Select model output folder'))
             paths = [path] if path else []
         else:
-            paths, _ = QFileDialog.getOpenFileNames(self, 'Select data files')
+            paths, _ = QFileDialog.getOpenFileNames(self, QCoreApplication.translate("PHGX", 'Select data files'))
         if not paths:
             return
         problem = self._add_inputs(role, paths)
         if problem:
-            self.status.setText(problem)
+            self.status.setText(i18n.tr(problem))
 
     def _add_inputs(self, role, paths):
         """Give ``role`` these files; returns why not, or "".
@@ -935,7 +932,7 @@ class OneClickModule(BaseModule):
         """Start a new conversational goal while keeping the selected data."""
         if self._worker is None:
             self._request_text = ''
-            self.goal.setText(self._goal_hint())
+            self.goal.setText(i18n.tr(self._goal_hint()))
 
     def submit_request(self, text, settings):
         if self._worker is not None:
@@ -964,7 +961,7 @@ class OneClickModule(BaseModule):
                 return str(exc)
         if not self._inputs and not self._data_folder:
             self._ai_settings = {}
-            self.status.setText(f'Waiting for data · Add files here, then send “continue” to {self._name()}.')
+            self.status.setText(QCoreApplication.translate("PHGX", "Waiting for data · Add files here, then send “continue” to {0}.").format(self._name()))
             self.tabs.setCurrentWidget(self._data_tab)
             return 'Add your data in the Workflow page, then send “continue” here. I have kept your goal.'
         self._start(step_mode=self.step_through.isChecked())
@@ -985,7 +982,7 @@ class OneClickModule(BaseModule):
                 return
         if not self._request_text:
             self._request_text = 'Process the supplied configuration or results and summarize the numerical evidence without AI.'
-            self.goal.setText(self._request_text)
+            self.goal.setText(i18n.tr(self._request_text))
         self._start(step_mode=self.step_through.isChecked(), offline=True)
 
     def _start(self, step_mode=False, *, offline=False):
@@ -993,19 +990,19 @@ class OneClickModule(BaseModule):
             return
         request = self._request_text
         if not request or (not self._inputs and not self._data_folder):
-            self.status.setText('Describe your goal and add the data to analyze first.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Describe your goal and add the data to analyze first.'))
             return
         for value in (self._inputs.values() if self._workflow_setup is None else ()):
             for path in value if isinstance(value, list) else [value]:
                 if not Path(path).exists():
-                    self.status.setText(f'Data no longer exists: {path}')
+                    self.status.setText(QCoreApplication.translate("PHGX", "Data no longer exists: {0}").format(path))
                     return
         settings = {} if offline else self._ai_settings
         provider = settings.get('provider', 'openai')
         key = settings.get('api_key')
         from PyHydroGeophysX.llm.providers import CLI_PROVIDER_IDS
         if not key and provider not in CLI_PROVIDER_IDS and not (offline and getattr(self._assistant, 'offline_workflow', False)):
-            self.status.setText('Configure an API provider or sign in with a CLI provider in Assistant settings.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Configure an API provider or sign in with a CLI provider in Assistant settings.'))
             return
         try:
             run_label = request[:120]
@@ -1018,7 +1015,7 @@ class OneClickModule(BaseModule):
                         output_dir=str(Path(self.state.output_dir) / 'runs' / '_preflight')))
                     run_label = str(prepared.get('run_label') or run_label)
                 except (ValueError, KeyError, OSError) as exc:
-                    self.status.setText(f'Action needed · {exc}')
+                    self.status.setText(QCoreApplication.translate("PHGX", "Action needed · {0}").format(exc))
                     show_error = getattr(self._workflow_setup, 'show_error', None)
                     if callable(show_error):
                         show_error(str(exc))
@@ -1080,7 +1077,7 @@ class OneClickModule(BaseModule):
                 widget.hide()
             self.next_step.hide()
             self._continuation_result = None
-            self.status.setText('Starting · You can continue using other Studio modules.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Starting · You can continue using other Studio modules.'))
             classify = payload.get('mode') == 'classify'
             self._end_replay()
             self._recorder.start()
@@ -1200,7 +1197,7 @@ class OneClickModule(BaseModule):
         self.details.appendPlainText(f'-> note to the run: {text}')
         when = ('when it carries on' if self.steer.state() == SteerBar.PAUSED
                 else 'before its next decision')
-        self.status.setText(f'Note sent · {self._name()} reads it {when}.')
+        self.status.setText(QCoreApplication.translate("PHGX", "Note sent · {0} reads it {1}.").format(self._name(), when))
 
     def _request_pause(self, pause):
         """Hold the run before its next step, or let it carry on."""
@@ -1209,8 +1206,7 @@ class OneClickModule(BaseModule):
         if pause:
             self._worker.pause()
             self.details.appendPlainText('-> pause requested')
-            self.status.setText(f'Pausing · {self._name()} stops before its next step; '
-                                'the step running now finishes first.')
+            self.status.setText(QCoreApplication.translate("PHGX", "Pausing · {0} stops before its next step; the step running now finishes first.").format(self._name()))
         else:
             self._worker.resume()
             self.steer.set_state(SteerBar.RUNNING)
@@ -1223,7 +1219,7 @@ class OneClickModule(BaseModule):
         self.timeline.thinking(f'Paused{where}', presence.WAITING)
         self._presence(presence.WAITING, f'{self._name()} is paused{where}',
                        'Send it a note, then Resume - or Stop.')
-        self.status.setText(f'Paused · {self._name()} is waiting before its next step.')
+        self.status.setText(QCoreApplication.translate("PHGX", "Paused · {0} is waiting before its next step.").format(self._name()))
 
     def _on_notes_read(self, event):
         notes = [str(n) for n in event.get('notes') or []]
@@ -1233,7 +1229,7 @@ class OneClickModule(BaseModule):
         self.status.setText(
             (f'{self._name()} read your note' + (f' and changed {len(changes)} setting(s)'
                                                   if changes else '') + '.')
-            if heard else 'This run has no model to read notes; pause and stop still work.')
+            if heard else QCoreApplication.translate("PHGX", 'This run has no model to read notes; pause and stop still work.'))
 
     def _on_follow_toggled(self, enabled):
         self._follow_enabled = bool(enabled)
@@ -1547,7 +1543,7 @@ class OneClickModule(BaseModule):
     def _choose_replay(self):
         start = self._output or ''
         path, _ = QFileDialog.getOpenFileName(
-            self, 'Replay a run', start,
+            self, QCoreApplication.translate("PHGX", 'Replay a run'), start,
             f'Run recording ({run_replay.FILE_NAME});;JSON files (*.json)')
         if path:
             self.start_replay(path)
@@ -1559,13 +1555,13 @@ class OneClickModule(BaseModule):
         a recording. Nothing is recomputed and no model is asked anything.
         """
         if self._worker is not None:
-            self.status.setText('A run is going · Replay it once it has finished.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'A run is going · Replay it once it has finished.'))
             return False
         path = path or self._last_replay
         try:
             recording = run_replay.load(path)
         except (OSError, ValueError) as exc:
-            self.status.setText(f'Could not open the recording · {exc}')
+            self.status.setText(QCoreApplication.translate("PHGX", "Could not open the recording · {0}").format(exc))
             return False
         self._end_replay()
         self._replaying = True
@@ -1589,7 +1585,7 @@ class OneClickModule(BaseModule):
         self.replay_bar.set_playing(True)
         who = meta.get('name') or 'The assistant'
         when = f" on {meta['started']}" if meta.get('started') else ''
-        self.status.setText(f"Replaying {who}'s run{when} · nothing is recomputed.")
+        self.status.setText(QCoreApplication.translate("PHGX", "Replaying {0}'s run{1} · nothing is recomputed.").format(who, when))
         return True
 
     @staticmethod
@@ -1632,9 +1628,9 @@ class OneClickModule(BaseModule):
             index += 1
         path = folder / f'replay_frame_{index:02d}.png'
         if self._live_tab.grab(area).save(str(path)):
-            self.status.setText(f'Saved the frame · {path}')
+            self.status.setText(QCoreApplication.translate("PHGX", "Saved the frame · {0}").format(path))
         else:
-            self.status.setText(f'Could not save the frame to {folder}.')
+            self.status.setText(QCoreApplication.translate("PHGX", "Could not save the frame to {0}.").format(folder))
 
     def _end_replay(self):
         """Close the replay, leaving the run shown as it ended."""
@@ -1756,9 +1752,9 @@ class OneClickModule(BaseModule):
             return
         self.pause_label.setText('<b>Waiting for you</b><br>' + prompt)
         for option in options:
-            button = QPushButton(str(option.get('label') or option.get('id')))
+            button = QPushButton(i18n.tr(str(option.get('label') or option.get('id'))))
             if option.get('detail'):
-                button.setToolTip(str(option['detail']))
+                button.setToolTip(i18n.tr(str(option['detail'])))
             decision = str(option.get('id') or '')
             button.clicked.connect(lambda _checked=False, d=decision: self._answer(d))
             self.pause_buttons.addWidget(button)
@@ -1792,7 +1788,7 @@ class OneClickModule(BaseModule):
             return
         self._worker.answer(decision)
         self.details.appendPlainText(f'-> answered: {decision}')
-        self.status.setText(self._answered_status(step, decision))
+        self.status.setText(i18n.tr(self._answered_status(step, decision)))
         if step and decision == 'skip':
             self.timeline.step_skipped(step)
             self.route.step_done('', step, 'skipped')
@@ -1838,7 +1834,7 @@ class OneClickModule(BaseModule):
     def _on_log(self, text):
         self.details.appendPlainText(text)
         if text.strip():
-            self.live_detail.setText(text.strip()[-220:])
+            self.live_detail.setText(i18n.tr(text.strip()[-220:]))
 
     def _succeeded(self, result):
         self.next_step.hide()
@@ -1858,7 +1854,7 @@ class OneClickModule(BaseModule):
             self.awaiting_continue = True
             if result['catalog'].get('warnings'):
                 message += '\n' + '\n'.join(result['catalog']['warnings'])
-            self.status.setText(message)
+            self.status.setText(i18n.tr(message))
             self.workflowFinished.emit(message)
             return
         self.finish_persisted_run(result, 'unified')
@@ -1877,8 +1873,8 @@ class OneClickModule(BaseModule):
                 item = QListWidgetItem(str(path.relative_to(self._output)))
                 item.setData(Qt.UserRole, str(path))
                 self.files.addItem(item)
-        self.status.setText('Complete · Report and output files are ready.' if reports else
-                            'Computation complete · No report was generated; inspect Activity and output files.')
+        self.status.setText(QCoreApplication.translate("PHGX", 'Complete · Report and output files are ready.') if reports else
+                            QCoreApplication.translate("PHGX", 'Computation complete · No report was generated; inspect Activity and output files.'))
         # The page says how many things need checking and where they are; the
         # list itself goes to the assistant's conversation. Spelled out here,
         # four warnings filled the banner and the line under the report.
@@ -1886,11 +1882,9 @@ class OneClickModule(BaseModule):
         incomplete = result.get('status') == 'incomplete'
         where = 'listed in the assistant panel'
         if incomplete:
-            self.status.setText(f'Did not complete · {_count(max(1, len(warnings)), "problem")}, '
-                                f'{where}.')
+            self.status.setText(QCoreApplication.translate("PHGX", "Did not complete · {0}, {1}.").format(_count(max(1, len(warnings)), "problem"), where))
         elif warnings:
-            self.status.setText(f'Complete · {_count(len(warnings), "thing")} to check before '
-                                f'relying on the results, {where}.')
+            self.status.setText(QCoreApplication.translate("PHGX", "Complete · {0} to check before relying on the results, {1}.").format(_count(len(warnings), "thing"), where))
         self.timeline.finish()
         self._presence(presence.FAILED if incomplete else presence.WAITING if warnings else presence.DONE,
                        f'{self._name()} could not finish the run' if incomplete else
@@ -1902,13 +1896,13 @@ class OneClickModule(BaseModule):
         self._show_finish(result)
         if result.get('completion'):
             completion = result['completion']
-            self.live_detail.setText('Source files preserved · Explore the models or save this run to Project history.'
+            self.live_detail.setText(QCoreApplication.translate("PHGX", 'Source files preserved · Explore the models or save this run to Project history.')
                                      if result.get('source_files_unchanged') is True else
-                                     'Explore the available outputs or save this run to Project history.')
+                                     QCoreApplication.translate("PHGX", 'Explore the available outputs or save this run to Project history.'))
             wording = {'complete': 'Complete', 'incomplete': 'Incomplete', 'generated': 'Generated',
                        'not_run': 'Not run', 'NOT_REVIEWED': 'Not run', 'ACCEPT': 'Accepted',
                        'REVISE_REPORT': 'Changes required', 'INSUFFICIENT_EVIDENCE': 'Insufficient evidence'}
-            self.status.setText(' · '.join(f'{name.title()}: {wording.get(value, value)}' for name, value in completion.items()))
+            self.status.setText(i18n.tr(' · '.join(f'{name.title()}: {wording.get(value, value)}' for name, value in completion.items())))
             if incomplete:
                 self.status.setText('Workflow incomplete · ' + self.status.text())
             self.result_summary.setText(self.status.text())
@@ -1916,13 +1910,13 @@ class OneClickModule(BaseModule):
             figures = exports.get('figures') or {}
             self.view_result.setEnabled(bool(exports.get('model')))
             self.view_fit.setEnabled(any('data fit' in str(k).lower() for k in figures))
-            self.view_fit.setToolTip('Open the observation, prediction and residual maps.' if self.view_fit.isEnabled()
-                                     else 'No observation/prediction files are available for this run.')
+            self.view_fit.setToolTip(QCoreApplication.translate("PHGX", 'Open the observation, prediction and residual maps.') if self.view_fit.isEnabled()
+                                     else QCoreApplication.translate("PHGX", 'No observation/prediction files are available for this run.'))
             self.read_report.setEnabled(bool(markdown))
             self._result_capabilities = {button: button.isEnabled() for button in
                                          (self.view_result, self.view_fit, self.read_report)}
-            self.read_report.setText('Read interpretation' if completion.get('interpretation') == 'generated'
-                                    else 'Read numerical summary')
+            self.read_report.setText(QCoreApplication.translate("PHGX", 'Read interpretation') if completion.get('interpretation') == 'generated'
+                                    else QCoreApplication.translate("PHGX", 'Read numerical summary'))
             if result.get('continuation') and callable(getattr(self._workflow_setup, 'prepare_continuation', None)):
                 self._continuation_result = result
                 self._continuation_assistant = self._assistant
@@ -1942,7 +1936,7 @@ class OneClickModule(BaseModule):
         self._settings_pending = None
         self.progress.setRange(0, 100)
         self.fail_persisted_run(error, 'unified')
-        self.status.setText(f'Could not complete · {error}')
+        self.status.setText(QCoreApplication.translate("PHGX", "Could not complete · {0}").format(error))
         self.timeline.finish()
         self._show_finish(error=str(error))
         self._presence(presence.FAILED, f'{self._name()} could not complete the run', str(error))
@@ -1953,7 +1947,7 @@ class OneClickModule(BaseModule):
 
     def _cancel(self):
         if self._worker:
-            self.status.setText('Stopping workflow…')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Stopping workflow…'))
             self.stop.setEnabled(False)
             self._worker.cancel()
 
@@ -1969,7 +1963,7 @@ class OneClickModule(BaseModule):
             page.hide_run_activity()
         self._current_followed = None
         if self._elapsed.isValid():
-            self.elapsed_label.setText(f'Finished · {self._elapsed.elapsed() / 1000:.1f}s elapsed')
+            self.elapsed_label.setText(QCoreApplication.translate("PHGX", "Finished · {0:.1f}s elapsed").format(self._elapsed.elapsed() / 1000))
             self.header.set_clock(self._elapsed.elapsed() / 1000, self._steps_done(), running=False)
         self.timeline.finish()
         self.route.finish()
@@ -1978,7 +1972,7 @@ class OneClickModule(BaseModule):
             self._presence(presence.IDLE, f'Stopped · {self._name()} handed control back to you',
                            'Partial files remain in the output folder.')
             self.cancel_persisted_run('Stopped by user', 'unified')
-            self.status.setText('Stopped · Partial files remain in the output folder. You can edit and retry.')
+            self.status.setText(QCoreApplication.translate("PHGX", 'Stopped · Partial files remain in the output folder. You can edit and retry.'))
             self.report.setPlainText('Workflow stopped. Partial outputs may be available in the output folder.')
             self.workflowFinished.emit('Workflow stopped. Inputs are retained for retry.')
         self.steer.setVisible(False)
@@ -2023,7 +2017,7 @@ class OneClickModule(BaseModule):
             self._open_path(path)
             return
         dialog = QDialog(self)
-        dialog.setWindowTitle(Path(path).name)
+        dialog.setWindowTitle(i18n.tr(Path(path).name))
         screen = (self.screen() or dialog.screen()).availableGeometry()
         fitted = pixmap.scaled(int(screen.width() * 0.85), int(screen.height() * 0.8),
                                Qt.KeepAspectRatio, Qt.SmoothTransformation) \

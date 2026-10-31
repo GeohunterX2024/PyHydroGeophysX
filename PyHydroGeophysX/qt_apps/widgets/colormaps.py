@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
-from PySide6.QtCore import QObject, QSize, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QImage, QPainter, QPalette, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -432,8 +432,8 @@ class ColormapChooser(QWidget):
             self._reverse.setIcon(icon)
             self._reverse.setIconSize(QSize(14, 14))
         self._reverse.setToolTip(
-            "Reverse the colour map, so the colours run the other way along the "
-            "colour bar.")
+            QCoreApplication.translate("PHGX", "Reverse the colour map, so the colours run the other way along the "
+            "colour bar."))
         self._reverse.toggled.connect(self._on_user_change)
         layout.addWidget(self._reverse)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -524,7 +524,7 @@ class ColormapChooser(QWidget):
                 item.setFont(font)
                 for name in names:
                     label = display_name(name)
-                    self._combo.addItem(gradient_icon(name), label, name)
+                    self._combo.addItem(i18n.tr(gradient_icon(name)), label, name)
                     longest = max(longest, metrics.horizontalAdvance(label))
             # The closed combo is only as wide as a swatch; the list it opens
             # must still fit a swatch and a name side by side.
@@ -603,6 +603,4 @@ class ColormapChooser(QWidget):
         shown = display_name(self._current)
         default = " (this view's default)" if self._current == self._default else ""
         self._combo.setToolTip(
-            f"Colour map for {what}: {shown}{default}.\n"
-            f"Remembered for this session and shared by every view of {what}; "
-            f"a figure exported from the view uses it too.")
+            QCoreApplication.translate("PHGX", "Colour map for {0}: {1}{2}.\nRemembered for this session and shared by every view of {3}; a figure exported from the view uses it too.").format(what, shown, default, what))

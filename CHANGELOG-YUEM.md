@@ -67,6 +67,11 @@
 - Model Viewer 消费 `ModelResultV2`：8 个产出模型的工作流（ERT 单次与时移、SRT、EM 单点与测线、MT 一维与二维、重磁）运行结束时在输出目录写 `model_result.phgx.h5` 并登记为产物（转换失败只记日志，不影响运行）；Model Viewer 优先列出并用新组件 `widgets/model_result_view.py` 显示（网格、规则网格切片、层状剖面与单点曲线，多参数切换，单位入色标），覆盖度、DOI、分辨率遮罩默认开启，图下注明遮罩依据。ERT 剖面视图的“Hide below”覆盖度遮罩改为默认开启。Model Viewer 的数组、曲线、表格渲染移到 `model_viewer_render.py`，页面由 2094 行降到 1968 行。
 - 单位与坐标系 `PyHydroGeophysX/results/units.py`：轻量单位字符串注册表（不引入 pint），`require_unit`/`check_units` 校验、同量纲换算；坐标系以 WKT 加 EPSG 代码保存（如 CGCS2000 的 EPSG:4544）。
 
+### 专业化与体验（M4）
+
+- 界面中文化（`docs/yuem/i18n.md`）：own 目录 54 个界面文件中 2078 处界面文字改为 `QCoreApplication.translate`（字面量与 f-string）、455 处改为 `i18n.tr`（变量），由 `tools/yuem/i18n.py wrap` 自动改写，保留原有换行与注释；`pyside6-lupdate` 生成 `qt_apps/translations/phgx_zh_CN.ts`（2399 条，全部译出，占位符与 HTML 标签经校验），`lrelease` 编译 `.qm` 并纳入 PyInstaller spec 与 wheel。默认跟随系统语言，“视图 > 语言”可切换（下次启动生效）。日志、作为取值读回的下拉框条目、无 Qt 的报告模块保持英文。门禁新增 `i18n.py check`；GUI 测试在中文翻译下逐页构建。
+- 中文字体回退（`qt_apps/theme.py`）：PingFang SC、Hiragino Sans GB、Microsoft YaHei、Noto Sans CJK SC、Segoe UI 依次回退，只引用已安装字体，消除自检的 “missing font family” 警告；Matplotlib 同步中文字体并关闭 unicode 负号。
+
 ### 修复（可回馈上游）
 
 - 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。

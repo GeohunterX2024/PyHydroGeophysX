@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.data_processing import gpr
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     ContentWidthScrollArea,
@@ -162,8 +162,8 @@ class GPRProcessingModule(BaseModule):
         tabs = QTabWidget()
         self._vertical = QComboBox()
         self._vertical.addItems([_TIME, _DEPTH, _ELEVATION])
-        self._vertical.setToolTip("Depth and elevation use the velocity on the right; "
-                                  "elevation also needs the ground elevations.")
+        self._vertical.setToolTip(QCoreApplication.translate("PHGX", "Depth and elevation use the velocity on the right; "
+                                  "elevation also needs the ground elevations."))
         self._vertical.currentTextChanged.connect(lambda *_: self._redraw())
         self._colormap = cmaps.ColormapChooser(cmaps.GPR, "gray",
                                                shared=cmaps.colormap_settings(self.state))
@@ -177,25 +177,25 @@ class GPRProcessingModule(BaseModule):
         self._display_controls = QWidget()
         display = FlowLayout(self._display_controls, spacing=10)
         display.setContentsMargins(6, 0, 6, 4)
-        display.addWidget(group("Vertical", self._vertical))
+        display.addWidget(group(QCoreApplication.translate("PHGX", "Vertical"), self._vertical))
         display.addWidget(group(self._colormap, self._range))
         for pane in (self._data_view, self._radargram):
             pane.canvas.mpl_connect("button_press_event", self._on_radargram_click)
 
         self._trace_box = QSpinBox()
         self._trace_box.setRange(1, 1)
-        self._trace_box.setToolTip("The trace shown; clicking the radargram picks one too.")
+        self._trace_box.setToolTip(QCoreApplication.translate("PHGX", "The trace shown; clicking the radargram picks one too."))
         self._trace_box.valueChanged.connect(self._on_trace_box)
         self._trace_view = _FigurePane()
         trace_row = FlowLayout(spacing=10)
         trace_row.setContentsMargins(6, 0, 6, 4)
-        trace_row.addWidget(group("Trace", self._trace_box))
+        trace_row.addWidget(group(QCoreApplication.translate("PHGX", "Trace"), self._trace_box))
         self._trace_view.layout().addLayout(trace_row)
         self._spectrum = _FigurePane()
-        tabs.addTab(self._data_view, DATA)
-        tabs.addTab(self._radargram, RADARGRAM)
-        tabs.addTab(self._trace_view, TRACE)
-        tabs.addTab(self._spectrum, SPECTRUM)
+        tabs.addTab(self._data_view, i18n.tr(DATA))
+        tabs.addTab(self._radargram, i18n.tr(RADARGRAM))
+        tabs.addTab(self._trace_view, i18n.tr(TRACE))
+        tabs.addTab(self._spectrum, i18n.tr(SPECTRUM))
         tabs.currentChanged.connect(self._on_tab_changed)
         return tabs
 
@@ -250,96 +250,96 @@ class GPRProcessingModule(BaseModule):
         self._controls_scroll.fit_to_content()
 
     def _build_load_group(self) -> QGroupBox:
-        box = QGroupBox("Load GPR data")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Load GPR data"))
         layout = QVBoxLayout(box)
         self._source = QLineEdit()
         self._source.setReadOnly(True)
-        self._source.setPlaceholderText("No GPR line loaded")
+        self._source.setPlaceholderText(QCoreApplication.translate("PHGX", "No GPR line loaded"))
         layout.addWidget(self._source)
         row = QHBoxLayout()
-        open_btn = QPushButton("Open file…")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open file…"))
         open_btn.setProperty("primary", True)
         open_btn.setIcon(theme.icon("fa5s.folder-open", color="#ffffff"))
         open_btn.clicked.connect(self._open_file)
-        example_btn = QPushButton("Use example")
+        example_btn = QPushButton(QCoreApplication.translate("PHGX", "Use example"))
         example_btn.setIcon(theme.icon("fa5s.box-open"))
-        example_btn.setToolTip("Simulate a 100 MHz GPR line over the MODFLOW catchment model.")
+        example_btn.setToolTip(QCoreApplication.translate("PHGX", "Simulate a 100 MHz GPR line over the MODFLOW catchment model."))
         example_btn.clicked.connect(self._use_example)
         row.addWidget(open_btn, stretch=1)
         row.addWidget(example_btn, stretch=1)
         layout.addLayout(row)
-        format_btn = QPushButton("Data format")
+        format_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         format_btn.setIcon(theme.icon("fa5s.file-alt"))
         format_btn.clicked.connect(self._show_format_help)
         layout.addWidget(format_btn)
-        self._info = QLabel("No line loaded.")
+        self._info = QLabel(QCoreApplication.translate("PHGX", "No line loaded."))
         self._info.setWordWrap(True)
         layout.addWidget(self._info)
-        geometry, form = fold("Line geometry")
+        geometry, form = fold(QCoreApplication.translate("PHGX", "Line geometry"))
         self._spacing = number_box(0.05, 0.001, 100.0, 0.01, 4, " m",
                                    "Distance between traces. Change it for a line recorded by "
                                    "time, whose file has no distances: the traces are then "
                                    "spaced evenly.")
         self._spacing.setKeyboardTracking(False)
         self._spacing.valueChanged.connect(self._on_spacing_changed)
-        form.addRow("Trace spacing", self._spacing)
+        form.addRow(QCoreApplication.translate("PHGX", "Trace spacing"), self._spacing)
         self._frequency = number_box(100.0, 1.0, 5000.0, 10.0, 0, " MHz",
                                      "The antenna's centre frequency. It sets the default "
                                      "dewow window and band-pass.")
         self._frequency.setKeyboardTracking(False)
         self._frequency.valueChanged.connect(self._on_frequency_changed)
-        form.addRow("Antenna frequency", self._frequency)
+        form.addRow(QCoreApplication.translate("PHGX", "Antenna frequency"), self._frequency)
         layout.addWidget(geometry)
         return box
 
     def _build_cleanup_group(self) -> QGroupBox:
-        box = QGroupBox("Data QC / filter")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Data QC / filter"))
         form = QFormLayout(box)
-        self._dewow = QCheckBox("Dewow (remove slow drift)")
+        self._dewow = QCheckBox(QCoreApplication.translate("PHGX", "Dewow (remove slow drift)"))
         self._dewow.setChecked(True)
-        self._dewow.setToolTip("Subtracts each trace's running mean: the low-frequency "
-                               "swing a receiver adds under the first arrivals.")
-        form.addRow(self._dewow)
+        self._dewow.setToolTip(QCoreApplication.translate("PHGX", "Subtracts each trace's running mean: the low-frequency "
+                               "swing a receiver adds under the first arrivals."))
+        form.addRow(i18n.tr(self._dewow))
         self._dewow_window = number_box(30.0, 0.5, 1000.0, 1.0, 1, " ns",
                                         "About three periods of the antenna (30 ns at 100 MHz). "
                                         "A shorter window cuts into the signal.")
-        form.addRow("    Window", self._dewow_window)
+        form.addRow(QCoreApplication.translate("PHGX", "    Window"), self._dewow_window)
 
-        self._time_zero = QCheckBox("Time-zero correction")
+        self._time_zero = QCheckBox(QCoreApplication.translate("PHGX", "Time-zero correction"))
         self._time_zero.setChecked(True)
-        self._time_zero.setToolTip("Moves time zero onto the direct wave, so times and depths "
+        self._time_zero.setToolTip(QCoreApplication.translate("PHGX", "Moves time zero onto the direct wave, so times and depths "
                                    "count from the ground surface. The samples before it are "
-                                   "dropped.")
-        form.addRow(self._time_zero)
+                                   "dropped."))
+        form.addRow(i18n.tr(self._time_zero))
         self._zero_mode = QComboBox()
-        self._zero_mode.addItem("Pick automatically", "auto")
-        self._zero_mode.addItem("Type it in", "manual")
-        form.addRow("    Time zero", self._zero_mode)
+        self._zero_mode.addItem(QCoreApplication.translate("PHGX", "Pick automatically"), "auto")
+        self._zero_mode.addItem(QCoreApplication.translate("PHGX", "Type it in"), "manual")
+        form.addRow(QCoreApplication.translate("PHGX", "    Time zero"), self._zero_mode)
         self._zero_time = number_box(0.0, -1000.0, 10000.0, 0.5, 2, " ns",
                                      "The time on the record that becomes zero.")
-        form.addRow("    At", self._zero_time)
+        form.addRow(QCoreApplication.translate("PHGX", "    At"), self._zero_time)
 
-        self._bandpass = QCheckBox("Band-pass filter")
-        self._bandpass.setToolTip("Keeps the frequencies the antenna sends and removes the "
-                                  "rest. Check the band on the Spectrum view.")
-        form.addRow(self._bandpass)
+        self._bandpass = QCheckBox(QCoreApplication.translate("PHGX", "Band-pass filter"))
+        self._bandpass.setToolTip(QCoreApplication.translate("PHGX", "Keeps the frequencies the antenna sends and removes the "
+                                  "rest. Check the band on the Spectrum view."))
+        form.addRow(i18n.tr(self._bandpass))
         self._low = number_box(25.0, 0.1, 10000.0, 5.0, 1, " MHz")
-        form.addRow("    Low", self._low)
+        form.addRow(QCoreApplication.translate("PHGX", "    Low"), self._low)
         self._high = number_box(250.0, 1.0, 20000.0, 10.0, 1, " MHz")
-        form.addRow("    High", self._high)
+        form.addRow(QCoreApplication.translate("PHGX", "    High"), self._high)
 
-        self._background = QCheckBox("Background removal")
+        self._background = QCheckBox(QCoreApplication.translate("PHGX", "Background removal"))
         self._background.setChecked(True)
-        self._background.setToolTip("Subtracts the average trace: removes the antenna's "
+        self._background.setToolTip(QCoreApplication.translate("PHGX", "Subtracts the average trace: removes the antenna's "
                                     "ringing and the direct wave, which repeat on every trace. "
-                                    "It also removes flat reflectors as long as the line.")
-        form.addRow(self._background)
+                                    "It also removes flat reflectors as long as the line."))
+        form.addRow(i18n.tr(self._background))
         self._bg_window = QSpinBox()
         self._bg_window.setRange(0, 100000)
-        self._bg_window.setSpecialValueText("whole line")
-        self._bg_window.setToolTip("How many neighbouring traces are averaged. The whole line "
-                                   "is usual; a few hundred traces keep long dipping layers.")
-        form.addRow("    Average over", self._bg_window)
+        self._bg_window.setSpecialValueText(QCoreApplication.translate("PHGX", "whole line"))
+        self._bg_window.setToolTip(QCoreApplication.translate("PHGX", "How many neighbouring traces are averaged. The whole line "
+                                   "is usual; a few hundred traces keep long dipping layers."))
+        form.addRow(QCoreApplication.translate("PHGX", "    Average over"), self._bg_window)
         for check in (self._dewow, self._time_zero, self._bandpass, self._background):
             check.toggled.connect(self._on_settings_changed)
         for widget in (self._dewow_window, self._zero_time, self._low, self._high):
@@ -348,87 +348,87 @@ class GPRProcessingModule(BaseModule):
         self._zero_mode.currentIndexChanged.connect(self._on_settings_changed)
         self._bg_window.valueChanged.connect(self._on_settings_changed)
         self._zero_note = hint("")
-        form.addRow(self._zero_note)
-        form.addRow(hint("Changes update the processed radargram automatically."))
+        form.addRow(i18n.tr(self._zero_note))
+        form.addRow(i18n.tr(hint("Changes update the processed radargram automatically.")))
         return box
 
     def _build_velocity_group(self) -> QGroupBox:
-        box = QGroupBox("Velocity / depth")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Velocity / depth"))
         form = QFormLayout(box)
         self._velocity = number_box(0.1, 0.01, 0.3, 0.002, 4, " m/ns",
                                     "Radar velocity in the ground; depth = velocity x time / 2. "
                                     "Dry sand is about 0.15, wet sand 0.06, clay 0.07-0.09.")
         self._velocity.valueChanged.connect(self._on_velocity_changed)
-        form.addRow("Velocity", self._velocity)
+        form.addRow(QCoreApplication.translate("PHGX", "Velocity"), self._velocity)
         self._permittivity = number_box(9.0, 1.0, 81.0, 0.5, 2, "",
                                         "The relative permittivity the velocity stands for.")
         self._permittivity.valueChanged.connect(self._on_permittivity_changed)
-        form.addRow("Relative permittivity", self._permittivity)
-        self._pick = QPushButton("Fit a hyperbola")
+        form.addRow(QCoreApplication.translate("PHGX", "Relative permittivity"), self._permittivity)
+        self._pick = QPushButton(QCoreApplication.translate("PHGX", "Fit a hyperbola"))
         self._pick.setCheckable(True)
         self._pick.setIcon(theme.icon("fa5s.crosshairs"))
-        self._pick.setToolTip("Then click the top of a hyperbola on the radargram.")
+        self._pick.setToolTip(QCoreApplication.translate("PHGX", "Then click the top of a hyperbola on the radargram."))
         self._pick.toggled.connect(self._on_pick_toggled)
-        form.addRow(self._pick)
+        form.addRow(i18n.tr(self._pick))
         self._pick_note = hint("")
-        form.addRow(self._pick_note)
-        elevations = QPushButton("Ground elevations…")
-        elevations.setToolTip("A CSV of distance and elevation (m) along the line, for the "
-                              "Elevation view.")
+        form.addRow(i18n.tr(self._pick_note))
+        elevations = QPushButton(QCoreApplication.translate("PHGX", "Ground elevations…"))
+        elevations.setToolTip(QCoreApplication.translate("PHGX", "A CSV of distance and elevation (m) along the line, for the "
+                              "Elevation view."))
         elevations.clicked.connect(self._load_elevations)
-        form.addRow(elevations)
+        form.addRow(i18n.tr(elevations))
         self._elevation_note = hint("No ground elevations: the Elevation view is off.")
-        form.addRow(self._elevation_note)
+        form.addRow(i18n.tr(self._elevation_note))
         return box
 
     def _build_migration_group(self) -> QGroupBox:
-        box = QGroupBox("Migration")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Migration"))
         form = QFormLayout(box)
-        self._migrate = QCheckBox("F-K migration")
-        self._migrate.setToolTip("Moves each diffraction back to the point that made it, with "
+        self._migrate = QCheckBox(QCoreApplication.translate("PHGX", "F-K migration"))
+        self._migrate.setToolTip(QCoreApplication.translate("PHGX", "Moves each diffraction back to the point that made it, with "
                                  "the velocity above. Fit the velocity first: a wrong one "
-                                 "leaves smiles or frowns.")
+                                 "leaves smiles or frowns."))
         self._migrate.toggled.connect(self._on_settings_changed)
-        form.addRow(self._migrate)
-        form.addRow(hint("Uses the velocity above, the same everywhere on the line."))
+        form.addRow(i18n.tr(self._migrate))
+        form.addRow(i18n.tr(hint("Uses the velocity above, the same everywhere on the line.")))
         return box
 
     def _build_gain_group(self) -> QGroupBox:
-        box = QGroupBox("Gain")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Gain"))
         form = QFormLayout(box)
         self._gain = QComboBox()
-        self._gain.addItem("None", "none")
-        self._gain.addItem("Power of time", "tpow")
-        self._gain.addItem("Automatic gain control", "agc")
+        self._gain.addItem(QCoreApplication.translate("PHGX", "None"), "none")
+        self._gain.addItem(QCoreApplication.translate("PHGX", "Power of time"), "tpow")
+        self._gain.addItem(QCoreApplication.translate("PHGX", "Automatic gain control"), "agc")
         self._gain.setCurrentIndex(2)
-        self._gain.setToolTip("Brings up the late, weak reflections so they can be seen. "
+        self._gain.setToolTip(QCoreApplication.translate("PHGX", "Brings up the late, weak reflections so they can be seen. "
                               "Automatic gain makes everything about as strong, so amplitudes "
-                              "are no longer comparable.")
+                              "are no longer comparable."))
         self._gain.currentIndexChanged.connect(self._on_settings_changed)
-        form.addRow("Gain", self._gain)
+        form.addRow(QCoreApplication.translate("PHGX", "Gain"), self._gain)
         self._power = number_box(1.5, 0.1, 4.0, 0.1, 2, "", "Amplitude x time^power.")
-        form.addRow("    Power", self._power)
+        form.addRow(QCoreApplication.translate("PHGX", "    Power"), self._power)
         self._agc_window = number_box(25.0, 1.0, 2000.0, 5.0, 1, " ns",
                                       "Each sample is divided by the strength around it, "
                                       "over this window.")
-        form.addRow("    Window", self._agc_window)
+        form.addRow(QCoreApplication.translate("PHGX", "    Window"), self._agc_window)
         for widget in (self._power, self._agc_window):
             widget.setKeyboardTracking(False)
             widget.valueChanged.connect(self._on_settings_changed)
         return box
 
     def _build_save_group(self) -> QGroupBox:
-        box = QGroupBox("Results")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Results"))
         layout = QVBoxLayout(box)
-        self._result_btn = QPushButton("View processed radargram")
+        self._result_btn = QPushButton(QCoreApplication.translate("PHGX", "View processed radargram"))
         self._result_btn.setIcon(theme.icon("fa5s.chart-area", color="#ffffff"))
         self._result_btn.setProperty("primary", True)
         self._result_btn.clicked.connect(lambda: self._tabs.setCurrentWidget(self._radargram))
         layout.addWidget(self._result_btn)
-        self._save_btn = QPushButton("Save results…")
+        self._save_btn = QPushButton(QCoreApplication.translate("PHGX", "Save results…"))
         self._save_btn.setIcon(theme.icon("fa5s.save"))
-        self._save_btn.setToolTip("Writes the processed line (.npz), the radargram as shown "
-                                  "(.png) and the processing recipe (.json) to a folder.")
+        self._save_btn.setToolTip(QCoreApplication.translate("PHGX", "Writes the processed line (.npz), the radargram as shown "
+                                  "(.png) and the processing recipe (.json) to a folder."))
         self._save_btn.clicked.connect(lambda: self._save_results())
         self._save_btn.setEnabled(False)
         layout.addWidget(self._save_btn)
@@ -477,7 +477,7 @@ class GPRProcessingModule(BaseModule):
     def _on_settings_changed(self, *_args: Any) -> None:
         self._sync_rows()
         if self._raw is not None:
-            self._status.setText("Processing…")
+            self._status.setText(QCoreApplication.translate("PHGX", "Processing…"))
             self._debounce.trigger()
 
     def _on_velocity_changed(self, value: float) -> None:
@@ -533,7 +533,7 @@ class GPRProcessingModule(BaseModule):
         source = Path(str(self._raw.source)) if self._raw is not None else None
         start = str(source.parent if source is not None and source.is_file()
                     else self.state.output_dir or Path.cwd())
-        path, _ = QFileDialog.getOpenFileName(self, "Open a GPR line", start, gpr.FILE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Open a GPR line"), start, gpr.FILE_FILTER)
         if path:
             self._load(path)
 
@@ -571,7 +571,7 @@ class GPRProcessingModule(BaseModule):
 
     def _load_failed(self, path: str, message: str) -> None:
         self.log(f"Could not read {Path(path).name}: {message}", "error")
-        self._info.setText(f"Could not read {Path(path).name}: {message}")
+        self._info.setText(QCoreApplication.translate("PHGX", "Could not read {0}: {1}").format(Path(path).name, message))
         theme.set_tone(self._info, "error")
 
     def _example_dir(self) -> Optional[Path]:
@@ -585,7 +585,7 @@ class GPRProcessingModule(BaseModule):
             message = io_utils.missing_example_message(
                 "The MODFLOW catchment example", f"{_EXAMPLE_DATA}/Watercontent.npy")
             self.log(message, "warn")
-            self._info.setText(message)
+            self._info.setText(i18n.tr(message))
             return
         self._simulate_example(folder)
 
@@ -622,7 +622,7 @@ class GPRProcessingModule(BaseModule):
         self._range.unlock()
         source = f"{profile.instrument}: {profile.source}" if profile.instrument else profile.source
         self._source.setText(Path(str(profile.source)).name or str(profile.source))
-        self._source.setToolTip(str(profile.source))
+        self._source.setToolTip(i18n.tr(str(profile.source)))
         self._source.setCursorPosition(0)
         self._info.setText(f"{profile.instrument or 'GPR line'}: {profile.describe()}.")
         theme.set_tone(self._info, None)
@@ -642,7 +642,7 @@ class GPRProcessingModule(BaseModule):
         if self._raw is None:
             self.log("Load a GPR line first.", "warn")
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Ground elevations along the line",
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Ground elevations along the line"),
                                               str(self.state.output_dir or Path.cwd()),
                                               "Tables (*.csv *.txt *.dat);;All files (*)")
         if not path:
@@ -678,9 +678,9 @@ class GPRProcessingModule(BaseModule):
 
     def _update_elevation_note(self) -> None:
         if self._elevation() is not None:
-            self._elevation_note.setText(f"Ground elevations from {self._elevation_source}.")
+            self._elevation_note.setText(QCoreApplication.translate("PHGX", "Ground elevations from {0}.").format(self._elevation_source))
         else:
-            self._elevation_note.setText("No ground elevations: the Elevation view is off.")
+            self._elevation_note.setText(QCoreApplication.translate("PHGX", "No ground elevations: the Elevation view is off."))
 
     # -- processing -----------------------------------------------------------
     def _reprocess(self) -> None:
@@ -695,7 +695,7 @@ class GPRProcessingModule(BaseModule):
             lambda result, g=generation: self._on_processed(g, result, started))
         worker.failed.connect(lambda message, g=generation: self._on_process_failed(g, message))
         self.register_worker(worker, activity="Processing the GPR line")
-        self._status.setText("Processing…")
+        self._status.setText(QCoreApplication.translate("PHGX", "Processing…"))
         worker.start()
 
     def _on_processed(self, generation: int, result: gpr.GPRProfile, started: float) -> None:
@@ -704,7 +704,7 @@ class GPRProcessingModule(BaseModule):
         self._processed = result
         self._last_seconds = time.perf_counter() - started
         picked = [line for line in result.history if line.startswith("Time zero")]
-        self._zero_note.setText(picked[0] if picked else "")
+        self._zero_note.setText(i18n.tr(picked[0]) if picked else "")
         if picked and self._zero_mode.currentData() == "auto":
             try:
                 zero = float(picked[0].split(" at ")[1].split(" ns")[0])
@@ -714,8 +714,7 @@ class GPRProcessingModule(BaseModule):
             except (IndexError, ValueError):
                 pass
         steps = len(result.history) - len(self._raw.history)
-        self._status.setText(f"{steps} step{'s' if steps != 1 else ''} applied in "
-                             f"{self._last_seconds:.2f} s.")
+        self._status.setText(QCoreApplication.translate("PHGX", "{0} step{1} applied in {2:.2f} s.").format(steps, 's' if steps != 1 else '', self._last_seconds))
         self._save_btn.setEnabled(True)
         self._sync_tab_controls()
         theme.set_tone(self._status, "hint")
@@ -726,7 +725,7 @@ class GPRProcessingModule(BaseModule):
     def _on_process_failed(self, generation: int, message: str) -> None:
         if generation != self._generation:
             return
-        self._status.setText(f"Processing stopped: {message}")
+        self._status.setText(QCoreApplication.translate("PHGX", "Processing stopped: {0}").format(message))
         theme.set_tone(self._status, "error")
         self.log(f"GPR processing failed: {message}", "error")
 
@@ -802,13 +801,13 @@ class GPRProcessingModule(BaseModule):
         elif mode == _DEPTH:
             set_length_axis(ax, "y", "Depth", unit=unit)
         else:
-            ax.set_ylabel("Two-way time (ns)")
+            ax.set_ylabel(QCoreApplication.translate("PHGX", "Two-way time (ns)"))
         set_length_axis(ax, "x", "Distance", unit=unit)
         if pane is self._radargram:
             self._draw_hyperbola(ax, profile, mode, velocity)
         ax.axvline(x[self._trace], color=theme.DATA_COLOR, lw=0.6, alpha=0.6)
         fig.colorbar(image, ax=ax, pad=0.01, fraction=0.04, label="Amplitude")
-        ax.set_title("\n".join(textwrap.wrap(self._title(profile, mode, velocity), 90)),
+        ax.set_title(i18n.tr("\n".join(textwrap.wrap(self._title(profile, mode, velocity), 90))),
                      fontsize=9)
         fig.tight_layout()
         pane.drawn()
@@ -855,15 +854,14 @@ class GPRProcessingModule(BaseModule):
         axes = fig.subplots(2, 1, sharex=False)
         axes[0].plot(raw.time_ns, raw.data[:, j], color=theme.PALETTE["canvas_text"], lw=0.8)
         unit = length_units.current()
-        axes[0].set_title(f"Trace {j + 1} at {to_display_length(raw.positions[j], unit):.2f} "
-                          f"{unit} - as recorded", fontsize=10)
+        axes[0].set_title(QCoreApplication.translate("PHGX", "Trace {0} at {1:.2f} {2} - as recorded").format(j + 1, to_display_length(raw.positions[j], unit), unit), fontsize=10)
         if done is not None:
             jj = int(np.clip(j, 0, done.n_traces - 1))
             axes[1].plot(done.time_ns, done.data[:, jj], color=theme.DATA_COLOR, lw=0.8)
-            axes[1].set_title("Processed", fontsize=10)
+            axes[1].set_title(QCoreApplication.translate("PHGX", "Processed"), fontsize=10)
         for ax in axes:
-            ax.set_xlabel("Two-way time (ns)")
-            ax.set_ylabel("Amplitude")
+            ax.set_xlabel(QCoreApplication.translate("PHGX", "Two-way time (ns)"))
+            ax.set_ylabel(QCoreApplication.translate("PHGX", "Amplitude"))
             ax.axhline(0.0, color="#8e8e93", lw=0.5)
             ax.grid(alpha=0.3)
         fig.tight_layout()
@@ -887,8 +885,8 @@ class GPRProcessingModule(BaseModule):
                 ax.axvline(corner, color=theme.SERIES_COLORS[1], lw=1.0, ls="--")
         frequency = self._frequency.value()
         ax.set_xlim(0.0, min(top, 5.0 * frequency) if frequency > 0 else top)
-        ax.set_xlabel("Frequency (MHz)")
-        ax.set_ylabel("Amplitude (dB, each curve's peak at 0)")
+        ax.set_xlabel(QCoreApplication.translate("PHGX", "Frequency (MHz)"))
+        ax.set_ylabel(QCoreApplication.translate("PHGX", "Amplitude (dB, each curve's peak at 0)"))
         ax.set_ylim(-60.0, 3.0)
         ax.grid(alpha=0.3)
         ax.legend(loc="upper right", fontsize=9)
@@ -929,13 +927,13 @@ class GPRProcessingModule(BaseModule):
     # -- velocity picking hint ------------------------------------------------
     def _update_guide(self) -> None:
         if self._pick.isChecked() and self._apex is None:
-            self._pick_note.setText("Click the top of a hyperbola on the processed radargram.")
+            self._pick_note.setText(QCoreApplication.translate("PHGX", "Click the top of a hyperbola on the processed radargram."))
         elif self._pick.isChecked():
-            self._pick_note.setText("Adjust velocity until the dashed curve follows the "
-                                    "hyperbola, then choose Depth below the plot.")
+            self._pick_note.setText(QCoreApplication.translate("PHGX", "Adjust velocity until the dashed curve follows the "
+                                    "hyperbola, then choose Depth below the plot."))
         else:
-            self._pick_note.setText("Fit a hyperbola, then choose Depth below the plot. "
-                                    "A curve that is too narrow needs a higher velocity.")
+            self._pick_note.setText(QCoreApplication.translate("PHGX", "Fit a hyperbola, then choose Depth below the plot. "
+                                    "A curve that is too narrow needs a higher velocity."))
 
     # -- saving ---------------------------------------------------------------
     def _save_results(self, folder: Optional[str] = None) -> Optional[Path]:
@@ -943,7 +941,7 @@ class GPRProcessingModule(BaseModule):
             self.log("Load and process a GPR line first.", "warn")
             return None
         if not folder:
-            folder = select_directory(self, "Save the GPR results to folder",
+            folder = select_directory(self, QCoreApplication.translate("PHGX", "Save the GPR results to folder"),
                                       self.state.output_dir or Path.cwd())
         if not folder:
             return None
@@ -970,9 +968,9 @@ class GPRProcessingModule(BaseModule):
 
     def _show_format_help(self) -> None:
         box = QMessageBox(self)
-        box.setWindowTitle("GPR data format")
+        box.setWindowTitle(QCoreApplication.translate("PHGX", "GPR data format"))
         box.setTextFormat(Qt.RichText)
-        box.setText(_FORMAT_HELP)
+        box.setText(i18n.tr(_FORMAT_HELP))
         box.exec()
 
     # -- automatic workflow display -------------------------------------------

@@ -68,6 +68,7 @@ if [ -f .importlinter ]; then
   step "import-linter (layer contracts)" "$BIN/lint-imports" --config .importlinter
 fi
 step "ratchet metrics" "$PY" tools/yuem/metrics.py --check
+step "translations (own UI texts translatable and translated)" "$PY" tools/yuem/i18n.py check
 # CI passes the PR's base (e.g. origin/yuem/main) in PHGX_CHANGELOG_BASE.
 CHANGELOG_BASE="${PHGX_CHANGELOG_BASE-yuem/main}"
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "yuem/main" ]; then

@@ -16,6 +16,7 @@ re-deriving percentage change slightly differently.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+from PySide6.QtCore import QCoreApplication
 
 import numpy as np
 from PySide6.QtWidgets import (
@@ -97,24 +98,24 @@ class TimeLapseSeriesView(QWidget):
 
         bar = QHBoxLayout()
         self._step = QComboBox()
-        self._step.setToolTip("Which survey of the series is displayed.")
+        self._step.setToolTip(QCoreApplication.translate("PHGX", "Which survey of the series is displayed."))
         self._step.currentIndexChanged.connect(self._show_current)
         bar.addWidget(self._step, stretch=1)
         self._prev = QPushButton("◀"); self._prev.setMaximumWidth(34)
-        self._prev.setToolTip("Previous survey")
+        self._prev.setToolTip(QCoreApplication.translate("PHGX", "Previous survey"))
         self._prev.clicked.connect(lambda: self._step_by(-1))
         self._next = QPushButton("▶"); self._next.setMaximumWidth(34)
-        self._next.setToolTip("Next survey")
+        self._next.setToolTip(QCoreApplication.translate("PHGX", "Next survey"))
         self._next.clicked.connect(lambda: self._step_by(1))
         bar.addWidget(self._prev); bar.addWidget(self._next)
 
         self._mode = QComboBox()
-        self._mode.addItem("Model", "model")
+        self._mode.addItem(QCoreApplication.translate("PHGX", "Model"), "model")
         self._mode.addItem("% change from baseline", "change")
         self._mode.setToolTip(
-            "Absolute model, or its change from the first survey. The change is "
+            QCoreApplication.translate("PHGX", "Absolute model, or its change from the first survey. The change is "
             "what a monitoring survey is run to see: it cancels the static "
-            "structure both surveys share and leaves what moved.")
+            "structure both surveys share and leaves what moved."))
         self._mode.currentIndexChanged.connect(self._on_mode_changed)
         bar.addWidget(self._mode)
 

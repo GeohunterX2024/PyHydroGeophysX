@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from PySide6.QtCore import QPoint, QPointF, QRect, QSize, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QPoint, QPointF, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QConicalGradient, QPainter, QPainterPath, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QFrame, QGridLayout, QHBoxLayout, QLabel, QLayout, QPushButton, QScrollArea,
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.agents import assistants as assistant_registry
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.layout_fit import elide_label
 from PyHydroGeophysX.qt_apps.widgets.project_tree import TREE_STRUCTURE, item_icon
 
@@ -55,7 +55,7 @@ def _group_pages(group: str):
 
 
 def _label(text: str, role: str, *, wrap: bool = True) -> QLabel:
-    label = QLabel(text)
+    label = QLabel(i18n.tr(text))
     label.setObjectName(role)
     label.setTextFormat(Qt.PlainText)
     label.setWordWrap(wrap)
@@ -204,7 +204,7 @@ class _SubsurfaceIllustration(QWidget):
         super().__init__()
         self.setObjectName("HomeIllustration")
         self.setAccessibleName("Schematic of a survey above layered ground and groundwater")
-        self.setToolTip("Conceptual subsurface illustration — not measured data")
+        self.setToolTip(QCoreApplication.translate("PHGX", "Conceptual subsurface illustration — not measured data"))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.setMinimumWidth(0)
         theme.notifier().changed.connect(self.update)
@@ -314,7 +314,7 @@ class StudioHome(QWidget):
 
         self._details = QToolButton()
         self._details.setObjectName("HomeDetails")
-        self._details.setText("Session details")
+        self._details.setText(QCoreApplication.translate("PHGX", "Session details"))
         self._details.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self._details.setArrowType(Qt.RightArrow)
         self._details.setCheckable(True)
@@ -359,7 +359,7 @@ class StudioHome(QWidget):
             actions.addWidget(self._navigate_button(label, key, role="quiet"))
         for text, signal in (("New Project…", self.newProjectRequested),
                              ("Open Project…", self.openProjectRequested)):
-            button = QPushButton(text)
+            button = QPushButton(i18n.tr(text))
             button.setProperty("homeRole", "quiet")
             button.setCursor(Qt.PointingHandCursor)
             button.clicked.connect(signal.emit)
@@ -401,7 +401,7 @@ class StudioHome(QWidget):
         return hero
 
     def _navigate_button(self, text, key, *, primary=False, role=""):
-        button = QPushButton(text)
+        button = QPushButton(i18n.tr(text))
         button.setProperty("primary", primary)
         button.setProperty("homeRole", role)
         button.setProperty("moduleKey", key)
@@ -458,8 +458,8 @@ class StudioHome(QWidget):
 
     def refresh(self) -> None:
         agent = assistant_registry.active()
-        self._agent_domain.setText(f"Agentic AI  /  {agent.domain}".upper())
-        self._pitch.setText(f"Let {agent.name} plan, run and explain your research workflow.")
+        self._agent_domain.setText(i18n.tr(f"Agentic AI  /  {agent.domain}".upper()))
+        self._pitch.setText(QCoreApplication.translate("PHGX", "Let {0} plan, run and explain your research workflow.").format(agent.name))
         self._agent_mark.update()
 
         summary = self.state.context_summary()
@@ -469,7 +469,7 @@ class StudioHome(QWidget):
         # while it is in use: it is shared by every session and every survey.
         default = bool(getattr(self.state, "default_project", False))
         name = self.state.project_name
-        self._workspace_name.setText(name)
+        self._workspace_name.setText(i18n.tr(name))
         self._workspace_path.setText(folder or "Choose a project folder to organise your research.")
         self._workspace_name.setToolTip(
             (folder or "") + ("\nShared by every session until you create a project."

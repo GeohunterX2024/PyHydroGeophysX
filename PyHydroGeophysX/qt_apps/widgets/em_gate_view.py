@@ -23,7 +23,7 @@ from typing import Any, Dict, Optional, Set
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -41,6 +41,7 @@ from PySide6.QtWidgets import (
 )
 
 from .log_scale_axis import label_axis_in_physical_units
+from PyHydroGeophysX.qt_apps import i18n
 
 #: How each verdict is drawn, as verdict -> (colour, symbol, filled). Kept gates
 #: are the only filled ones, so the picture reads before the legend does.
@@ -92,19 +93,19 @@ class EMGateView(QWidget):
         controls = QWidget()
         row = QHBoxLayout(controls)
         row.setContentsMargins(6, 4, 6, 2)
-        self._show_dropped = QCheckBox("Show dropped gates")
+        self._show_dropped = QCheckBox(QCoreApplication.translate("PHGX", "Show dropped gates"))
         self._show_dropped.setChecked(True)
         self._show_dropped.setToolTip(
-            "Draw the gates the current selection removes, each marked with the "
+            QCoreApplication.translate("PHGX", "Draw the gates the current selection removes, each marked with the "
             "test that removed it. Turning this off leaves the gates the "
-            "inversion will actually see.")
+            "inversion will actually see."))
         self._show_dropped.toggled.connect(lambda _b: self._redraw())
         row.addWidget(self._show_dropped)
-        self._show_windows = QCheckBox("Gate windows")
+        self._show_windows = QCheckBox(QCoreApplication.translate("PHGX", "Gate windows"))
         self._show_windows.setToolTip(
-            "Draw each gate as a bar from its open time to its close time. The "
+            QCoreApplication.translate("PHGX", "Draw each gate as a bar from its open time to its close time. The "
             "response is integrated across that width, so a late gate averages "
-            "over a span comparable to its own centre time.")
+            "over a span comparable to its own centre time."))
         self._show_windows.toggled.connect(lambda _b: self._redraw())
         row.addWidget(self._show_windows)
         row.addSpacing(12)
@@ -113,13 +114,13 @@ class EMGateView(QWidget):
         row.addStretch(1)
         for label, slot in (("Export CSV", self._export_csv_dialog),
                             ("Export PNG", self._export_png_dialog)):
-            button = QPushButton(label)
+            button = QPushButton(i18n.tr(label))
             button.clicked.connect(slot)
             row.addWidget(button)
 
         self._plot = pg.PlotWidget()
-        self._plot.setLabel("bottom", "Time (s)")
-        self._plot.setLabel("left", "|dB/dt| (V)")
+        self._plot.setLabel("bottom", QCoreApplication.translate("PHGX", "Time (s)"))
+        self._plot.setLabel("left", QCoreApplication.translate("PHGX", "|dB/dt| (V)"))
         for side in ("bottom", "left"):
             label_axis_in_physical_units(self._plot.getAxis(side))
         self._plot.showGrid(x=True, y=True, alpha=0.25)
@@ -216,7 +217,7 @@ class EMGateView(QWidget):
         if rejected_total:
             caption += "  The fit rejected %d of the %d it was given." % (
                 rejected_total, kept_total)
-        self._caption.setText(caption)
+        self._caption.setText(i18n.tr(caption))
 
     def _draw_rejected(self, name: str, status: np.ndarray, log_t: np.ndarray,
                        log_v: np.ndarray, drawable: np.ndarray,
@@ -356,13 +357,13 @@ class EMGateView(QWidget):
 
     def _export_csv_dialog(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export gates as CSV", "gates.csv", "CSV (*.csv)")
+            self, QCoreApplication.translate("PHGX", "Export gates as CSV"), "gates.csv", "CSV (*.csv)")
         if path:
             self.export_csv(path)
 
     def _export_png_dialog(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export plot as PNG", "gates.png", "PNG (*.png)")
+            self, QCoreApplication.translate("PHGX", "Export plot as PNG"), "gates.png", "PNG (*.png)")
         if path:
             self.export_png(path)
 

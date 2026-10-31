@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QCoreApplication, Qt, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFileDialog,
     QHBoxLayout, QInputDialog, QLabel, QMessageBox, QPushButton, QProgressBar, QSpinBox, QSplitter,
     QStackedWidget, QTreeWidget, QHeaderView, QTreeWidgetItem, QVBoxLayout, QWidget)
@@ -27,7 +27,7 @@ from PyHydroGeophysX.qt_apps.workers import TaskWorker
 from PyHydroGeophysX.visualization.axis_units import (
     set_length_axis, set_section_axes, to_display_length)
 from PyHydroGeophysX.visualization.basemap import TILE_SOURCES, basemap_image
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ class VariogramDialog(QDialog):
         from matplotlib.figure import Figure
         from PyHydroGeophysX.core.plan_interpolation import variogram_function
         fit = result['variogram']
-        self.setWindowTitle('Kriging variogram')
+        self.setWindowTitle(QCoreApplication.translate("PHGX", 'Kriging variogram'))
         self.resize(560, 420)
         layout = QVBoxLayout(self)
         figure = Figure(figsize=(5.5, 3.4), layout='constrained')
@@ -118,11 +118,7 @@ class VariogramDialog(QDialog):
         axes.legend(fontsize=8)
         axes.grid(alpha=.25, linestyle=':')
         summary = QLabel(
-            f"model {fit['model']} · nugget {fit['nugget']:.4g} · sill {fit['sill']:.4g} · "
-            f"range {fit['range']:.4g} m · fit RMSE {fit['rmse']:.3g}\n"
-            'Separations are measured in the map frame. Web Mercator metres are '
-            'stretched by 1/cos(latitude), so a geographic range reads larger than the '
-            'ground distance it represents.')
+            QCoreApplication.translate("PHGX", "model {0} · nugget {1:.4g} · sill {2:.4g} · range {3:.4g} m · fit RMSE {4:.3g}\nSeparations are measured in the map frame. Web Mercator metres are stretched by 1/cos(latitude), so a geographic range reads larger than the ground distance it represents.").format(fit['model'], fit['nugget'], fit['sill'], fit['range'], fit['rmse']))
         summary.setWordWrap(True)
         theme.set_tone(summary, "hint")
         layout.addWidget(summary)
@@ -157,7 +153,7 @@ class ProjectMapModule(BaseModule):
         root = QVBoxLayout(self)
         root.setContentsMargins(4, 4, 4, 4)
         root.setSpacing(4)
-        self._note = QLabel('Add results from any survey method using Add to Map… or import a point product.')
+        self._note = QLabel(QCoreApplication.translate("PHGX", 'Add results from any survey method using Add to Map… or import a point product.'))
         self._note.setWordWrap(True)
         theme.set_tone(self._note, "hint")
         split = QSplitter(Qt.Horizontal)
@@ -168,18 +164,18 @@ class ProjectMapModule(BaseModule):
         ll = QVBoxLayout(left)
         ll.setContentsMargins(6, 6, 6, 6)
         ll.setSpacing(4)
-        layers_title = QLabel('SURVEY LAYERS')
+        layers_title = QLabel(QCoreApplication.translate("PHGX", 'SURVEY LAYERS'))
         layers_title.setObjectName('MapSectionTitle')
         ll.addWidget(layers_title)
         self._frame = QComboBox()
-        self._frame.addItem('Geographic surveys', 'geographic')
-        self._frame.addItem('Local project coordinates', 'local')
+        self._frame.addItem(QCoreApplication.translate("PHGX", 'Geographic surveys'), 'geographic')
+        self._frame.addItem(QCoreApplication.translate("PHGX", 'Local project coordinates'), 'local')
         self._method = QComboBox()
         self._method.addItems(['All methods', 'ERT', 'EM', 'Seismic'])
         ll.addWidget(self._frame)
         ll.addWidget(self._method)
         self._list = QTreeWidget()
-        self._list.setHeaderLabels(['Survey', 'Method'])
+        self._list.setHeaderLabels([QCoreApplication.translate("PHGX", 'Survey'), QCoreApplication.translate("PHGX", 'Method')])
         self._list.setRootIsDecorated(False)
         self._list.setAlternatingRowColors(True)
         self._list.header().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -191,13 +187,13 @@ class ProjectMapModule(BaseModule):
         ll.addWidget(self._details)
         actions = QHBoxLayout()
         for text, callback in [('Rename', self._rename), ('Remove', self._remove), ('Refresh', self.refresh)]:
-            button = QPushButton(text)
+            button = QPushButton(i18n.tr(text))
             button.clicked.connect(callback)
             actions.addWidget(button)
         ll.addLayout(actions)
         for text, callback in [('Add available result…', self._add_resource),
                                ('Import point product CSV…', self._import_points)]:
-            button = QPushButton(text)
+            button = QPushButton(i18n.tr(text))
             button.clicked.connect(callback)
             ll.addWidget(button)
         split.addWidget(left)
@@ -211,18 +207,18 @@ class ProjectMapModule(BaseModule):
         toolbar = QHBoxLayout()
         self._source = QComboBox()
         self._source.addItems(list(TILE_SOURCES))
-        self._load_tiles = QPushButton('Load basemap')
-        self._load_tiles.setToolTip('Fetch imagery for the visible extent. Optional; surveys remain available offline.')
+        self._load_tiles = QPushButton(QCoreApplication.translate("PHGX", 'Load basemap'))
+        self._load_tiles.setToolTip(QCoreApplication.translate("PHGX", 'Fetch imagery for the visible extent. Optional; surveys remain available offline.'))
         self._load_tiles.clicked.connect(self._fetch_tiles)
         self._depth = QComboBox()
-        self._depth.addItem('Survey locations', None)
+        self._depth.addItem(QCoreApplication.translate("PHGX", 'Survey locations'), None)
         self._depth.currentIndexChanged.connect(self._draw_map)
         toolbar.addWidget(self._source)
         toolbar.addWidget(self._load_tiles)
-        fit = QPushButton('Fit surveys')
+        fit = QPushButton(QCoreApplication.translate("PHGX", 'Fit surveys'))
         fit.clicked.connect(lambda: self._draw_map(fit=True))
         toolbar.addWidget(fit)
-        save = QPushButton('Export map PNG…')
+        save = QPushButton(QCoreApplication.translate("PHGX", 'Export map PNG…'))
         save.clicked.connect(self._export_png)
         toolbar.addWidget(save)
         ml.addLayout(toolbar)
@@ -248,53 +244,53 @@ class ProjectMapModule(BaseModule):
         surface = FlowLayout(spacing=6)
         self._interp = QComboBox()
         for text, value in SURFACES:
-            self._interp.addItem(text, value)
-        self._interp.setToolTip(SURFACE_HELP)
+            self._interp.addItem(i18n.tr(text), value)
+        self._interp.setToolTip(i18n.tr(SURFACE_HELP))
         self._interp.currentIndexChanged.connect(self._surface_changed)
         surface.addWidget(control_group('Surface:', self._interp))
         self._interp_res = GridSpinBox()
         self._interp_res.setRange(40, 400)
         self._interp_res.setValue(140)
-        self._interp_res.setSuffix(' cells')
+        self._interp_res.setSuffix(QCoreApplication.translate("PHGX", ' cells'))
         self._interp_res.setKeyboardTracking(False)
-        self._interp_res.setToolTip('Cells across the longer map axis. More cells give a finer map\n'
-                                   'but take longer to calculate. Click Interpolate after changing settings.')
+        self._interp_res.setToolTip(QCoreApplication.translate("PHGX", 'Cells across the longer map axis. More cells give a finer map\n'
+                                   'but take longer to calculate. Click Interpolate after changing settings.'))
         self._interp_res.valueChanged.connect(self._draw_map)
         surface.addWidget(self._interp_res)
         self._interp_blank = DistanceSpinBox()
         self._interp_blank.setRange(0, 1e7)
         self._interp_blank.setDecimals(0)
-        self._interp_blank.setSuffix(' m blanking')
+        self._interp_blank.setSuffix(QCoreApplication.translate("PHGX", ' m blanking'))
         # Typing "60" must not re-grid at 6 on the way, and 0 has to read as the
         # off switch it is rather than as a zero-metre radius.
         self._interp_blank.setKeyboardTracking(False)
-        self._interp_blank.setSpecialValueText('no blanking')
+        self._interp_blank.setSpecialValueText(QCoreApplication.translate("PHGX", 'no blanking'))
         self._interp_blank.setToolTip(
-            'Also blank cells farther than this from any station, so a wide line\n'
+            QCoreApplication.translate("PHGX", 'Also blank cells farther than this from any station, so a wide line\n'
             'spacing does not read as coverage. Set it near the line spacing:\n'
             'well below that it cuts into the survey and leaves ribbons along the\n'
-            'lines. The caption under the map reports what the outline needs.')
+            'lines. The caption under the map reports what the outline needs.'))
         self._interp_blank.valueChanged.connect(self._draw_map)
         surface.addWidget(self._interp_blank)
-        self._stations = QCheckBox('Stations')
+        self._stations = QCheckBox(QCoreApplication.translate("PHGX", 'Stations'))
         self._stations.setToolTip(
-            'Draw this survey\'s stations and line traces over its interpolated\n'
+            QCoreApplication.translate("PHGX", 'Draw this survey\'s stations and line traces over its interpolated\n'
             'surface. Off by default: the surface already carries those values,\n'
-            'and the markers cover the image. Other surveys keep their traces.')
+            'and the markers cover the image. Other surveys keep their traces.'))
         self._stations.toggled.connect(self._draw_map)
         surface.addWidget(self._stations)
-        self._interpolate_button = QPushButton('Interpolate')
+        self._interpolate_button = QPushButton(QCoreApplication.translate("PHGX", 'Interpolate'))
         self._interpolate_button.setToolTip(
-            'Create a surface for the selected slice using the settings above.\n'
-            'You can keep using the map while it calculates. Higher resolution takes longer.')
+            QCoreApplication.translate("PHGX", 'Create a surface for the selected slice using the settings above.\n'
+            'You can keep using the map while it calculates. Higher resolution takes longer.'))
         self._interpolate_button.setEnabled(False)
         self._interpolate_button.clicked.connect(self._start_surface)
         surface.addWidget(self._interpolate_button)
-        self._variogram_button = QPushButton('Variogram…')
+        self._variogram_button = QPushButton(QCoreApplication.translate("PHGX", 'Variogram…'))
         self._variogram_button.setEnabled(False)
         self._variogram_button.clicked.connect(self._show_variogram)
         surface.addWidget(self._variogram_button)
-        self._export_grid = QPushButton('Export grid…')
+        self._export_grid = QPushButton(QCoreApplication.translate("PHGX", 'Export grid…'))
         self._export_grid.setEnabled(False)
         self._export_grid.clicked.connect(self._export_surface)
         surface.addWidget(self._export_grid)
@@ -303,7 +299,7 @@ class ProjectMapModule(BaseModule):
         ml.addLayout(slices)
         ml.addLayout(surface)
         progress_row = QHBoxLayout()
-        self._interpolation_status = QLabel('Choose a slice and interpolation method to get started.')
+        self._interpolation_status = QLabel(QCoreApplication.translate("PHGX", 'Choose a slice and interpolation method to get started.'))
         self._interpolation_status.setWordWrap(True)
         progress_row.addWidget(self._interpolation_status, 1)
         self._interpolation_progress = QProgressBar()
@@ -311,8 +307,8 @@ class ProjectMapModule(BaseModule):
         self._interpolation_progress.setFixedWidth(160)
         self._interpolation_progress.setVisible(False)
         progress_row.addWidget(self._interpolation_progress)
-        self._cancel_interpolation = QPushButton('Cancel')
-        self._cancel_interpolation.setToolTip('Stop interpolation after the current calculation batch.')
+        self._cancel_interpolation = QPushButton(QCoreApplication.translate("PHGX", 'Cancel'))
+        self._cancel_interpolation.setToolTip(QCoreApplication.translate("PHGX", 'Stop interpolation after the current calculation batch.'))
         self._cancel_interpolation.clicked.connect(lambda: self._cancel_surface())
         self._cancel_interpolation.setVisible(False)
         progress_row.addWidget(self._cancel_interpolation)
@@ -327,7 +323,7 @@ class ProjectMapModule(BaseModule):
         self._ax = None
         right.addWidget(map_panel)
         self._result_stack = QStackedWidget()
-        self._empty = QLabel('Select a survey to inspect its saved result.')
+        self._empty = QLabel(QCoreApplication.translate("PHGX", 'Select a survey to inspect its saved result.'))
         self._empty.setAlignment(Qt.AlignCenter)
         self._result_stack.addWidget(self._empty)
         self._em = EMOverviewView(section_only=True, colormaps=shared)
@@ -420,14 +416,13 @@ class ProjectMapModule(BaseModule):
                 self._method.setCurrentIndex(0)
                 self._method.blockSignals(False)
                 self.state.map_selected_id = None
-            self._note.setText(f'{len(self._entries)} saved surveys · {store.root.name} · '
-                               'Map snapshots are saved immediately. Removing a layer keeps source results.')
+            self._note.setText(QCoreApplication.translate("PHGX", "{0} saved surveys · {1} · Map snapshots are saved immediately. Removing a layer keeps source results.").format(len(self._entries), store.root.name))
             self._filter_changed()
         except Exception as exc:
             kept, reason = set(), 'the project map could not be read'
             self._entries = []
             self._keep_cached(kept)
-            self._note.setText(f'Could not read project map: {exc}')
+            self._note.setText(QCoreApplication.translate("PHGX", "Could not read project map: {0}").format(exc))
             self._filter_changed()
         # The redraw leaves the status line on its idle text; when work is gone,
         # the reason goes ahead of it so nothing vanishes unexplained. A job can
@@ -523,14 +518,13 @@ class ProjectMapModule(BaseModule):
             kind = {'em': 'Soundings / section', 'mesh': 'Section model',
                     'grid': 'Model grid footprint', 'points': 'Point product',
                     'wells': 'Wells, logs and water levels'}.get(entry['kind'], '')
-            self._details.setText(f"{entry['name']}\n{kind} · {entry['units']}\n"
-                                  f"CRS: {entry['crs']}\nAdded: {entry['created_at']}")
+            self._details.setText(QCoreApplication.translate("PHGX", "{0}\n{1} · {2}\nCRS: {3}\nAdded: {4}").format(entry['name'], kind, entry['units'], entry['crs'], entry['created_at']))
         self._depth.blockSignals(True)
         self._depth.clear()
-        self._depth.addItem('Survey locations', None)
+        self._depth.addItem(QCoreApplication.translate("PHGX", 'Survey locations'), None)
         self._depth.blockSignals(False)
         self._result_stack.setCurrentWidget(self._empty)
-        self._empty.setText('Select a survey to inspect its saved result.')
+        self._empty.setText(QCoreApplication.translate("PHGX", 'Select a survey to inspect its saved result.'))
         if entry:
             try:
                 arrays = self._data(entry)
@@ -549,8 +543,8 @@ class ProjectMapModule(BaseModule):
                     levels = list(enumerate((edges[:-1] + edges[1:])/2))
                     # Depths read from the ground down.
                     for index, z in (levels[::-1] if depth else levels):
-                        self._depth.addItem(f'Depth {-z:.3g} m' if depth
-                                            else f'Model Z = {z:g} m', index)
+                        self._depth.addItem(QCoreApplication.translate("PHGX", "Depth {0:.3g} m").format(-z) if depth
+                                            else QCoreApplication.translate("PHGX", "Model Z = {0:g} m").format(z), index)
                     self._depth.blockSignals(False)
                     self._draw_grid(entry, arrays)
                     self._result_stack.setCurrentWidget(self._mesh_view)
@@ -565,7 +559,7 @@ class ProjectMapModule(BaseModule):
                     self._draw_section(entry, arrays)
                     self._result_stack.setCurrentWidget(self._mesh_view)
             except Exception as exc:
-                self._empty.setText(f"Cannot load {entry['name']}: {exc}")
+                self._empty.setText(QCoreApplication.translate("PHGX", "Cannot load {0}: {1}").format(entry['name'], exc))
         if 0 < keep < self._depth.count():
             self._depth.blockSignals(True)
             self._depth.setCurrentIndex(keep)
@@ -575,8 +569,8 @@ class ProjectMapModule(BaseModule):
         griddable = bool(entry and entry['kind'] in ('em', 'grid', 'points'))
         for widget in (self._interp, self._interp_res, self._interp_blank, self._stations):
             widget.setEnabled(griddable)
-        self._interp.setToolTip(SURFACE_HELP if griddable else
-                                'A section model has no plan slice to interpolate.')
+        self._interp.setToolTip(i18n.tr(SURFACE_HELP) if griddable else
+                                QCoreApplication.translate("PHGX", 'A section model has no plan slice to interpolate.'))
         self._draw_map()
 
     def _surface_changed(self, *_):
@@ -706,18 +700,18 @@ class ProjectMapModule(BaseModule):
         worker.succeeded.connect(lambda result: self._surface_ready(token, key, result))
         worker.failed.connect(lambda message: self._surface_failed(token, message))
         self._interpolate_button.setEnabled(False)
-        self._interpolate_button.setText('Interpolating…')
+        self._interpolate_button.setText(QCoreApplication.translate("PHGX", 'Interpolating…'))
         self._interpolation_progress.setValue(0)
         self._interpolation_progress.setVisible(True)
         self._cancel_interpolation.setVisible(True)
-        self._interpolation_status.setText('Preparing interpolation… You can keep using the map.')
+        self._interpolation_status.setText(QCoreApplication.translate("PHGX", 'Preparing interpolation… You can keep using the map.'))
         self.register_worker(worker)
         worker.start()
 
     def _surface_progress(self, token, percent, message):
         if self._surface_job is not None and token == self._surface_token:
             self._interpolation_progress.setValue(percent)
-            self._interpolation_status.setText(message)
+            self._interpolation_status.setText(i18n.tr(message))
 
     def _surface_ready(self, token, key, result):
         if self._surface_job is None or token != self._surface_token:
@@ -729,7 +723,7 @@ class ProjectMapModule(BaseModule):
             self._surfaces.clear()
         self._surfaces[key] = result
         self._draw_map()
-        self._interpolation_status.setText('Interpolation complete — the surface is ready to view or export.')
+        self._interpolation_status.setText(QCoreApplication.translate("PHGX", 'Interpolation complete — the surface is ready to view or export.'))
         self._interpolation_progress.setValue(100)
 
     def _surface_failed(self, token, message):
@@ -737,7 +731,7 @@ class ProjectMapModule(BaseModule):
             return
         self._surface_job = None
         self._sync_surface_controls()
-        self._interpolation_status.setText(f'Could not interpolate: {message} Adjust the settings and try again.')
+        self._interpolation_status.setText(QCoreApplication.translate("PHGX", "Could not interpolate: {0} Adjust the settings and try again.").format(message))
 
     def _cancel_surface(self, message='Interpolation cancelled. Click Interpolate to try again.'):
         if self._surface_job is None:
@@ -747,19 +741,19 @@ class ProjectMapModule(BaseModule):
         self._surface_job = None
         worker.cancel()
         self._sync_surface_controls()
-        self._interpolation_status.setText(message)
+        self._interpolation_status.setText(i18n.tr(message))
 
     def _sync_surface_controls(self):
         busy = self._surface_job is not None
         self._interpolate_button.setEnabled(self._surface_request is not None and not busy)
-        self._interpolate_button.setText('Interpolating…' if busy else 'Interpolate')
+        self._interpolate_button.setText(QCoreApplication.translate("PHGX", 'Interpolating…') if busy else QCoreApplication.translate("PHGX", 'Interpolate'))
         self._cancel_interpolation.setVisible(busy)
         self._interpolation_progress.setVisible(busy)
         if not busy:
             self._interpolation_status.setText(
-                'Surface ready. Change settings and click Interpolate to update.' if self._surface is not None else
-                'Ready — click Interpolate to create the map surface.' if self._surface_request is not None else
-                self._surface_hint())
+                QCoreApplication.translate("PHGX", 'Surface ready. Change settings and click Interpolate to update.') if self._surface is not None else
+                QCoreApplication.translate("PHGX", 'Ready — click Interpolate to create the map surface.') if self._surface_request is not None else
+                i18n.tr(self._surface_hint()))
 
     def _surface_hint(self):
         """What stands between the selection and a surface to interpolate.
@@ -792,23 +786,22 @@ class ProjectMapModule(BaseModule):
 
     def _export_surface(self):
         if self._surface is None:
-            QMessageBox.information(self, 'Export grid', 'Select a survey slice and a Surface '
-                                    'interpolation method first; the export writes that grid.')
+            QMessageBox.information(self, QCoreApplication.translate("PHGX", 'Export grid'), QCoreApplication.translate("PHGX", 'Select a survey slice and a Surface '
+                                    'interpolation method first; the export writes that grid.'))
             return
         from PyHydroGeophysX.core.plan_interpolation import write_plan_grid
         entry, result, layer = self._surface
         name = f"{entry['name']}_{layer}".replace(' ', '_').replace('·', '-')
         path, _ = QFileDialog.getSaveFileName(
-            self, 'Export interpolated plan grid', f'{name}.asc',
+            self, QCoreApplication.translate("PHGX", 'Export interpolated plan grid'), f'{name}.asc',
             'ESRI ASCII grid (*.asc);;Point table (*.csv)')
         if not path:
             return
         try:
             write_plan_grid(result, path)
-            self._note.setText(f"Wrote {result['method']} grid of {entry['name']} "
-                               f"({layer}) in {entry['crs']} to {path}.")
+            self._note.setText(QCoreApplication.translate("PHGX", "Wrote {0} grid of {1} ({2}) in {3} to {4}.").format(result['method'], entry['name'], layer, entry['crs'], path))
         except Exception as exc:
-            QMessageBox.warning(self, 'Export grid', str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Export grid'), i18n.tr(str(exc)))
 
     def _section_key(self, entry):
         """What a section figure shows, as the key its colour map is kept under."""
@@ -862,7 +855,7 @@ class ProjectMapModule(BaseModule):
             else:
                 self._draw_section(entry, arrays)
         except Exception as exc:
-            self._note.setText(f"Cannot redraw {entry['name']}: {exc}")
+            self._note.setText(QCoreApplication.translate("PHGX", "Cannot redraw {0}: {1}").format(entry['name'], exc))
 
     def _draw_grid(self, entry, arrays):
         self._section_fig.clear()
@@ -896,7 +889,7 @@ class ProjectMapModule(BaseModule):
         set_length_axis(section, 'y', 'Depth' if depth else 'Model Z')
         if depth:
             section.invert_yaxis()
-        section.set_title('Central Y section')
+        section.set_title(QCoreApplication.translate("PHGX", 'Central Y section'))
         self._section_fig.colorbar(image, ax=[plan, section], label=entry['units'])
         self._section_drawn()
 
@@ -942,7 +935,7 @@ class ProjectMapModule(BaseModule):
         # z = 0, and reads as depth.
         set_section_axes(ax, z=vertices[:, 1], xlabel='Profile distance',
                          elevation_name='Section elevation')
-        ax.set_title(entry['name'])
+        ax.set_title(i18n.tr(entry['name']))
         self._section_fig.colorbar(collection, ax=ax, label=entry['units'])
         self._section_drawn()
 
@@ -1066,9 +1059,9 @@ class ProjectMapModule(BaseModule):
             self._cancel_surface('Selection changed. Click Interpolate to calculate the new surface.')
         self._sync_surface_controls()
         if errors:
-            self._note.setText(' · '.join(errors))
+            self._note.setText(i18n.tr(' · '.join(errors)))
         elif self._surface_note:
-            self._note.setText(self._surface_note)
+            self._note.setText(i18n.tr(self._surface_note))
         self._canvas.draw_idle()
         # New axes: Home and Back start from this view, not from axes cleared.
         self._map_toolbar.update()
@@ -1118,9 +1111,9 @@ class ProjectMapModule(BaseModule):
         layout.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
         self._well_pick = QComboBox()
-        self._well_pick.setToolTip('The well to compare; click a well on the map to choose it.')
+        self._well_pick.setToolTip(QCoreApplication.translate("PHGX", 'The well to compare; click a well on the map to choose it.'))
         self._well_pick.currentIndexChanged.connect(self._on_well_changed)
-        bar.addWidget(QLabel('Well'))
+        bar.addWidget(QLabel(QCoreApplication.translate("PHGX", 'Well')))
         bar.addWidget(self._well_pick)
         self._compare_within = DistanceSpinBox()
         self._compare_within.setRange(1, 1e5)
@@ -1128,19 +1121,19 @@ class ProjectMapModule(BaseModule):
         self._compare_within.setValue(50)
         self._compare_within.setSuffix(' m')
         self._compare_within.setKeyboardTracking(False)
-        self._compare_within.setToolTip('Surveys read farther than this from the well are '
-                                        'listed below the plot, not drawn.')
+        self._compare_within.setToolTip(QCoreApplication.translate("PHGX", 'Surveys read farther than this from the well are '
+                                        'listed below the plot, not drawn.'))
         self._compare_within.valueChanged.connect(self._draw_compare)
-        bar.addWidget(QLabel('Surveys within'))
+        bar.addWidget(QLabel(QCoreApplication.translate("PHGX", 'Surveys within')))
         bar.addWidget(self._compare_within)
         self._compare_depth = DistanceSpinBox()
         self._compare_depth.setRange(0, 1e4)
         self._compare_depth.setDecimals(1)
         self._compare_depth.setSuffix(' m')
-        self._compare_depth.setSpecialValueText('auto')
+        self._compare_depth.setSpecialValueText(QCoreApplication.translate("PHGX", 'auto'))
         self._compare_depth.setKeyboardTracking(False)
         self._compare_depth.valueChanged.connect(self._draw_compare)
-        bar.addWidget(QLabel('Down to'))
+        bar.addWidget(QLabel(QCoreApplication.translate("PHGX", 'Down to')))
         bar.addWidget(self._compare_depth)
         bar.addStretch(1)
         layout.addLayout(bar)
@@ -1239,7 +1232,7 @@ class ProjectMapModule(BaseModule):
             arrays = self._data(entry)
             data, order = wells_data(arrays)
         except Exception as exc:  # noqa: BLE001
-            self._compare_note.setText(f"Cannot read the wells of {entry['name']}: {exc}")
+            self._compare_note.setText(QCoreApplication.translate("PHGX", "Cannot read the wells of {0}: {1}").format(entry['name'], exc))
             return
         index = self._well_pick.currentIndex()
         well_id = order[index]
@@ -1266,7 +1259,7 @@ class ProjectMapModule(BaseModule):
             lines.append('Point values: ' + ' · '.join(values) + '.')
         if far:
             lines.append('Not drawn: ' + ' · '.join(far) + '.')
-        self._compare_note.setText('\n'.join(lines))
+        self._compare_note.setText(i18n.tr('\n'.join(lines)))
 
     def _visibility(self, item, column):
         if column != 0 or self._store is None:
@@ -1278,13 +1271,13 @@ class ProjectMapModule(BaseModule):
             next(e for e in self._entries if e['id'] == survey_id)['visible'] = visible
             self._draw_map()
         except Exception as exc:
-            QMessageBox.warning(self, 'Map visibility', str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Map visibility'), i18n.tr(str(exc)))
             self.refresh()
 
     def _rename(self):
         entry = self._entry()
         if entry:
-            name, ok = QInputDialog.getText(self, 'Rename survey', 'Survey name', text=entry['name'])
+            name, ok = QInputDialog.getText(self, QCoreApplication.translate("PHGX", 'Rename survey'), QCoreApplication.translate("PHGX", 'Survey name'), text=entry['name'])
             if ok:
                 self._change(lambda: self._store.update(entry['id'], name=name))
 
@@ -1298,7 +1291,7 @@ class ProjectMapModule(BaseModule):
             action()
             self.refresh()
         except Exception as exc:
-            QMessageBox.warning(self, 'Project Map', str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Project Map'), i18n.tr(str(exc)))
 
     def _fetch_tiles(self):
         if self._tile_worker is not None or self._frame.currentData() != 'geographic':
@@ -1308,38 +1301,38 @@ class ProjectMapModule(BaseModule):
                             source=self._source.currentText(), max_tiles=6, timeout=2.)
         self._tile_worker = self.register_worker(worker)
         self._load_tiles.setEnabled(False)
-        self._note.setText('Loading optional basemap… Survey results remain available.')
+        self._note.setText(QCoreApplication.translate("PHGX", 'Loading optional basemap… Survey results remain available.'))
         def loaded(tile):
             if root != self._root or self._frame.currentData() != 'geographic':
                 return
             self._tile = tile
-            self._note.setText('Basemap loaded.' if tile else 'Basemap unavailable; showing surveys without imagery.')
+            self._note.setText(QCoreApplication.translate("PHGX", 'Basemap loaded.') if tile else QCoreApplication.translate("PHGX", 'Basemap unavailable; showing surveys without imagery.'))
             self._draw_map()
         def finished():
             self._tile_worker = None
             self._load_tiles.setEnabled(self._frame.currentData() == 'geographic')
         worker.succeeded.connect(loaded)
-        worker.failed.connect(lambda message: self._note.setText(f'Basemap unavailable: {message}'))
+        worker.failed.connect(lambda message: self._note.setText(QCoreApplication.translate("PHGX", "Basemap unavailable: {0}").format(message)))
         worker.finished.connect(finished)
         worker.start()
 
     def _export_png(self):
-        path, _ = QFileDialog.getSaveFileName(self, 'Export current project map', 'project_map.png', 'PNG (*.png)')
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", 'Export current project map'), 'project_map.png', 'PNG (*.png)')
         if path:
             try:
                 self._fig.savefig(path, dpi=180)
             except Exception as exc:
-                QMessageBox.warning(self, 'Map export', str(exc))
+                QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Map export'), i18n.tr(str(exc)))
 
     def _import_points(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Point product: x,y,value columns', '', 'CSV (*.csv)')
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", 'Point product: x,y,value columns'), '', 'CSV (*.csv)')
         if not path:
             return
-        method, ok = QInputDialog.getItem(self, 'Survey method', 'Method',
+        method, ok = QInputDialog.getItem(self, QCoreApplication.translate("PHGX", 'Survey method'), QCoreApplication.translate("PHGX", 'Method'),
             ['Gravity', 'Magnetics', 'ERT', 'EM', 'Seismic', 'GPR', 'IP', 'SP'], 0, True)
         if not ok:
             return
-        units, ok = QInputDialog.getText(self, 'Product units', 'Units (e.g. mGal, nT, Ω·m, m/s)')
+        units, ok = QInputDialog.getText(self, QCoreApplication.translate("PHGX", 'Product units'), QCoreApplication.translate("PHGX", 'Units (e.g. mGal, nT, Ω·m, m/s)'))
         if not ok:
             return
         try:
@@ -1352,16 +1345,16 @@ class ProjectMapModule(BaseModule):
             save_snapshot_to_map(self, *snapshot)
             self.refresh()
         except Exception as exc:
-            QMessageBox.warning(self, 'Point product', str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Point product'), i18n.tr(str(exc)))
 
     def _add_resource(self):
         resources = [r for r in self.state.geophysical_resources.values() if r.get('role') == 'model']
         if not resources:
-            QMessageBox.information(self, 'Available results', 'No model resources in this session. '
-                                    'Run a module or import a point product CSV.')
+            QMessageBox.information(self, QCoreApplication.translate("PHGX", 'Available results'), QCoreApplication.translate("PHGX", 'No model resources in this session. '
+                                    'Run a module or import a point product CSV.'))
             return
         labels = [f"{i+1}. {r.get('label', r.get('method', 'Model'))}" for i, r in enumerate(resources)]
-        label, ok = QInputDialog.getItem(self, 'Add available result', 'Model', labels, 0, False)
+        label, ok = QInputDialog.getItem(self, QCoreApplication.translate("PHGX", 'Add available result'), QCoreApplication.translate("PHGX", 'Model'), labels, 0, False)
         if not ok:
             return
         try:
@@ -1373,7 +1366,7 @@ class ProjectMapModule(BaseModule):
             method = {'SRT': 'Seismic', 'GRAVITY': 'Gravity', 'MAGNETICS': 'Magnetics'}.get(method, method)
             units = {'ERT': 'Ω·m', 'Seismic': 'm/s', 'Gravity': 'g/cc', 'Magnetics': 'SI'}.get(method)
             if units is None:
-                units, ok = QInputDialog.getText(self, 'Model units', 'Units')
+                units, ok = QInputDialog.getText(self, QCoreApplication.translate("PHGX", 'Model units'), QCoreApplication.translate("PHGX", 'Units'))
                 if not ok:
                     return
             if meta.get('mesh') is not None:
@@ -1387,7 +1380,7 @@ class ProjectMapModule(BaseModule):
             save_snapshot_to_map(self, *snapshot)
             self.refresh()
         except Exception as exc:
-            QMessageBox.warning(self, 'Available result', str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", 'Available result'), i18n.tr(str(exc)))
 
     def export_actions(self):
         return [('Current project map (PNG)', self._export_png),
@@ -1691,8 +1684,7 @@ class ProjectMapModule(BaseModule):
             write_plan_grid(result, str(path))
         except Exception as exc:  # noqa: BLE001
             return {'status': 'failed', 'error': str(exc)}
-        self._note.setText(f"Wrote {result['method']} grid of {entry['name']} "
-                           f"({layer}) in {entry['crs']} to {path}.")
+        self._note.setText(QCoreApplication.translate("PHGX", "Wrote {0} grid of {1} ({2}) in {3} to {4}.").format(result['method'], entry['name'], layer, entry['crs'], path))
         return {'status': 'ok', 'path': str(path), 'method': result.get('method')}
 
     def _agent_import_points(self, path, method, units, crs='LOCAL', name=None):

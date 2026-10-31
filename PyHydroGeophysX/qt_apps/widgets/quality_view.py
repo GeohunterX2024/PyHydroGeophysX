@@ -13,14 +13,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from PyHydroGeophysX.inversion.metrics import metrics_from_manager
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
 from PyHydroGeophysX.visualization.axis_units import set_length_axis
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 
 
 class InversionQualityView(QWidget):
@@ -31,7 +31,7 @@ class InversionQualityView(QWidget):
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
 
-        self._metrics = QLabel("No inversion run yet.")
+        self._metrics = QLabel(QCoreApplication.translate("PHGX", "No inversion run yet."))
         self._metrics.setWordWrap(True)
         self._metrics.setTextFormat(Qt.RichText)
         self._metrics.setContentsMargins(8, 6, 8, 2)
@@ -135,8 +135,7 @@ class InversionQualityView(QWidget):
         head = "  ·  ".join(parts) if parts else "inversion finished"
         note = f"<br><span style='color:#8e8e93'>{m['note']}</span>" if m.get("note") else ""
         self._metrics.setText(
-            f"{title_html}<span style='font-size:13px'>{head}</span><br>"
-            f"<span style='color:{color}'><b>{verdict}</b></span>{note}")
+            QCoreApplication.translate("PHGX", "{0}<span style='font-size:13px'>{1}</span><br><span style='color:{2}'><b>{3}</b></span>{4}").format(title_html, head, color, verdict, note))
 
         self._drawn = (convergence, chi2, m.get("convergence_track"), per_item, robust)
         self._request_redraw()
@@ -190,9 +189,9 @@ class InversionQualityView(QWidget):
         else:
             ax.axhline(target, color="#34c759", ls=":", lw=1., label=f"Target χ² = {target:g}")
         ax.set_yscale("log")
-        ax.set_xlabel("Iteration (all recorded solves)" if plotted else "Run")
+        ax.set_xlabel(QCoreApplication.translate("PHGX", "Iteration (all recorded solves)") if plotted else QCoreApplication.translate("PHGX", "Run"))
         ax.set_ylabel("χ²")
-        ax.set_title("Weighted convergence")
+        ax.set_title(QCoreApplication.translate("PHGX", "Weighted convergence"))
         ax.grid(True, which="both", ls=":", alpha=.4)
         ax.legend(fontsize=7, loc="best")
 
@@ -270,9 +269,9 @@ class InversionQualityView(QWidget):
                         ha="center", va="top", fontsize=7.5, color="#6e6e73")
         ax.axhline(1.0, color="#ff3b30", ls="--", lw=1.0, label="target χ² = 1")
         ax.set_yscale("log")
-        ax.set_xlabel("Iteration (all stages, in order)")
+        ax.set_xlabel(QCoreApplication.translate("PHGX", "Iteration (all stages, in order)"))
         ax.set_ylabel("χ²")
-        ax.set_title("Convergence")
+        ax.set_title(QCoreApplication.translate("PHGX", "Convergence"))
         ax.grid(True, which="both", ls=":", alpha=0.4)
         ax.legend(fontsize=8, loc="best")
         return True
@@ -324,9 +323,9 @@ class InversionQualityView(QWidget):
             # the studio's length unit.
             set_length_axis(ax, "x", str(per_item["x_length"]))
         else:
-            ax.set_xlabel(str(per_item.get("x_label", "Item")))
+            ax.set_xlabel(i18n.tr(str(per_item.get("x_label", "Item"))))
         ax.set_ylabel("χ²")
-        ax.set_title(f"Misfit per {per_item.get('item_label', 'item')}")
+        ax.set_title(QCoreApplication.translate("PHGX", "Misfit per {0}").format(per_item.get('item_label', 'item')))
         ax.grid(True, which="both", ls=":", alpha=0.4)
         ax.legend(fontsize=8, loc="best")
         return True
@@ -370,9 +369,9 @@ class InversionQualityView(QWidget):
             ax.plot(iters, conv, "o-", color="#007aff", lw=1.6, ms=4)
             ax.axhline(1.0, color="#ff3b30", ls="--", lw=1.0, label="target χ² = 1")
             ax.set_yscale("log")
-            ax.set_xlabel("Iteration")
+            ax.set_xlabel(QCoreApplication.translate("PHGX", "Iteration"))
             ax.set_ylabel("χ²")
-            ax.set_title("Convergence")
+            ax.set_title(QCoreApplication.translate("PHGX", "Convergence"))
             ax.grid(True, which="both", ls=":", alpha=0.4)
             ax.legend(fontsize=8, loc="best")
             if len(iters) <= 15:
@@ -383,7 +382,7 @@ class InversionQualityView(QWidget):
             ax.bar(["Final \u03c7\u00b2"], [value], color=color, width=0.5)
             ax.axhline(1.0, color="#007aff", ls="--", lw=1.2, label="target \u03c7\u00b2 = 1")
             ax.set_ylabel("\u03c7\u00b2")
-            ax.set_title("Final data misfit")
+            ax.set_title(QCoreApplication.translate("PHGX", "Final data misfit"))
             ax.grid(True, axis="y", ls=":", alpha=0.4)
             ax.legend(fontsize=8, loc="best")
             ax.text(0, value, f"  {value:.2f}", va="bottom", ha="center", fontsize=9)
@@ -395,6 +394,6 @@ class InversionQualityView(QWidget):
 
     def clear(self) -> None:
         self._drawn = None
-        self._metrics.setText("<span style='color:#8e8e93'>Run an inversion to see its "
-                              "quality (χ², RMS, convergence) here.</span>")
+        self._metrics.setText(QCoreApplication.translate("PHGX", "<span style='color:#8e8e93'>Run an inversion to see its "
+                              "quality (χ², RMS, convergence) here.</span>"))
         self._request_redraw()

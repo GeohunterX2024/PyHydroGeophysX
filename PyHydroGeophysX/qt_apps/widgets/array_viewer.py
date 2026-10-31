@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QRectF, Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.log_scale_axis import label_axis_in_physical_units
@@ -91,8 +91,8 @@ class ArrayViewer(QWidget):
         layout.addWidget(self._glw, stretch=1)
 
         self._plot = self._glw.addPlot(row=0, col=0)
-        self._plot.setLabel("bottom", "Column (x)")
-        self._plot.setLabel("left", "Row (y)")
+        self._plot.setLabel("bottom", QCoreApplication.translate("PHGX", "Column (x)"))
+        self._plot.setLabel("left", QCoreApplication.translate("PHGX", "Row (y)"))
         self._plot.invertY(True)  # row 0 at top, like an image
         self._plot.setAspectLocked(False)
 
@@ -155,7 +155,7 @@ class ArrayViewer(QWidget):
             ("Clear profile", self._on_clear_profile_clicked, "fa5s.eraser"),
             ("Export PNG", self._export_png_dialog, "fa5s.camera"),
         ):
-            btn = QPushButton(label)
+            btn = QPushButton(i18n.tr(label))
             btn.setIcon(theme.icon(icon_name))
             btn.clicked.connect(slot)
             bar.addWidget(btn)
@@ -205,14 +205,14 @@ class ArrayViewer(QWidget):
         self._value_label = str(value_label or "Value")
         self._hist.axis.setLabel(self._value_label)
         label_axis_in_physical_units(self._hist.axis, self._log_display)
-        self._plot.setTitle(str(title or ""))
+        self._plot.setTitle(i18n.tr(str(title or "")))
         self._readout.setText(f"x: -, y: -, {self._value_label}: -")
         if invert_y is not None:
             self._plot.invertY(bool(invert_y))
         if x_label is not None:
-            self._plot.setLabel("bottom", x_label)
+            self._plot.setLabel("bottom", i18n.tr(x_label))
         if y_label is not None:
-            self._plot.setLabel("left", y_label)
+            self._plot.setLabel("left", i18n.tr(y_label))
 
         display = arr
         if log:
@@ -427,7 +427,7 @@ class ArrayViewer(QWidget):
         if self._extent is not None:
             self._readout.setText(f"x: {x:.1f}, z: {z:.1f}, {reading}")
         else:
-            self._readout.setText(f"x(col): {col}, y(row): {row}, {reading}")
+            self._readout.setText(QCoreApplication.translate("PHGX", "x(col): {0}, y(row): {1}, {2}").format(col, row, reading))
 
     def _on_mouse_clicked(self, event) -> None:
         if event.button() != Qt.LeftButton:
@@ -457,6 +457,6 @@ class ArrayViewer(QWidget):
         exporter.export(str(path))
 
     def _export_png_dialog(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Export view as PNG", "view.png", "PNG (*.png)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export view as PNG"), "view.png", "PNG (*.png)")
         if path:
             self.export_png(path)

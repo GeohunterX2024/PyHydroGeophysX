@@ -52,7 +52,7 @@ import os
 import time
 from typing import Dict, List, Optional, Sequence
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QPointF, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QFont,
                            QFontMetrics, QLinearGradient, QPainter, QPainterPath,
                            QPen, QRadialGradient, QRegion)
@@ -60,7 +60,7 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QScrollArea,
                                QSizePolicy, QStyle, QStyleOption, QVBoxLayout,
                                QWidget)
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout
 import logging
 
@@ -273,7 +273,7 @@ class ShimmerText(_Animated):
         self._tone = "text"
         self.setAttribute(Qt.WA_TranslucentBackground)
         font = QFont(self.font())
-        font.setFamilies([theme.UI_FONT_FAMILY, "Helvetica Neue", "Arial"])
+        font.setFamilies(theme.ui_font_families())
         if point_size:
             font.setPointSizeF(point_size)
         font.setWeight(QFont.DemiBold if bold else QFont.Normal)
@@ -289,7 +289,7 @@ class ShimmerText(_Animated):
         text = str(text or "")
         if text != self._text:
             self._text = text
-            self.setToolTip(text)
+            self.setToolTip(i18n.tr(text))
             self.updateGeometry()
             self.update()
 
@@ -402,7 +402,7 @@ class TypewriterLabel(QLabel):
             body += caret + (f"<span style='color:transparent;'>"
                              f"{html.escape(rest[1:])}</span>" if len(rest) > 1 else "")
         body = body.replace(chr(10), "<br>")
-        super().setText(f"<i>{body}</i>" if self._italic else body)
+        super().setText(f"<i>{body}</i>" if self._italic else i18n.tr(body))
 
 
 class AgentGlowFrame(QWidget):
@@ -537,7 +537,7 @@ def _clock(seconds: float) -> str:
 
 
 def _label(text: str = "", name: str = "") -> QLabel:
-    label = QLabel(text)
+    label = QLabel(i18n.tr(text))
     if name:
         label.setObjectName(name)
     return label
@@ -625,7 +625,7 @@ class StepCard(_Card):
         return (self._ended or time.monotonic()) - self._started
 
     def tick(self) -> None:
-        self._clock.setText(_clock(self.elapsed()))
+        self._clock.setText(i18n.tr(_clock(self.elapsed())))
 
     def finish(self, status: str, summary: str = "",
                figures: Sequence[str] = (), seconds: Optional[float] = None) -> None:
@@ -668,7 +668,7 @@ class StepCard(_Card):
                 continue
             thumb = _label("", "stepThumb")
             thumb.setPixmap(pixmap)
-            thumb.setToolTip(f"{path}\nClick to open full size.")
+            thumb.setToolTip(QCoreApplication.translate("PHGX", "{0}\nClick to open full size.").format(path))
             thumb.setCursor(Qt.PointingHandCursor)
             thumb.mousePressEvent = (lambda _e, p=path: QDesktopServices.openUrl(
                 QUrl.fromLocalFile(p)))
@@ -736,7 +736,7 @@ class _ThinkingCard(_Card):
     def show_text(self, text: str, state: str = THINKING) -> None:
         if text != self.text.text() or state != self.orb.state():
             self._since = time.monotonic()
-        self.text.setText(text)
+        self.text.setText(i18n.tr(text))
         self.orb.set_state(state)
         self.set_accent(state)
         self.text.set_shimmer(state in _BUSY, tone=STATE_TONE.get(state, "text"))
@@ -762,11 +762,11 @@ class _ThinkingCard(_Card):
             decision = str(option.get("id") or "")
             if not decision:
                 continue
-            button = QPushButton(str(option.get("label") or decision))
+            button = QPushButton(i18n.tr(str(option.get("label") or decision)))
             if not shown:
                 button.setProperty("primary", True)
             if option.get("detail"):
-                button.setToolTip(str(option["detail"]))
+                button.setToolTip(i18n.tr(str(option["detail"])))
             button.clicked.connect(lambda _checked=False, d=decision: on_choice(d))
             self._choices.addWidget(button)
             shown += 1
@@ -774,7 +774,7 @@ class _ThinkingCard(_Card):
             return False
         self._choices.addStretch(1)
         head, code = _split_code(prompt)
-        self._question.setText(html.escape(head).replace("\n", "<br>"))
+        self._question.setText(i18n.tr(html.escape(head).replace("\n", "<br>")))
         self._question.setVisible(bool(head))
         self._code.setPlainText(code)
         self._code.setVisible(bool(code))
@@ -793,7 +793,7 @@ class _ThinkingCard(_Card):
         self._code.clear()
 
     def tick(self) -> None:
-        self._clock.setText(_clock(time.monotonic() - self._since))
+        self._clock.setText(i18n.tr(_clock(time.monotonic() - self._since)))
 
     def stop(self) -> None:
         self.clear_question()
@@ -866,9 +866,9 @@ class AgentTimeline(QScrollArea):
                 + html.escape(goal).replace("\n", "<br>"))
         else:
             self._goal.setText(
-                "Describe a goal in the assistant panel on the right and choose <b>Auto "
+                QCoreApplication.translate("PHGX", "Describe a goal in the assistant panel on the right and choose <b>Auto "
                 "to report</b>. Each step the assistant decides on appears here as it happens: "
-                "why it chose it, where it worked, and what it found.")
+                "why it chose it, where it worked, and what it found."))
         self._thinking.setVisible(False)
         self._clock.stop()
 
@@ -1024,8 +1024,8 @@ class AgentHeader(_Card):
         right.addWidget(self.counter)
         self.usage = _label("", "agentCounter")
         self.usage.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.usage.setToolTip("Tokens the run's model calls have used, and their cost "
-                              "estimated from the provider's list prices.")
+        self.usage.setToolTip(QCoreApplication.translate("PHGX", "Tokens the run's model calls have used, and their cost "
+                              "estimated from the provider's list prices."))
         self.usage.setVisible(False)
         right.addWidget(self.usage)
         row.addLayout(right)
@@ -1033,7 +1033,7 @@ class AgentHeader(_Card):
     def show_state(self, state: str, headline: str, detail: str = "") -> None:
         self.orb.set_state(state)
         self.set_accent(state)
-        self.headline.setText(headline)
+        self.headline.setText(i18n.tr(headline))
         self.headline.set_shimmer(state in _BUSY, tone=STATE_TONE.get(state, "text"))
         if detail is not None:
             self.detail.type_text(detail)
@@ -1041,7 +1041,7 @@ class AgentHeader(_Card):
 
     def set_usage(self, tokens: int, cost_usd: float, calls: int = 0) -> None:
         """What the run's model calls have used so far, and roughly cost."""
-        self.usage.setText(usage_text(tokens, cost_usd))
+        self.usage.setText(i18n.tr(usage_text(tokens, cost_usd)))
         self.usage.setVisible(bool(tokens or calls))
 
     def clear_usage(self) -> None:
@@ -1052,12 +1052,12 @@ class AgentHeader(_Card):
                   ahead: Optional[int] = None) -> None:
         """The clock, and how far along: steps done and, while running, about
         how many the run's own route still puts ahead."""
-        self.clock.setText(_clock(seconds))
+        self.clock.setText(i18n.tr(_clock(seconds)))
         noun = "step" if steps_done == 1 else "steps"
         tail = ""
         if running:
             tail = f" · about {ahead} to go" if ahead else " · running"
-        self.counter.setText(f"{steps_done} {noun} done{tail}")
+        self.counter.setText(QCoreApplication.translate("PHGX", "{0} {1} done{2}").format(steps_done, noun, tail))
 
 
 # -- the route, the newest output, the end of a run --------------------------
@@ -1086,7 +1086,7 @@ def _linear_ai(x0: float, x1: float, alpha: float = 1.0) -> QLinearGradient:
 
 def _small_font(point_size: float = 8.5, weight=QFont.Normal) -> QFont:
     font = QFont()
-    font.setFamilies([theme.UI_FONT_FAMILY, "Helvetica Neue", "Arial"])
+    font.setFamilies(theme.ui_font_families())
     font.setPointSizeF(point_size)
     font.setWeight(weight)
     return font
@@ -1508,7 +1508,7 @@ class LiveCanvas(_Card):
         outer.addLayout(top)
         self.view = _FigureView()
         self.view.setCursor(Qt.PointingHandCursor)
-        self.view.setToolTip("Double-click to open the figure full size.")
+        self.view.setToolTip(QCoreApplication.translate("PHGX", "Double-click to open the figure full size."))
         self.view.mouseDoubleClickEvent = lambda _e: self._open(self._current)
         outer.addWidget(self.view, 1)
         self._caption = _label("", "agentReason")
@@ -1573,7 +1573,7 @@ class LiveCanvas(_Card):
         small = thumbnail_pixmap(path, 60)
         if small is not None:
             thumb.setPixmap(small)
-        thumb.setToolTip(f"{os.path.basename(path)}\nClick to show, double-click to open.")
+        thumb.setToolTip(QCoreApplication.translate("PHGX", "{0}\nClick to show, double-click to open.").format(os.path.basename(path)))
         thumb.setCursor(Qt.PointingHandCursor)
         thumb.mousePressEvent = lambda _e, p=path: self._select(p)
         thumb.mouseDoubleClickEvent = lambda _e, p=path: self._open(p)
@@ -1595,7 +1595,7 @@ class LiveCanvas(_Card):
         except OSError:
             self._when.setText("")
             return
-        self._when.setText("written just now" if age < 5 else f"written {_clock(age)} ago")
+        self._when.setText(QCoreApplication.translate("PHGX", "written just now") if age < 5 else QCoreApplication.translate("PHGX", "written {0} ago").format(_clock(age)))
 
     def _select(self, path: str) -> None:
         from PySide6.QtGui import QPixmap
@@ -1608,10 +1608,10 @@ class LiveCanvas(_Card):
         self._current = path
         self.view.show_pixmap(pixmap, reveal=reveal)
         step = self._steps.get(path, "")
-        self._step.setText(html.escape(step))
+        self._step.setText(i18n.tr(html.escape(step)))
         self._step.setVisible(bool(step))
-        self._caption.setText(html.escape(os.path.basename(path)))
-        self._caption.setToolTip(path)
+        self._caption.setText(i18n.tr(html.escape(os.path.basename(path))))
+        self._caption.setToolTip(i18n.tr(path))
         for other, thumb in self._labels.items():
             thumb.setProperty("selected", other == path)
             thumb.style().unpolish(thumb)
@@ -1691,13 +1691,13 @@ class FinishCard(_Card):
                           "assistant panel", "agentReason")
             line.setWordWrap(True)
             line.setContentsMargins(indent, 0, 0, 0)
-            line.setToolTip("\n\n".join(gaps))
+            line.setToolTip(i18n.tr("\n\n".join(gaps)))
             outer.addWidget(line)
         if actions:
             row = FlowLayout(spacing=8)
             row.setContentsMargins(indent, 4, 0, 0)
             for index, (label, callback) in enumerate(actions):
-                button = QPushButton(str(label))
+                button = QPushButton(i18n.tr(str(label)))
                 if index == 0:
                     button.setProperty("primary", True)
                 button.clicked.connect(lambda _checked=False, f=callback: f())
@@ -1775,10 +1775,10 @@ class NoteCard(QFrame):
         self.pending = False
         self._status.set_shimmer(False)
         if not heard:
-            self._status.setText("This run has no model to read notes; "
-                                 "pause and stop still work.")
+            self._status.setText(QCoreApplication.translate("PHGX", "This run has no model to read notes; "
+                                 "pause and stop still work."))
             return
-        self._status.setText("Read before the next decision")
+        self._status.setText(QCoreApplication.translate("PHGX", "Read before the next decision"))
         lines = []
         if why:
             lines.append(f"Decided: {why}")
@@ -1821,10 +1821,10 @@ class SteerBar(QFrame):
         self.field.setObjectName("steerField")
         self.field.returnPressed.connect(self._send)
         row.addWidget(self.field, 1)
-        self.send = QPushButton("Send note")
+        self.send = QPushButton(QCoreApplication.translate("PHGX", "Send note"))
         self.send.clicked.connect(self._send)
         row.addWidget(self.send)
-        self.pause = QPushButton("Pause after this step")
+        self.pause = QPushButton(QCoreApplication.translate("PHGX", "Pause after this step"))
         self.pause.clicked.connect(self._toggle)
         row.addWidget(self.pause)
         self._state = self.RUNNING
@@ -1832,8 +1832,7 @@ class SteerBar(QFrame):
 
     def set_name(self, name: str) -> None:
         self.field.setPlaceholderText(
-            f"Tell {name} something while it works - e.g. use lambda 20, "
-            "or leave the seismic line out")
+            QCoreApplication.translate("PHGX", "Tell {0} something while it works - e.g. use lambda 20, or leave the seismic line out").format(name))
 
     def state(self) -> str:
         return self._state
@@ -1842,9 +1841,9 @@ class SteerBar(QFrame):
         """``running``, ``pausing`` (asked, the step is finishing) or ``paused``."""
         self._state = state
         self.pause.setEnabled(state != self.PAUSING)
-        self.pause.setText({self.RUNNING: "Pause after this step",
+        self.pause.setText(i18n.tr({self.RUNNING: "Pause after this step",
                             self.PAUSING: "Pausing after this step…",
-                            self.PAUSED: "Resume"}.get(state, "Pause after this step"))
+                            self.PAUSED: "Resume"}.get(state, "Pause after this step")))
         self.pause.setProperty("primary", state == self.PAUSED)
         self.pause.style().unpolish(self.pause)
         self.pause.style().polish(self.pause)

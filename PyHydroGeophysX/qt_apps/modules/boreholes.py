@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from PySide6.QtCore import QDate, Qt
+from PySide6.QtCore import QCoreApplication, QDate, Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QDateEdit,
@@ -33,7 +33,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.data_processing import boreholes as bh
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import ContentWidthScrollArea
 from PyHydroGeophysX.qt_apps.widgets import borehole_panel, length_units
@@ -98,17 +98,17 @@ class BoreholesModule(BaseModule):
         self._logs = _FigurePane("Choose wells with a lithology or geophysical log on the right.")
         self._water = _FigurePane("Load water levels (Water levels… on the right) to see them "
                                   "through time.")
-        self._tabs.addTab(self._map, MAP)
-        self._tabs.addTab(self._logs, LOGS)
-        self._tabs.addTab(self._water, WATER)
+        self._tabs.addTab(self._map, i18n.tr(MAP))
+        self._tabs.addTab(self._logs, i18n.tr(LOGS))
+        self._tabs.addTab(self._water, i18n.tr(WATER))
         self._tabs.currentChanged.connect(lambda *_: self._redraw())
         root.addWidget(self._tabs, stretch=1)
         self._map.canvas.mpl_connect("button_press_event", self._on_map_click)
 
         column = QWidget()
         column_layout = QVBoxLayout(column)
-        intro = QLabel("Load the wells, logs and water levels here. Add them to the Project "
-                       "Map to compare each well with the surveys around it.")
+        intro = QLabel(QCoreApplication.translate("PHGX", "Load the wells, logs and water levels here. Add them to the Project "
+                       "Map to compare each well with the surveys around it."))
         intro.setWordWrap(True)
         theme.set_tone(intro, "hint")
         column_layout.addWidget(intro)
@@ -126,10 +126,10 @@ class BoreholesModule(BaseModule):
 
     # -- the right column ------------------------------------------------------
     def _build_show_group(self) -> QGroupBox:
-        box = QGroupBox("Show")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Show"))
         layout = QVBoxLayout(box)
-        hint = QLabel("Ticked wells are drawn on the Logs and Water levels views and "
-                      "highlighted on the map; click a well on the map to tick it.")
+        hint = QLabel(QCoreApplication.translate("PHGX", "Ticked wells are drawn on the Logs and Water levels views and "
+                      "highlighted on the map; click a well on the map to tick it."))
         hint.setWordWrap(True)
         theme.set_tone(hint, "hint")
         layout.addWidget(hint)
@@ -139,39 +139,39 @@ class BoreholesModule(BaseModule):
         layout.addWidget(self._well_list)
         buttons = QHBoxLayout()
         for label, rule in (("With data", "data"), ("All", "all"), ("None", "none")):
-            button = QPushButton(label)
+            button = QPushButton(i18n.tr(label))
             button.clicked.connect(lambda _=False, r=rule: self._select(r))
             buttons.addWidget(button)
         buttons.addStretch(1)
         layout.addLayout(buttons)
         form = QFormLayout()
         self._water_mode = QComboBox()
-        self._water_mode.addItem("Range of all readings", "range")
-        self._water_mode.addItem("Nearest to a date", "date")
+        self._water_mode.addItem(QCoreApplication.translate("PHGX", "Range of all readings"), "range")
+        self._water_mode.addItem(QCoreApplication.translate("PHGX", "Nearest to a date"), "date")
         self._water_mode.currentIndexChanged.connect(self._on_water_mode)
-        form.addRow("Water level on the logs", self._water_mode)
+        form.addRow(QCoreApplication.translate("PHGX", "Water level on the logs"), self._water_mode)
         self._date = QDateEdit()
         self._date.setCalendarPopup(True)
         self._date.setDisplayFormat("yyyy-MM-dd")
         self._date.setDate(QDate.currentDate())
         self._date.setEnabled(False)
         self._date.dateChanged.connect(lambda *_: self._redraw())
-        form.addRow("Date", self._date)
+        form.addRow(QCoreApplication.translate("PHGX", "Date"), self._date)
         layout.addLayout(form)
         return box
 
     def _build_map_group(self) -> QGroupBox:
-        box = QGroupBox("Project Map")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Project Map"))
         layout = QVBoxLayout(box)
-        hint = QLabel("Put the wells on the Project Map with their logs and water levels. "
-                      "There, clicking a well sets its log beside every survey around it.")
+        hint = QLabel(QCoreApplication.translate("PHGX", "Put the wells on the Project Map with their logs and water levels. "
+                      "There, clicking a well sets its log beside every survey around it."))
         hint.setWordWrap(True)
         theme.set_tone(hint, "hint")
         layout.addWidget(hint)
         button = self.map_export_button()
-        button.setText("Add wells to the Map…")
-        button.setToolTip("Save the wells, their logs and water levels as a layer of the "
-                          "Project Map. Adding them again after an edit adds the new version.")
+        button.setText(QCoreApplication.translate("PHGX", "Add wells to the Map…"))
+        button.setToolTip(QCoreApplication.translate("PHGX", "Save the wells, their logs and water levels as a layer of the "
+                          "Project Map. Adding them again after an edit adds the new version."))
         layout.addWidget(button)
         return box
 
@@ -317,7 +317,7 @@ class BoreholesModule(BaseModule):
             pane.figure.clear()
             ax = pane.figure.add_subplot(111)
             bh.draw_water_levels(ax, data, wells, length_unit=unit, when=self._when())
-            ax.set_title("Depth to water", fontsize=10)
+            ax.set_title(QCoreApplication.translate("PHGX", "Depth to water"), fontsize=10)
             pane.figure.autofmt_xdate()
             pane.figure.tight_layout()
             pane.drawn()

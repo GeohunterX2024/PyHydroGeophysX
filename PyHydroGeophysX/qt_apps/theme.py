@@ -138,8 +138,23 @@ DATA_COLOR = SERIES_COLORS[0]
 APPEARANCES = ("system", "light", "dark")
 _SETTING = "appearance/mode"
 
+#: UI fonts in the order tried: CJK families first, so Chinese text gets a font
+#: made for it, then Segoe UI and the platform sans-serifs (plan M4.2).
+UI_FONT_FALLBACKS = (
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI",
+    "Helvetica Neue", "Arial", "DejaVu Sans",
+)
+MONO_FONT_FALLBACKS = ("SF Mono", "Menlo", "Consolas", "DejaVu Sans Mono", "Courier New")
+#: CJK fonts Matplotlib may know by these names, in the order tried.
+MPL_CJK_FONTS = (
+    "PingFang SC", "Hiragino Sans GB", "Heiti SC", "STHeiti", "Songti SC", "Arial Unicode MS",
+    "Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei",
+)
+
+#: The first installed of the fallbacks; set by :func:`resolve_fonts` once Qt runs.
 UI_FONT_FAMILY = "Segoe UI"
 MONO_FONT_FAMILY = "Consolas"
+_families: dict[str, list[str]] = {"ui": [], "mono": []}
 
 _state = {"mode": "light", "appearance": "system"}
 
@@ -332,6 +347,39 @@ def _url(path: str) -> str:
     return f'url("{path}")' if path else "none"
 
 
+def resolve_fonts() -> list[str]:
+    """Pick the installed fonts from the fallbacks; returns the UI families in order.
+
+    Only installed families are named afterwards (stylesheet, ``QFont``), so Qt
+    never searches for a missing one - which is what its "missing font family"
+    warning reports, and what costs startup time.
+    """
+    global UI_FONT_FAMILY, MONO_FONT_FAMILY
+    from PySide6.QtGui import QFontDatabase
+
+    installed = set(QFontDatabase.families())
+    ui = [family for family in UI_FONT_FALLBACKS if family in installed]
+    mono = [family for family in MONO_FONT_FALLBACKS if family in installed]
+    if not ui:
+        ui = [QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont).family()]
+    if not mono:
+        mono = [QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont).family()]
+    _families["ui"], _families["mono"] = ui, mono
+    UI_FONT_FAMILY, MONO_FONT_FAMILY = ui[0], mono[0]
+    return ui
+
+
+def ui_font_families() -> list[str]:
+    """The installed UI families in fallback order (after :func:`resolve_fonts`)."""
+    return list(_families["ui"] or [UI_FONT_FAMILY])
+
+
+def _css_families(kind: str) -> str:
+    """Installed families only: Qt looks up a CSS generic name ("sans-serif") as a family too."""
+    names = _families[kind] or [UI_FONT_FAMILY if kind == "ui" else MONO_FONT_FAMILY]
+    return ", ".join(f'"{name}"' for name in names)
+
+
 def build_qss() -> str:
     """Return the full QSS stylesheet for the palette in force."""
     p = PALETTE
@@ -342,14 +390,14 @@ def build_qss() -> str:
     QWidget {{
         background-color: {p['bg']};
         color: {p['text']};
-        font-family: "{UI_FONT_FAMILY}", "Helvetica Neue", Arial, sans-serif;
+        font-family: {_css_families("ui")};
         font-size: 10pt;
     }}
     QMainWindow, QDialog {{ background-color: {p['bg']}; }}
 
     /* Welcome page: quiet surfaces, readable hierarchy and one main action.
        Blue is what can be clicked; the agent's colours are its mark alone. */
-    QWidget#StudioHome QWidget {{ font-family: "{UI_FONT_FAMILY}"; }}
+    QWidget#StudioHome QWidget {{ font-family: {_css_families("ui")}; }}
     QWidget#HomeContent, QScrollArea#HomeScroll {{ background: {p['bg']}; border: none; }}
     QFrame#HomeHero {{ background: {p['card']}; border: 1px solid {p['border']}; border-radius: 20px; }}
     QFrame#HomeTaskCard, QFrame#HomeWorkspace {{
@@ -382,7 +430,7 @@ def build_qss() -> str:
     QWidget#StudioHome QPushButton[homeRole="quiet"]:hover {{ background: {p['hover']}; }}
     QToolButton#HomeDetails {{ background: transparent; color: {p['muted']}; border: none; padding: 4px 0; }}
     QToolButton#HomeDetails:hover {{ color: {p['primary']}; }}
-    QTextEdit#HomeSummary {{ font-family: "{MONO_FONT_FAMILY}"; font-size: 12px; border-color: {p['border']}; }}
+    QTextEdit#HomeSummary {{ font-family: {_css_families("mono")}; font-size: 12px; border-color: {p['border']}; }}
 
     /* Cards / group boxes */
     QGroupBox {{
@@ -484,7 +532,7 @@ def build_qss() -> str:
     QLabel[tone="warn"] {{ color: {p['amber']}; font-size: 8pt; }}
     QLabel[tone="error"] {{ color: {p['red']}; font-size: 8pt; }}
     QLabel[tone="muted"] {{ color: {p['muted']}; }}
-    QLabel[tone="mono"] {{ color: {p['muted']}; font-family: "{MONO_FONT_FAMILY}", monospace; font-size: 9pt; }}
+    QLabel[tone="mono"] {{ color: {p['muted']}; font-family: {_css_families("mono")}; font-size: 9pt; }}
 
     /* Tabs: a segmented control */
     QTabWidget::pane {{ border: 1px solid {p['border']}; border-radius: 10px; background: {p['card']}; top: -1px; }}
@@ -576,7 +624,7 @@ def build_qss() -> str:
         color: {p['text']};
         border: none;
         border-radius: 0;
-        font-family: "{MONO_FONT_FAMILY}", "Courier New", monospace;
+        font-family: {_css_families("mono")};
         font-size: 12px;
     }}
 
@@ -594,7 +642,7 @@ def build_qss() -> str:
     QLabel#agentGoalTag {{ color: {p['tertiary']}; font-size: 8pt; font-weight: 600; letter-spacing: 1px; }}
     QLabel#agentTitle {{ color: {p['text']}; font-weight: 600; }}
     QLabel#agentChip {{ background: {p['tab_selected']}; color: {p['muted']}; border-radius: 9px; padding: 1px 8px; font-size: 8pt; font-weight: 500; }}
-    QLabel#agentClock {{ color: {p['tertiary']}; font-family: "{MONO_FONT_FAMILY}", monospace; font-size: 9pt; }}
+    QLabel#agentClock {{ color: {p['tertiary']}; font-family: {_css_families("mono")}; font-size: 9pt; }}
     QLabel#agentBigClock {{ color: {p['text']}; font-size: 18pt; font-weight: 300; }}
     QLabel#agentCounter {{ color: {p['muted']}; font-size: 8pt; }}
     QLabel#agentReason {{ color: {p['muted']}; }}
@@ -617,7 +665,7 @@ def build_qss() -> str:
     QSplitter#agentLiveSplit::handle {{ background: transparent; }}
     QPlainTextEdit#agentCode, QPlainTextEdit#runCode {{
         background: {p['field']}; color: {p['text']}; border: 1px solid {p['border']}; border-radius: 6px;
-        font-family: "{MONO_FONT_FAMILY}", "DejaVu Sans Mono", monospace; font-size: 11px;
+        font-family: {_css_families("mono")}; font-size: 11px;
     }}
     QFrame#runActivity {{ background: {p['material']}; border: none; border-bottom: 1px solid {p['border']}; }}
     QFrame#runActivity QLabel {{ color: {p['text']}; background: transparent; }}
@@ -669,7 +717,10 @@ def apply_theme(app, appearance: Optional[str] = None) -> str:
 
     app.setStyle("Fusion")
     app.setPalette(_qpalette())
-    app.setFont(QFont(UI_FONT_FAMILY, 10))
+    font = QFont()
+    font.setFamilies(resolve_fonts())
+    font.setPointSize(10)
+    app.setFont(font)
     app.setStyleSheet(build_qss())
 
     # pyqtgraph: a light canvas in either appearance (see the module notes).
@@ -746,6 +797,15 @@ def apply_matplotlib_style() -> None:
         _logger.debug("apply_matplotlib_style: the studio runs without Matplotlib", exc_info=True)
         return
     ink, soft = PALETTE["canvas_text"], "#6e6e73"
+    from matplotlib import font_manager
+
+    known = {entry.name for entry in font_manager.fontManager.ttflist}
+    cjk = [name for name in MPL_CJK_FONTS if name in known]
+    if cjk:
+        # Chinese labels in figures; the minus sign drawn as a hyphen, which
+        # CJK fonts have, instead of U+2212, which many of them lack.
+        sans = [name for name in mpl.rcParams["font.sans-serif"] if name not in cjk]
+        mpl.rcParams.update({"font.sans-serif": cjk + sans, "axes.unicode_minus": False})
     mpl.rcParams.update({
         "figure.facecolor": PALETTE["canvas"],
         "axes.facecolor": PALETTE["canvas"],

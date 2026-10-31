@@ -23,7 +23,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib.transforms import offset_copy
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QCoreApplication, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -49,7 +49,7 @@ from PySide6.QtWidgets import (
 from PyHydroGeophysX.core.hydro_profile import inactive_cells, zone_boundaries
 from PyHydroGeophysX.data_processing import run_inputs
 from PyHydroGeophysX.Hydro_modular import hydro_to_geophysics as hydro_pipeline
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -199,9 +199,9 @@ class HydroGeophysicsModule(BaseModule):
 
         root = QHBoxLayout(self)
         self._tabs = QTabWidget()
-        self._tabs.addTab(self._build_map_tab(shared), "Map")
-        self._tabs.addTab(self._build_section_tab(), "Section")
-        self._tabs.addTab(self._build_results_tab(), "Results")
+        self._tabs.addTab(self._build_map_tab(shared), QCoreApplication.translate("PHGX", "Map"))
+        self._tabs.addTab(self._build_section_tab(), QCoreApplication.translate("PHGX", "Section"))
+        self._tabs.addTab(self._build_results_tab(), QCoreApplication.translate("PHGX", "Results"))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         self._reproduce = ReproduceBar()
         center = QWidget()
@@ -231,7 +231,7 @@ class HydroGeophysicsModule(BaseModule):
             grid.addWidget(QLabel(f"<b>{zone}</b>"), 0, column)
         row = 1
         for label, widgets in rows:
-            grid.addWidget(_hint(label), row, 0, 1, len(_ZONES))
+            grid.addWidget(_hint(i18n.tr(label)), row, 0, 1, len(_ZONES))
             for column, widget in enumerate(widgets):
                 grid.addWidget(widget, row + 1, column)
             row += 2
@@ -248,19 +248,19 @@ class HydroGeophysicsModule(BaseModule):
         example_btn = self._example_button()
         example_btn.setProperty("primary", True)
         example_btn.setIcon(theme.icon("fa5s.box-open", color="#ffffff"))
-        open_btn = QPushButton("Open folder…")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open folder…"))
         open_btn.setIcon(theme.icon("fa5s.folder-open"))
         open_btn.clicked.connect(self._select_folder)
-        format_btn = QPushButton("Data format")
+        format_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         format_btn.setIcon(theme.icon("fa5s.question-circle"))
         format_btn.clicked.connect(self._show_format_help)
         return start_card(
-            "Simulate surveys on a hydrologic model",
-            "See what ERT, seismic, EM and gravity surveys would measure over the "
-            "water in a MODFLOW or ParFlow model.",
-            ["Load a hydrologic model: its water content, porosity and layer surfaces.",
-             "Draw a survey line on the model's map.",
-             "Tick the surveys to simulate, and press Simulate surveys."],
+            QCoreApplication.translate("PHGX", "Simulate surveys on a hydrologic model"),
+            QCoreApplication.translate("PHGX", "See what ERT, seismic, EM and gravity surveys would measure over the "
+            "water in a MODFLOW or ParFlow model."),
+            [QCoreApplication.translate("PHGX", "Load a hydrologic model: its water content, porosity and layer surfaces."),
+             QCoreApplication.translate("PHGX", "Draw a survey line on the model's map."),
+             QCoreApplication.translate("PHGX", "Tick the surveys to simulate, and press Simulate surveys.")],
             [example_btn, open_btn, format_btn],
             note=("The example is the MODFLOW catchment model of the ERT workflow "
                   "example, opened on its survey line."
@@ -275,14 +275,14 @@ class HydroGeophysicsModule(BaseModule):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Show"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Show")))
         self._variable = QComboBox()
         self._variable.addItems(list(_MAP_VARS))
         self._variable.currentTextChanged.connect(self._update_display)
         row.addWidget(self._variable)
         self._layer = QSpinBox()
         self._layer.setRange(0, 0)
-        self._layer.setToolTip("The model layer the map shows, counted from the top (0).")
+        self._layer.setToolTip(QCoreApplication.translate("PHGX", "The model layer the map shows, counted from the top (0)."))
         self._layer.valueChanged.connect(self._update_display)
         self._layer_row = merged_row("Layer", self._layer)
         row.addWidget(self._layer_row)
@@ -303,7 +303,7 @@ class HydroGeophysicsModule(BaseModule):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         controls = QHBoxLayout()
-        controls.addWidget(QLabel("Show"))
+        controls.addWidget(QLabel(QCoreApplication.translate("PHGX", "Show")))
         self._section_var = QComboBox()
         self._section_var.addItems(_SECTION_VARS)
         self._section_var.currentTextChanged.connect(self._on_section_var_changed)
@@ -325,26 +325,26 @@ class HydroGeophysicsModule(BaseModule):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
-        header.addWidget(QLabel("Method"))
+        header.addWidget(QLabel(QCoreApplication.translate("PHGX", "Method")))
         self._result_method = QComboBox()
         self._result_method.currentIndexChanged.connect(self._show_selected_result)
         header.addWidget(self._result_method)
         header.addStretch(1)
-        open_btn = QPushButton("Open output folder")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open output folder"))
         open_btn.setIcon(theme.icon("fa5s.folder-open"))
         open_btn.clicked.connect(self._open_output_folder)
         header.addWidget(open_btn)
         layout.addLayout(header)
         self._result_summary = QLabel(
-            "No results yet. Load a model, draw a line, choose the methods and press "
-            "Simulate surveys.")
+            QCoreApplication.translate("PHGX", "No results yet. Load a model, draw a line, choose the methods and press "
+            "Simulate surveys."))
         self._result_summary.setWordWrap(True)
         layout.addWidget(self._result_summary)
 
         panels = QHBoxLayout()
         self._result_views: Dict[str, Tuple[ZoomableImageView, QLabel]] = {}
         for panel, title in (("model", "Model"), ("measurement", "Synthetic data")):
-            box = QGroupBox(title)
+            box = QGroupBox(i18n.tr(title))
             box_layout = QVBoxLayout(box)
             caption = QLabel("")
             caption.setWordWrap(True)
@@ -392,12 +392,12 @@ class HydroGeophysicsModule(BaseModule):
         flayout.addWidget(rule)
         self._run_reason = _hint()
         flayout.addWidget(self._run_reason)
-        self._run_btn = QPushButton("Simulate surveys")
+        self._run_btn = QPushButton(QCoreApplication.translate("PHGX", "Simulate surveys"))
         self._run_btn.setProperty("primary", True)
         self._run_btn.setIcon(theme.icon("fa5s.play", color="#ffffff"))
         self._run_btn.setToolTip(
-            "Turn the model under the line into resistivity, velocity, conductivity "
-            "and density, and simulate each ticked survey on it.")
+            QCoreApplication.translate("PHGX", "Turn the model under the line into resistivity, velocity, conductivity "
+            "and density, and simulate each ticked survey on it."))
         self._run_btn.clicked.connect(self._run_forward)
         flayout.addWidget(self._run_btn)
         self._progress = QProgressBar()
@@ -419,75 +419,75 @@ class HydroGeophysicsModule(BaseModule):
     def _example_button(self) -> QPushButton:
         """"Use example", or "Use project data" when the studio was opened on a project's."""
         context = self.state.hydro_data_dir is not None
-        button = QPushButton("Use project data" if context else "Use example")
+        button = QPushButton(QCoreApplication.translate("PHGX", "Use project data") if context else QCoreApplication.translate("PHGX", "Use example"))
         button.setIcon(theme.icon("fa5s.box-open"))
         button.setToolTip(
-            "Load the hydrologic model of this project." if context else
-            "Load the MODFLOW catchment model of the Ex_ERT_workflow example, on its "
-            "time step and survey line.")
+            QCoreApplication.translate("PHGX", "Load the hydrologic model of this project.") if context else
+            QCoreApplication.translate("PHGX", "Load the MODFLOW catchment model of the Ex_ERT_workflow example, on its "
+            "time step and survey line."))
         button.clicked.connect(self._use_context_data)
         return button
 
     def _build_data_group(self) -> QGroupBox:
-        box = QGroupBox("1  Hydrologic model")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "1  Hydrologic model"))
         form = QFormLayout(box)
-        open_btn = QPushButton("Open folder…")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open folder…"))
         open_btn.setProperty("primary", True)
         open_btn.setIcon(theme.icon("fa5s.folder-open", color="#ffffff"))
-        open_btn.setToolTip("Open a folder with Watercontent.npy, Porosity.npy, top.npy "
-                            "and bot.npy.")
+        open_btn.setToolTip(QCoreApplication.translate("PHGX", "Open a folder with Watercontent.npy, Porosity.npy, top.npy "
+                            "and bot.npy."))
         open_btn.clicked.connect(self._select_folder)
         reload_btn = QPushButton()
         reload_btn.setIcon(theme.icon("fa5s.sync"))
-        reload_btn.setToolTip("Read the folder again, after its files changed.")
+        reload_btn.setToolTip(QCoreApplication.translate("PHGX", "Read the folder again, after its files changed."))
         reload_btn.clicked.connect(self._reload)
         help_btn = QPushButton()
         help_btn.setIcon(theme.icon("fa5s.question-circle"))
-        help_btn.setToolTip("What the folder must contain.")
+        help_btn.setToolTip(QCoreApplication.translate("PHGX", "What the folder must contain."))
         help_btn.clicked.connect(self._show_format_help)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         for button in (open_btn, self._example_button(), reload_btn, help_btn):
             row.addWidget(button)
         row.addStretch(1)
-        form.addRow(row)
+        form.addRow(i18n.tr(row))
         self._data_status = QLabel("")
         self._data_status.setWordWrap(True)
-        form.addRow(self._data_status)
+        form.addRow(i18n.tr(self._data_status))
         self._snapshot = QSpinBox()
         self._snapshot.setRange(0, 0)
-        self._snapshot.setToolTip("The saved time of the model the surveys are simulated on.")
+        self._snapshot.setToolTip(QCoreApplication.translate("PHGX", "The saved time of the model the surveys are simulated on."))
         self._snapshot.valueChanged.connect(self._on_snapshot_changed)
         self._snapshot_range = QLabel("")
-        form.addRow("Time step", merged_row(self._snapshot, self._snapshot_range))
+        form.addRow(QCoreApplication.translate("PHGX", "Time step"), merged_row(self._snapshot, self._snapshot_range))
         return box
 
     def _build_line_group(self) -> QGroupBox:
-        box = QGroupBox("2  Survey line")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "2  Survey line"))
         form = QFormLayout(box)
         self._line_hint = _hint()
-        form.addRow(self._line_hint)
+        form.addRow(i18n.tr(self._line_hint))
         self._p1x, self._p1y, self._p2x, self._p2y = (
             make_spinbox(0, 0, 100000) for _ in range(4))
         for spin in (self._p1x, self._p1y, self._p2x, self._p2y):
             spin.setKeyboardTracking(False)     # act on a typed number once it is in
             spin.valueChanged.connect(lambda *_: self._spins_debounced.trigger())
-        form.addRow("Start", merged_row("column", self._p1x, "row", self._p1y))
-        form.addRow("End", merged_row("column", self._p2x, "row", self._p2y))
+        form.addRow(QCoreApplication.translate("PHGX", "Start"), merged_row("column", self._p1x, "row", self._p1y))
+        form.addRow(QCoreApplication.translate("PHGX", "End"), merged_row("column", self._p2x, "row", self._p2y))
         self._profile_label = QLabel("")
         self._profile_label.setWordWrap(True)
-        form.addRow(self._profile_label)
-        clear_btn = QPushButton("Clear line")
+        form.addRow(i18n.tr(self._profile_label))
+        clear_btn = QPushButton(QCoreApplication.translate("PHGX", "Clear line"))
         clear_btn.setIcon(theme.icon("fa5s.eraser"))
         clear_btn.clicked.connect(self._clear_profile)
-        form.addRow(merged_row(clear_btn))
+        form.addRow(i18n.tr(merged_row(clear_btn)))
         adv, aform = fold()
         self._num_samples = make_spinbox(
             220, 50, 1000, tooltip="How many points the model is read at along the "
                                    "line. More gives a finer section and a slower run.")
         self._num_samples.valueChanged.connect(lambda *_: self._preview_debounced.trigger())
-        aform.addRow("Points along the line", self._num_samples)
-        form.addRow(adv)
+        aform.addRow(QCoreApplication.translate("PHGX", "Points along the line"), self._num_samples)
+        form.addRow(i18n.tr(adv))
         self._show_line_hint()
         return box
 
@@ -497,10 +497,10 @@ class HydroGeophysicsModule(BaseModule):
         The settings themselves are folded: every survey starts on values that
         run, so a first run needs nothing but the ticks.
         """
-        box = QGroupBox("3  Surveys")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "3  Surveys"))
         layout = QVBoxLayout(box)
-        layout.addWidget(_hint("Tick the surveys to simulate along the line. Each starts "
-                               "on settings that work; unfold a line to change them."))
+        layout.addWidget(_hint(QCoreApplication.translate("PHGX", "Tick the surveys to simulate along the line. Each starts "
+                               "on settings that work; unfold a line to change them.")))
         builders = {
             "ERT": self._build_ert_panel,
             "SRT": self._build_srt_panel,
@@ -511,8 +511,8 @@ class HydroGeophysicsModule(BaseModule):
         self._method_boxes: Dict[str, QCheckBox] = {}
         self._method_panels = {}
         for name in _METHODS:
-            check = QCheckBox(_METHOD_LABELS[name])
-            check.setToolTip(_METHOD_TIPS[name])
+            check = QCheckBox(i18n.tr(_METHOD_LABELS[name]))
+            check.setToolTip(i18n.tr(_METHOD_TIPS[name]))
             check.setChecked(name in ("ERT", "SRT"))
             check.toggled.connect(self._on_methods_changed)
             panel = builders[name]()
@@ -527,7 +527,7 @@ class HydroGeophysicsModule(BaseModule):
             24, 4, 200, tooltip="Stations spread evenly along the line, for TDEM, "
                                 "FDEM and gravity.")
         self._em_stations.valueChanged.connect(self._on_survey_changed)
-        sform.addRow("Stations (EM, gravity)", self._em_stations)
+        sform.addRow(QCoreApplication.translate("PHGX", "Stations (EM, gravity)"), self._em_stations)
         layout.addWidget(stations)
         return box
 
@@ -553,7 +553,7 @@ class HydroGeophysicsModule(BaseModule):
         panel, layout, self._ert_summary = self._method_panel()
         self._ert_fit = _hint()
         layout.addWidget(self._ert_fit)
-        survey, form = fold("Electrodes and array")
+        survey, form = fold(QCoreApplication.translate("PHGX", "Electrodes and array"))
         self._ert_count = make_spinbox(72, 4, 512)
         self._ert_spacing = _number(1.0, 0.1, 50.0, 0.5, 2, " m")
         self._ert_start = _number(
@@ -562,30 +562,30 @@ class HydroGeophysicsModule(BaseModule):
             "off the end of the line is moved back onto it.")
         self._ert_scheme = QComboBox()
         for label, code in _ERT_ARRAYS:
-            self._ert_scheme.addItem(label, code)
+            self._ert_scheme.addItem(i18n.tr(label), code)
         self._ert_noise = _number(3.0, 0.0, 100.0, 0.5, 2, " %",
                                   "Random noise added to each simulated reading.")
-        form.addRow("Electrodes", self._ert_count)
-        form.addRow("Spacing", self._ert_spacing)
-        form.addRow("First electrode at", self._ert_start)
-        form.addRow("Array", self._ert_scheme)
-        form.addRow("Added noise", self._ert_noise)
+        form.addRow(QCoreApplication.translate("PHGX", "Electrodes"), self._ert_count)
+        form.addRow(QCoreApplication.translate("PHGX", "Spacing"), self._ert_spacing)
+        form.addRow(QCoreApplication.translate("PHGX", "First electrode at"), self._ert_start)
+        form.addRow(QCoreApplication.translate("PHGX", "Array"), self._ert_scheme)
+        form.addRow(QCoreApplication.translate("PHGX", "Added noise"), self._ert_noise)
         layout.addWidget(survey)
 
-        adv, aform = fold("Rock physics and errors")
+        adv, aform = fold(QCoreApplication.translate("PHGX", "Rock physics and errors"))
         self._rho = [_number(v, 1.0, 1e5, 10.0, 1) for v in (100.0, 500.0, 2400.0)]
         self._archie = [_number(v, 1.0, 3.0, 0.1, 2) for v in (2.2, 1.8, 2.5)]
         self._sigma_s = [_number(v, 0.0, 1.0, 0.001, 4) for v in (0.002, 0.0, 0.0)]
-        aform.addRow(self._zone_grid([
+        aform.addRow(i18n.tr(self._zone_grid([
             ("Resistivity when saturated (Ω·m)", self._rho),
             ("Saturation exponent n", self._archie),
             ("Surface conductivity (S/m)", self._sigma_s),
-        ]))
+        ])))
         self._ert_rel = _number(3.0, 0.0, 100.0, 0.5, 2, " %")
         self._ert_abs = _number(0.0, 0.0, 100.0, 0.1, 3, " Ω")
-        self._ert_rel.setToolTip("The error each simulated reading is given, as a "
-                                 "share of the reading, plus the absolute part.")
-        aform.addRow("Error model", merged_row(self._ert_rel, "+", self._ert_abs))
+        self._ert_rel.setToolTip(QCoreApplication.translate("PHGX", "The error each simulated reading is given, as a "
+                                 "share of the reading, plus the absolute part."))
+        aform.addRow(QCoreApplication.translate("PHGX", "Error model"), merged_row(self._ert_rel, "+", self._ert_abs))
         layout.addWidget(adv)
         self._watch(self._ert_count, self._ert_spacing, self._ert_start, self._ert_scheme,
                     self._ert_noise)
@@ -595,7 +595,7 @@ class HydroGeophysicsModule(BaseModule):
         panel, layout, self._srt_summary = self._method_panel()
         self._srt_fit = _hint()
         layout.addWidget(self._srt_fit)
-        survey, form = fold("Geophones and shots")
+        survey, form = fold(QCoreApplication.translate("PHGX", "Geophones and shots"))
         self._srt_count = make_spinbox(72, 4, 512)
         self._srt_spacing = _number(1.0, 0.1, 50.0, 0.5, 2, " m")
         self._srt_start = _number(
@@ -605,22 +605,22 @@ class HydroGeophysicsModule(BaseModule):
         self._srt_shot = make_spinbox(5, 1, 100)
         self._srt_noise = _number(1.0, 0.0, 100.0, 0.5, 2, " %",
                                   "Random noise added to each simulated travel time.")
-        form.addRow("Geophones", self._srt_count)
-        form.addRow("Spacing", self._srt_spacing)
-        form.addRow("First geophone at", self._srt_start)
-        form.addRow("A shot every", merged_row(self._srt_shot, "geophones"))
-        form.addRow("Added noise", self._srt_noise)
+        form.addRow(QCoreApplication.translate("PHGX", "Geophones"), self._srt_count)
+        form.addRow(QCoreApplication.translate("PHGX", "Spacing"), self._srt_spacing)
+        form.addRow(QCoreApplication.translate("PHGX", "First geophone at"), self._srt_start)
+        form.addRow(QCoreApplication.translate("PHGX", "A shot every"), merged_row(self._srt_shot, "geophones"))
+        form.addRow(QCoreApplication.translate("PHGX", "Added noise"), self._srt_noise)
         layout.addWidget(survey)
 
-        adv, aform = fold("Rock physics and errors")
+        adv, aform = fold(QCoreApplication.translate("PHGX", "Rock physics and errors"))
         self._vel_bulk = [_number(v, 1.0, 200.0, 1.0, 1) for v in (30.0, 50.0, 55.0)]
         self._vel_shear = [_number(v, 1.0, 200.0, 1.0, 1) for v in (20.0, 35.0, 50.0)]
         self._vel_rho = [_number(v, 1000.0, 4000.0, 10.0, 0) for v in (2650.0, 2670.0, 2680.0)]
-        aform.addRow(self._zone_grid([
+        aform.addRow(i18n.tr(self._zone_grid([
             ("Mineral bulk modulus (GPa)", self._vel_bulk),
             ("Mineral shear modulus (GPa)", self._vel_shear),
             ("Mineral density (kg/m³)", self._vel_rho),
-        ]))
+        ])))
         self._vel_top_depth = _number(
             1.0, 0.1, 100.0, 0.5, 2, " m",
             "Depth used for the confining pressure of the regolith's grain contacts "
@@ -629,12 +629,12 @@ class HydroGeophysicsModule(BaseModule):
                                        tip="Crack aspect ratio of the fractured rock.")
         self._vel_bot_aspect = _number(0.03, 0.001, 1.0, 0.01, 3,
                                        tip="Crack aspect ratio of the bedrock.")
-        aform.addRow("Regolith pressure depth", self._vel_top_depth)
-        aform.addRow("Crack aspect ratio",
+        aform.addRow(QCoreApplication.translate("PHGX", "Regolith pressure depth"), self._vel_top_depth)
+        aform.addRow(QCoreApplication.translate("PHGX", "Crack aspect ratio"),
                      merged_row("fractured", self._vel_mid_aspect, "bedrock", self._vel_bot_aspect))
         self._srt_noise_abs = _number(0.01, 0.0, 1000.0, 0.01, 4, " ms",
                                       "Absolute noise added to each travel time.")
-        aform.addRow("Absolute noise", self._srt_noise_abs)
+        aform.addRow(QCoreApplication.translate("PHGX", "Absolute noise"), self._srt_noise_abs)
         layout.addWidget(adv)
         self._watch(self._srt_count, self._srt_spacing, self._srt_start, self._srt_shot,
                     self._srt_noise)
@@ -646,44 +646,44 @@ class HydroGeophysicsModule(BaseModule):
         m = _number(1.5, 1.0, 3.0, 0.1, 2)
         n = _number(2.0, 1.0, 3.0, 0.1, 2)
         sigma_s = _number(0.0, 0.0, 1.0, 0.001, 4, " S/m")
-        aform.addRow("Pore-water conductivity", sigma_w)
-        aform.addRow("Cementation exponent m", m)
-        aform.addRow("Saturation exponent n", n)
-        aform.addRow("Surface conductivity", sigma_s)
+        aform.addRow(QCoreApplication.translate("PHGX", "Pore-water conductivity"), sigma_w)
+        aform.addRow(QCoreApplication.translate("PHGX", "Cementation exponent m"), m)
+        aform.addRow(QCoreApplication.translate("PHGX", "Saturation exponent n"), n)
+        aform.addRow(QCoreApplication.translate("PHGX", "Surface conductivity"), sigma_s)
         return sigma_w, m, n, sigma_s
 
     def _build_tdem_panel(self) -> QWidget:
         panel, layout, self._tdem_summary = self._method_panel()
-        survey, form = fold("Time gates")
+        survey, form = fold(QCoreApplication.translate("PHGX", "Time gates"))
         self._tdem_tmin = _number(0.01, 0.0001, 1000.0, 0.01, 4, " ms")
         self._tdem_tmax = _number(10.0, 0.01, 10000.0, 1.0, 3, " ms")
         self._tdem_ngates = make_spinbox(28, 4, 200)
         self._tdem_noise = _number(3.0, 0.0, 100.0, 0.5, 2, " %")
-        form.addRow("Times", merged_row(self._tdem_tmin, "to", self._tdem_tmax))
-        form.addRow("Time gates", self._tdem_ngates)
-        form.addRow("Added noise", self._tdem_noise)
+        form.addRow(QCoreApplication.translate("PHGX", "Times"), merged_row(self._tdem_tmin, "to", self._tdem_tmax))
+        form.addRow(QCoreApplication.translate("PHGX", "Time gates"), self._tdem_ngates)
+        form.addRow(QCoreApplication.translate("PHGX", "Added noise"), self._tdem_noise)
         layout.addWidget(survey)
-        adv, aform = fold("Rock physics and loop")
+        adv, aform = fold(QCoreApplication.translate("PHGX", "Rock physics and loop"))
         (self._tdem_sigma_w, self._tdem_m, self._tdem_n,
          self._tdem_sigma_s) = self._em_rock_physics(aform)
         self._tdem_radius = _number(10.0, 0.5, 200.0, 0.5, 1, " m")
-        aform.addRow("Loop radius", self._tdem_radius)
+        aform.addRow(QCoreApplication.translate("PHGX", "Loop radius"), self._tdem_radius)
         layout.addWidget(adv)
         self._watch(self._tdem_tmin, self._tdem_tmax, self._tdem_ngates, self._tdem_noise)
         return panel
 
     def _build_fdem_panel(self) -> QWidget:
         panel, layout, self._fdem_summary = self._method_panel()
-        survey, form = fold("Frequencies")
+        survey, form = fold(QCoreApplication.translate("PHGX", "Frequencies"))
         self._fdem_fmin = _number(10.0, 0.1, 1e6, 10.0, 2, " Hz")
         self._fdem_fmax = _number(1e4, 1.0, 1e7, 100.0, 1, " Hz")
         self._fdem_nfreq = make_spinbox(18, 4, 200)
         self._fdem_noise = _number(3.0, 0.0, 100.0, 0.5, 2, " %")
-        form.addRow("Frequencies", merged_row(self._fdem_fmin, "to", self._fdem_fmax))
-        form.addRow("How many", self._fdem_nfreq)
-        form.addRow("Added noise", self._fdem_noise)
+        form.addRow(QCoreApplication.translate("PHGX", "Frequencies"), merged_row(self._fdem_fmin, "to", self._fdem_fmax))
+        form.addRow(QCoreApplication.translate("PHGX", "How many"), self._fdem_nfreq)
+        form.addRow(QCoreApplication.translate("PHGX", "Added noise"), self._fdem_noise)
         layout.addWidget(survey)
-        adv, aform = fold("Rock physics and instrument")
+        adv, aform = fold(QCoreApplication.translate("PHGX", "Rock physics and instrument"))
         (self._fdem_sigma_w, self._fdem_m, self._fdem_n,
          self._fdem_sigma_s) = self._em_rock_physics(aform)
         self._fdem_src_x = _number(0.0, -100.0, 1000.0, 1.0, 1, " m")
@@ -695,47 +695,47 @@ class HydroGeophysicsModule(BaseModule):
         self._fdem_comp.addItems(["secondary", "total"])
         self._fdem_wave = QComboBox()
         self._fdem_wave.addItems(["dipole", "loop"])
-        aform.addRow("Transmitter at", self._fdem_src_x)
-        aform.addRow("Receiver at", self._fdem_rec_x)
-        aform.addRow("Loop radius", self._fdem_radius)
-        aform.addRow("Receiver orientation", self._fdem_orient)
-        aform.addRow("Receiver component", self._fdem_comp)
-        aform.addRow("Source", self._fdem_wave)
+        aform.addRow(QCoreApplication.translate("PHGX", "Transmitter at"), self._fdem_src_x)
+        aform.addRow(QCoreApplication.translate("PHGX", "Receiver at"), self._fdem_rec_x)
+        aform.addRow(QCoreApplication.translate("PHGX", "Loop radius"), self._fdem_radius)
+        aform.addRow(QCoreApplication.translate("PHGX", "Receiver orientation"), self._fdem_orient)
+        aform.addRow(QCoreApplication.translate("PHGX", "Receiver component"), self._fdem_comp)
+        aform.addRow(QCoreApplication.translate("PHGX", "Source"), self._fdem_wave)
         layout.addWidget(adv)
         self._watch(self._fdem_fmin, self._fdem_fmax, self._fdem_nfreq, self._fdem_noise)
         return panel
 
     def _build_gravity_panel(self) -> QWidget:
         panel, layout, self._grav_summary = self._method_panel()
-        survey, form = fold("Sensor")
+        survey, form = fold(QCoreApplication.translate("PHGX", "Sensor"))
         self._grav_sensor_h = _number(1.0, 0.0, 100.0, 0.5, 2, " m")
         self._grav_noise = _number(2.0, 0.0, 100.0, 0.5, 2, " %")
-        form.addRow("Height above ground", self._grav_sensor_h)
-        form.addRow("Added noise", self._grav_noise)
+        form.addRow(QCoreApplication.translate("PHGX", "Height above ground"), self._grav_sensor_h)
+        form.addRow(QCoreApplication.translate("PHGX", "Added noise"), self._grav_noise)
         layout.addWidget(survey)
-        adv, aform = fold("Densities and model grid")
+        adv, aform = fold(QCoreApplication.translate("PHGX", "Densities and model grid"))
         self._grav_rho_matrix = _number(2650.0, 1000.0, 4000.0, 10.0, 0, " kg/m³")
         self._grav_rho_water = _number(1000.0, 500.0, 1500.0, 10.0, 0, " kg/m³")
         self._grav_rho_air = _number(1.225, 0.0, 100.0, 0.1, 3, " kg/m³")
         self._grav_mesh_nx = make_spinbox(80, 10, 400)
         self._grav_mesh_nz = make_spinbox(60, 10, 400)
         self._grav_width_y = _number(12.0, 1.0, 200.0, 1.0, 1, " m")
-        aform.addRow("Grain density", self._grav_rho_matrix)
-        aform.addRow("Water density", self._grav_rho_water)
-        aform.addRow("Air density", self._grav_rho_air)
-        aform.addRow("Grid cells", merged_row(self._grav_mesh_nx, "across ×",
+        aform.addRow(QCoreApplication.translate("PHGX", "Grain density"), self._grav_rho_matrix)
+        aform.addRow(QCoreApplication.translate("PHGX", "Water density"), self._grav_rho_water)
+        aform.addRow(QCoreApplication.translate("PHGX", "Air density"), self._grav_rho_air)
+        aform.addRow(QCoreApplication.translate("PHGX", "Grid cells"), merged_row(self._grav_mesh_nx, "across ×",
                                               self._grav_mesh_nz, "deep"))
-        aform.addRow("Model width", self._grav_width_y)
+        aform.addRow(QCoreApplication.translate("PHGX", "Model width"), self._grav_width_y)
         layout.addWidget(adv)
         self._watch(self._grav_sensor_h, self._grav_noise)
         return panel
 
     def _build_more_group(self) -> QGroupBox:
-        box = QGroupBox("Simulation")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Simulation"))
         outer = QFormLayout(box)
-        outer.addRow(_hint("Rarely needs changing."))
-        adv, form = fold("Noise seed, mesh and saved settings")
-        outer.addRow(adv)
+        outer.addRow(i18n.tr(_hint(QCoreApplication.translate("PHGX", "Rarely needs changing."))))
+        adv, form = fold(QCoreApplication.translate("PHGX", "Noise seed, mesh and saved settings"))
+        outer.addRow(i18n.tr(adv))
         self._seed = make_spinbox(
             7, 0, 10_000_000,
             tooltip="Seed of the random noise: the same seed gives the same noisy data.")
@@ -745,15 +745,15 @@ class HydroGeophysicsModule(BaseModule):
             "and more of them.")
         self._mesh_area = _number(1.0, 0.01, 100.0, 0.1, 2, " m²",
                                   "Largest area a mesh cell may have.")
-        form.addRow("Noise seed", self._seed)
-        form.addRow("Mesh quality", self._mesh_quality)
-        form.addRow("Largest mesh cell", self._mesh_area)
-        export_btn = QPushButton("Save survey settings")
+        form.addRow(QCoreApplication.translate("PHGX", "Noise seed"), self._seed)
+        form.addRow(QCoreApplication.translate("PHGX", "Mesh quality"), self._mesh_quality)
+        form.addRow(QCoreApplication.translate("PHGX", "Largest mesh cell"), self._mesh_area)
+        export_btn = QPushButton(QCoreApplication.translate("PHGX", "Save survey settings"))
         export_btn.setIcon(theme.icon("fa5s.file-export"))
-        export_btn.setToolTip("Write the line, the surveys and their settings to "
-                              "survey_config.json, without simulating anything.")
+        export_btn.setToolTip(QCoreApplication.translate("PHGX", "Write the line, the surveys and their settings to "
+                              "survey_config.json, without simulating anything."))
         export_btn.clicked.connect(self._export_config)
-        form.addRow(merged_row(export_btn))
+        form.addRow(i18n.tr(merged_row(export_btn)))
         return box
 
     # -- navigation (the assistant's step names) -----------------------------
@@ -838,7 +838,7 @@ class HydroGeophysicsModule(BaseModule):
         if not hasattr(self, "_run_reason"):
             return
         reason = self._run_blocker()
-        self._run_reason.setText(reason)
+        self._run_reason.setText(i18n.tr(reason))
         self._run_reason.setVisible(bool(reason))
         if self._run_busy is None:
             self._run_btn.setEnabled(not reason)
@@ -847,14 +847,14 @@ class HydroGeophysicsModule(BaseModule):
         has_line = bool(self._point1 and self._point2)
         self._map_stack.setCurrentIndex(1 if loaded else 0)
         self._guide.setVisible(loaded or self._run_busy is not None)
-        self._guide.setText(self._next_step())
+        self._guide.setText(i18n.tr(self._next_step()))
         for group in (self._line_group, self._methods_group, self._more_group):
             group.setEnabled(loaded)
         done = {self._data_group: loaded and not self._missing,
                 self._line_group: has_line,
                 self._methods_group: has_line and bool(self._collect_methods())}
         for group, title in self._step_titles.items():
-            group.setTitle(f"{title}  ✓" if done[group] else title)
+            group.setTitle(f"{title}  ✓" if done[group] else i18n.tr(title))
         self._tabs.setTabEnabled(_SECTION_TAB, has_line)
         self._tabs.setTabEnabled(_RESULTS_TAB, self._has_results)
 
@@ -893,20 +893,15 @@ class HydroGeophysicsModule(BaseModule):
     def _update_summaries(self) -> None:
         """Each survey in one line, and where each spread lies on the line."""
         self._ert_summary.setText(
-            f"{self._ert_count.value()} electrodes {self._ert_spacing.value():g} m apart, "
-            f"{self._ert_scheme.currentText()} array, {self._ert_noise.value():g} % noise.")
+            QCoreApplication.translate("PHGX", "{0} electrodes {1:g} m apart, {2} array, {3:g} % noise.").format(self._ert_count.value(), self._ert_spacing.value(), self._ert_scheme.currentText(), self._ert_noise.value()))
         self._srt_summary.setText(
-            f"{self._srt_count.value()} geophones {self._srt_spacing.value():g} m apart, "
-            f"a shot every {self._srt_shot.value()}, {self._srt_noise.value():g} % noise.")
+            QCoreApplication.translate("PHGX", "{0} geophones {1:g} m apart, a shot every {2}, {3:g} % noise.").format(self._srt_count.value(), self._srt_spacing.value(), self._srt_shot.value(), self._srt_noise.value()))
         self._tdem_summary.setText(
-            f"{self._tdem_ngates.value()} time gates from {self._tdem_tmin.value():g} to "
-            f"{self._tdem_tmax.value():g} ms, {self._tdem_noise.value():g} % noise.")
+            QCoreApplication.translate("PHGX", "{0} time gates from {1:g} to {2:g} ms, {3:g} % noise.").format(self._tdem_ngates.value(), self._tdem_tmin.value(), self._tdem_tmax.value(), self._tdem_noise.value()))
         self._fdem_summary.setText(
-            f"{self._fdem_nfreq.value()} frequencies from {self._fdem_fmin.value():g} to "
-            f"{self._fdem_fmax.value():g} Hz, {self._fdem_noise.value():g} % noise.")
+            QCoreApplication.translate("PHGX", "{0} frequencies from {1:g} to {2:g} Hz, {3:g} % noise.").format(self._fdem_nfreq.value(), self._fdem_fmin.value(), self._fdem_fmax.value(), self._fdem_noise.value()))
         self._grav_summary.setText(
-            f"Sensor {self._grav_sensor_h.value():g} m above the ground, "
-            f"{self._grav_noise.value():g} % noise.")
+            QCoreApplication.translate("PHGX", "Sensor {0:g} m above the ground, {1:g} % noise.").format(self._grav_sensor_h.value(), self._grav_noise.value()))
         length = self._line_length()
         for label, count_box, spacing_box, start_box, what in (
             (self._ert_fit, self._ert_count, self._ert_spacing, self._ert_start, "electrodes"),
@@ -918,8 +913,7 @@ class HydroGeophysicsModule(BaseModule):
             if length is None:
                 continue
             if span > length:
-                label.setText(f"The spread is {span:.0f} m, longer than the {length:.0f} m "
-                              f"line: use fewer or closer {what}.")
+                label.setText(QCoreApplication.translate("PHGX", "The spread is {0:.0f} m, longer than the {1:.0f} m line: use fewer or closer {2}.").format(span, length, what))
                 theme.set_tone(label, "warn")
                 continue
             first = float(hydro_pipeline.sensor_positions(
@@ -997,7 +991,7 @@ class HydroGeophysicsModule(BaseModule):
             _logger.debug("HydroGeophysicsModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
         dlg = QDialog(self)
-        dlg.setWindowTitle("Hydro input data format")
+        dlg.setWindowTitle(QCoreApplication.translate("PHGX", "Hydro input data format"))
         dlg.resize(760, 660)
         lay = QVBoxLayout(dlg)
         browser = QTextBrowser()
@@ -1008,14 +1002,14 @@ class HydroGeophysicsModule(BaseModule):
             _logger.debug("HydroGeophysicsModule._show_format_help: very old Qt without setMarkdown", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close_btn = QPushButton("Close")
+        close_btn = QPushButton(QCoreApplication.translate("PHGX", "Close"))
         close_btn.clicked.connect(dlg.accept)
         lay.addWidget(close_btn)
         dlg.exec()
 
     def _select_folder(self) -> None:
         start = str(self._data_dir() or Path.cwd())
-        path = select_directory(self, "Select hydro data folder", start)
+        path = select_directory(self, QCoreApplication.translate("PHGX", "Select hydro data folder"), start)
         if path:
             self._agent_data_source_confirmed = False
             self._agent_data_source = ""
@@ -1032,8 +1026,8 @@ class HydroGeophysicsModule(BaseModule):
         self._missing = []
         if data_dir is None or not Path(data_dir).exists():
             self._data_status.setText(
-                "No model loaded. Open a folder with Watercontent.npy, Porosity.npy, "
-                "top.npy and bot.npy, or use the example.")
+                QCoreApplication.translate("PHGX", "No model loaded. Open a folder with Watercontent.npy, Porosity.npy, "
+                "top.npy and bot.npy, or use the example."))
             theme.set_tone(self._data_status, None)
             self._snapshot_range.setText("")
             self._sync_page()
@@ -1056,7 +1050,7 @@ class HydroGeophysicsModule(BaseModule):
         n_times = int(self._wc.shape[0]) if self._wc is not None and self._wc.ndim == 4 else 1
         self._snapshot.setRange(0, n_times - 1)
         self._snapshot.setEnabled(n_times > 1)
-        self._snapshot_range.setText(f"of 0–{n_times - 1}" if n_times > 1 else "(one time)")
+        self._snapshot_range.setText(QCoreApplication.translate("PHGX", "of 0–{0}").format(n_times - 1) if n_times > 1 else QCoreApplication.translate("PHGX", "(one time)"))
         layered = [arr for arr in (self._wc, self._por, self._bot)
                    if arr is not None and arr.ndim >= 3]
         n_layers = max((int(arr.shape[-3]) for arr in layered), default=1)
@@ -1079,8 +1073,8 @@ class HydroGeophysicsModule(BaseModule):
                          f"{n_layers} layers · {grid[0]} × {grid[1]} cells")
         if self._missing:
             lines.append(f"Missing: {', '.join(self._missing)} (see the ? button).")
-        self._data_status.setText("<br>".join(lines))
-        self._data_status.setToolTip(str(data_dir))
+        self._data_status.setText(i18n.tr("<br>".join(lines)))
+        self._data_status.setToolTip(i18n.tr(str(data_dir)))
         theme.set_tone(self._data_status, "warn" if self._missing else None)
         self.log(f"Loaded hydro data from {data_dir}",
                  "success" if not self._missing else "warn")
@@ -1223,9 +1217,7 @@ class HydroGeophysicsModule(BaseModule):
         self._profile = None
         length = self._line_length() or 0.0
         self._profile_label.setText(
-            f"Line from ({self._point1[0]:.0f}, {self._point1[1]:.0f}) to "
-            f"({self._point2[0]:.0f}, {self._point2[1]:.0f}), about {length:.0f} m. "
-            "The Section tab shows the ground under it.")
+            QCoreApplication.translate("PHGX", "Line from ({0:.0f}, {1:.0f}) to ({2:.0f}, {3:.0f}), about {4:.0f} m. The Section tab shows the ground under it.").format(self._point1[0], self._point1[1], self._point2[0], self._point2[1], length))
         self._update_summaries()
         self._preview_debounced.trigger()
         self._sync_page()
@@ -1357,7 +1349,7 @@ class HydroGeophysicsModule(BaseModule):
         top, base = float(np.nanmax(surface)), float(np.nanmin(bounds[n_layers]))
         ax.set_ylim(base - 0.02 * (top - base), top + 0.08 * (top - base))
         set_section_axes(ax, surface=surface, unit=length_units.current())
-        ax.set_title(f"{label} under the line, time step {self._profile.get('snapshot_index', 0)}")
+        ax.set_title(QCoreApplication.translate("PHGX", "{0} under the line, time step {1}").format(label, self._profile.get('snapshot_index', 0)))
         self._section_canvas.draw_idle()
         self._section_toolbar.update()
 
@@ -1375,11 +1367,10 @@ class HydroGeophysicsModule(BaseModule):
                 done.append(str(method))
         if result.get("status") == "config_exported":
             self._result_summary.setText(
-                "Nothing was simulated; the survey settings were saved instead.")
+                QCoreApplication.translate("PHGX", "Nothing was simulated; the survey settings were saved instead."))
         else:
             self._result_summary.setText(
-                f"Simulated {', '.join(done) or 'no method'} on the line. Each method's "
-                "model and synthetic data are shown below.")
+                QCoreApplication.translate("PHGX", "Simulated {0} on the line. Each method's model and synthetic data are shown below.").format(', '.join(done) or 'no method'))
         paths = result.get("display_paths", {})
         self._result_paths = {
             str(method): {str(panel): str(path) for panel, path in panels.items()}
@@ -1397,7 +1388,7 @@ class HydroGeophysicsModule(BaseModule):
         self._result_method.clear()
         for method in result.get("methods", []):
             if method in self._result_paths:
-                self._result_method.addItem(_METHOD_LABELS.get(method, str(method)), method)
+                self._result_method.addItem(i18n.tr(_METHOD_LABELS.get(method, str(method))), method)
         self._result_method.blockSignals(False)
         if self._result_method.count():
             self._result_method.setCurrentIndex(0)
@@ -1407,7 +1398,7 @@ class HydroGeophysicsModule(BaseModule):
         bits = [f"Synthetic data files: {', '.join(files)}" if files else ""]
         if cfg:
             bits.append(f"Survey settings: {cfg}")
-        self._result_files.setText("<br>".join(bit for bit in bits if bit))
+        self._result_files.setText(i18n.tr("<br>".join(bit for bit in bits if bit)))
         self._sync_page()
 
     def _show_selected_result(self) -> None:
@@ -1417,10 +1408,10 @@ class HydroGeophysicsModule(BaseModule):
         for panel, (view, caption) in self._result_views.items():
             path = paths.get(panel)
             if path and Path(path).exists() and view.set_image_file(path):
-                caption.setText(Path(path).name)
+                caption.setText(i18n.tr(Path(path).name))
             else:
                 view.clear()
-                caption.setText("" if not method else f"No {panel} figure for this method.")
+                caption.setText("" if not method else QCoreApplication.translate("PHGX", "No {0} figure for this method.").format(panel))
 
     def _open_output_folder(self) -> None:
         out = self.state.module_results.get(self.module_key, {}).get("output_dir")
@@ -1611,10 +1602,10 @@ class HydroGeophysicsModule(BaseModule):
         self._workflow_recipe_path = str(recipe_path)
         self._run_busy = BusyStateController([self._run_btn])
         self._run_busy.start()
-        self._run_btn.setText("Simulating…")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Simulating…"))
         self._progress.setVisible(True)
         self._progress.setRange(0, 0)  # busy
-        self._run_status.setText("Starting the simulation…")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Starting the simulation…"))
         theme.set_tone(self._run_status, None)
         self._sync_page()
         self.log("Starting hydro → geophysics forward modeling…", "info")
@@ -1643,13 +1634,13 @@ class HydroGeophysicsModule(BaseModule):
         self._on_forward_ok(result.legacy_payload())
 
     def _on_worker_log(self, message: str, level: str) -> None:
-        self._run_status.setText(message)
+        self._run_status.setText(i18n.tr(message))
         self.log(message, level)
 
     def _on_forward_ok(self, result: dict) -> None:
         self._progress.setRange(0, 1); self._progress.setValue(1)
         self.log(f"Forward modeling complete: {result.get('methods')}.", "success")
-        self._run_status.setText("Finished. The results are on the Results tab.")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Finished. The results are on the Results tab."))
         theme.set_tone(self._run_status, "ok")
         result["selected_points"] = [self._point1, self._point2]
         self.report_result(result)
@@ -1666,7 +1657,7 @@ class HydroGeophysicsModule(BaseModule):
             # changed before trying again. Exporting the configuration in its
             # place would blame a backend that is there.
             self.log(f"Forward modeling failed: {message}", "error")
-            self._run_status.setText(f"The simulation failed: {message}")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "The simulation failed: {0}").format(message))
             theme.set_tone(self._run_status, "error")
             return
         self.log(f"Forward modeling could not run: {message}", "warn")
@@ -1674,7 +1665,7 @@ class HydroGeophysicsModule(BaseModule):
         note = ("A forward-modeling engine this run needs is not installed or could not be "
                 "loaded (the log says which). The survey settings were saved to "
                 f"{config_path}.")
-        self._run_status.setText(note)
+        self._run_status.setText(i18n.tr(note))
         theme.set_tone(self._run_status, "warn")
         self.log(note, "warn")
         self._populate_results({"status": "config_exported", "methods": self._collect_methods(),
@@ -1685,12 +1676,12 @@ class HydroGeophysicsModule(BaseModule):
         if self._run_busy is not None:
             self._run_busy.finish()
             self._run_busy = None
-        self._run_btn.setText("Simulate surveys")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Simulate surveys"))
         self._progress.setVisible(False)
         if self._worker is not None and self._worker.is_cancelled():
             self._run_problem = "Stopped by user"
-            self._run_status.setText("Stopped before it finished. Press Simulate surveys "
-                                     "to start again.")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "Stopped before it finished. Press Simulate surveys "
+                                     "to start again."))
             theme.set_tone(self._run_status, "warn")
         self._sync_page()
 

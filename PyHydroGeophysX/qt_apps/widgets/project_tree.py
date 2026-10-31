@@ -7,7 +7,7 @@ from typing import List, Tuple
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 
 _MODULE_ROLE = Qt.UserRole
 
@@ -109,7 +109,7 @@ class ProjectTree(QTreeWidget):
 
     def _build(self) -> None:
         for group_label, children in TREE_STRUCTURE:
-            group = QTreeWidgetItem([group_label])
+            group = QTreeWidgetItem([i18n.tr(group_label)])
             group.setFlags(group.flags() & ~Qt.ItemIsSelectable)
             font = group.font(0)
             font.setBold(True)
@@ -117,7 +117,7 @@ class ProjectTree(QTreeWidget):
             group.setIcon(0, theme.icon(_GROUP_ICONS.get(group_label, "fa5s.folder"), color=theme.PALETTE["primary"]))
             self.addTopLevelItem(group)
             for child_label, module_key in children:
-                child = QTreeWidgetItem([child_label])
+                child = QTreeWidgetItem([i18n.tr(child_label)])
                 child.setData(0, _MODULE_ROLE, module_key)
                 child.setIcon(0, theme.icon(_CHILD_ICONS.get(child_label, "fa5s.circle"), color=theme.PALETTE["accent"]))
                 group.addChild(child)

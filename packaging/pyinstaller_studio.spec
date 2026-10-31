@@ -97,6 +97,11 @@ for _source, _target in (
     (("examples", "data", "EM", "synthetic_tem_lci"), "examples/data/EM/synthetic_tem_lci"),
 ):
     datas.append((os.path.join(repo_root, *_source), _target))
+# The Studio's translations (qt_apps/i18n.py loads phgx_<language>.qm from here).
+_translations_dir = os.path.join(repo_root, "PyHydroGeophysX", "qt_apps", "translations")
+for _name in sorted(os.listdir(_translations_dir)) if os.path.isdir(_translations_dir) else ():
+    if _name.endswith(".qm"):
+        datas.append((os.path.join(_translations_dir, _name), "PyHydroGeophysX/qt_apps/translations"))
 _modules_dir = os.path.join(repo_root, "PyHydroGeophysX", "qt_apps", "modules")
 for _name in sorted(os.listdir(_modules_dir)):
     if _name.endswith("_input_format.md"):

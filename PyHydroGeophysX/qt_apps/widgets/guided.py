@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence, Tuple
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.qt_utils import PlainDoubleSpinBox
 
 
@@ -38,15 +38,15 @@ def number_box(value: float, lo: float, hi: float, step: float, decimals: int,
     box.setSingleStep(float(step))
     box.setValue(float(value))
     if suffix:
-        box.setSuffix(suffix)
+        box.setSuffix(i18n.tr(suffix))
     if tip:
-        box.setToolTip(tip)
+        box.setToolTip(i18n.tr(tip))
     return box
 
 
 def hint(text: str = "") -> QLabel:
     """A small grey explanatory line that wraps."""
-    label = QLabel(text)
+    label = QLabel(i18n.tr(text))
     label.setWordWrap(True)
     theme.set_tone(label, "hint")
     return label
@@ -64,7 +64,7 @@ def fold(title: str = "More options") -> Tuple[QWidget, QFormLayout]:
     outer.setContentsMargins(0, 2, 0, 0)
     outer.setSpacing(0)
     toggle = QToolButton()
-    toggle.setText(title)
+    toggle.setText(i18n.tr(title))
     toggle.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
     toggle.setArrowType(Qt.RightArrow)
     toggle.setCheckable(True)
@@ -103,7 +103,7 @@ class NextStepStrip(QFrame):
         row.addWidget(self._text, stretch=1)
 
     def setText(self, text: str) -> None:  # noqa: N802 - QLabel's API
-        self._text.setText(text)
+        self._text.setText(i18n.tr(text))
 
     def text(self) -> str:
         return self._text.text()
@@ -130,16 +130,16 @@ def start_card(title: str, intro: str, steps: Sequence[str],
     layout = QVBoxLayout(card)
     layout.setContentsMargins(margin, 4, margin, 12)
     layout.setSpacing(10)
-    heading = QLabel(title)
+    heading = QLabel(i18n.tr(title))
     heading.setObjectName("HomeCardTitle")
     heading.setWordWrap(True)
     layout.addWidget(heading)
-    description = QLabel(intro)
+    description = QLabel(i18n.tr(intro))
     description.setObjectName("HomeDescription")
     description.setWordWrap(True)
     layout.addWidget(description)
     for number, text in enumerate(steps, start=1):
-        step = QLabel(f"<b>{number}</b>&nbsp;&nbsp;&nbsp;{text}")
+        step = QLabel(QCoreApplication.translate("PHGX", "<b>{0}</b>&nbsp;&nbsp;&nbsp;{1}").format(number, text))
         step.setWordWrap(True)
         layout.addWidget(step)
     row = QHBoxLayout()

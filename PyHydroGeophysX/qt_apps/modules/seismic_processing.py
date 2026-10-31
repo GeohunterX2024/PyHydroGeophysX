@@ -41,7 +41,7 @@ from PySide6.QtCore import QCoreApplication, QEventLoop, Qt, QTimer
 
 from PyHydroGeophysX._internal.utils import velocity_of
 from PyHydroGeophysX.inversion.lambda_search import LAMBDA_BOUNDS as _LAMBDA_BOUNDS
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -259,11 +259,11 @@ class SeismicProcessingModule(BaseModule):
         self._viewer.pointPicked.connect(self._on_point_picked)
         self._viewer.linePicked.connect(self._on_line_picked)
         self._center_tabs = QTabWidget()
-        self._center_tabs.addTab(self._viewer, "Gather")
+        self._center_tabs.addTab(self._viewer, QCoreApplication.translate("PHGX", "Gather"))
         self._tt_widget = pg.PlotWidget()
         self._tt_widget.setBackground("w")
         self._tt_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._tt_widget.setLabel("left", "travel time (ms)")
+        self._tt_widget.setLabel("left", QCoreApplication.translate("PHGX", "travel time (ms)"))
         self._tt_plot = self._tt_widget.getPlotItem()
         length_units.pyqtgraph_axis(self._tt_plot, "bottom", "geophone position x")
         self._tt_plot.addLegend()
@@ -271,13 +271,13 @@ class SeismicProcessingModule(BaseModule):
         # redraws that one: an uploaded container, or the picks.
         self._tt_shows_container = False
         length_units.notifier().changed.connect(self._on_length_unit_changed)
-        self._center_tabs.addTab(self._tt_widget, "Travel-time")
+        self._center_tabs.addTab(self._tt_widget, QCoreApplication.translate("PHGX", "Travel-time"))
         self._vel_view = MeshResultView(colormaps=cmaps.colormap_settings(self.state))
-        self._center_tabs.addTab(self._vel_view, "Velocity model")
+        self._center_tabs.addTab(self._vel_view, QCoreApplication.translate("PHGX", "Velocity model"))
         self._quality_view = InversionQualityView()
-        self._center_tabs.addTab(self._quality_view, "Inversion quality")
+        self._center_tabs.addTab(self._quality_view, QCoreApplication.translate("PHGX", "Inversion quality"))
         self._refl_view = ReflectionView(colormaps=cmaps.colormap_settings(self.state))
-        self._center_tabs.addTab(self._refl_view, "Reflection")
+        self._center_tabs.addTab(self._refl_view, QCoreApplication.translate("PHGX", "Reflection"))
         self._reproduce = ReproduceBar()
         center = QWidget()
         center_layout = QVBoxLayout(center)
@@ -302,99 +302,99 @@ class SeismicProcessingModule(BaseModule):
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
-        load_btn = QPushButton("Load seismic data…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load seismic data…"))
         load_btn.setIcon(theme.icon("fa5s.folder-open"))
         load_btn.clicked.connect(self._load_gather)
         layout.addWidget(load_btn)
         self._load_btn = load_btn
         formats = "SEG-Y, Geometrics DAT, SEG-2, NPY/CSV" if _SEISMIC_OK else "NPY/NPZ/CSV/TXT"
-        hint = QLabel(f"Formats: {formats}")
+        hint = QLabel(QCoreApplication.translate("PHGX", "Formats: {0}").format(formats))
         theme.set_tone(hint, "hint")
         layout.addWidget(hint)
-        self._info = QLabel("No data loaded.")
+        self._info = QLabel(QCoreApplication.translate("PHGX", "No data loaded."))
         self._info.setWordWrap(True)
         layout.addWidget(self._info)
 
-        pos_btn = QPushButton("Load geophone positions / topography…")
+        pos_btn = QPushButton(QCoreApplication.translate("PHGX", "Load geophone positions / topography…"))
         pos_btn.setIcon(theme.icon("fa5s.map-marker-alt"))
-        pos_btn.setToolTip("Load a text file of per-geophone x distance and elevation "
+        pos_btn.setToolTip(QCoreApplication.translate("PHGX", "Load a text file of per-geophone x distance and elevation "
                            "(columns: station distance_m elevation_m, or x z). Picks then carry real "
-                           "positions + topography into the SRT inversion.")
+                           "positions + topography into the SRT inversion."))
         pos_btn.clicked.connect(self._load_geometry_dialog)
         layout.addWidget(pos_btn)
         self._pos_btn = pos_btn
-        self._geo_info = QLabel("Even spacing (no position file).")
+        self._geo_info = QLabel(QCoreApplication.translate("PHGX", "Even spacing (no position file)."))
         theme.set_tone(self._geo_info, "hint")
         self._geo_info.setWordWrap(True)
         layout.addWidget(self._geo_info)
 
-        self._shot_group = QGroupBox("Geometry")
+        self._shot_group = QGroupBox(QCoreApplication.translate("PHGX", "Geometry"))
         sform = QFormLayout(self._shot_group)
         self._shot_combo = QComboBox()
         self._shot_combo.currentIndexChanged.connect(self._on_shot_changed)
-        sform.addRow("Record", self._shot_combo)
+        sform.addRow(QCoreApplication.translate("PHGX", "Record"), self._shot_combo)
         self._spacing = QDoubleSpinBox()
         self._spacing.setRange(0.05, 1000.0); self._spacing.setValue(1.0); self._spacing.setSuffix(" m")
         self._spacing.valueChanged.connect(self._geometry_debounced.trigger)
-        sform.addRow("Geophone spacing", self._spacing)
+        sform.addRow(QCoreApplication.translate("PHGX", "Geophone spacing"), self._spacing)
         self._geo_start = QDoubleSpinBox()
         self._geo_start.setRange(-100000.0, 100000.0); self._geo_start.setValue(0.0); self._geo_start.setSuffix(" m")
         self._geo_start.valueChanged.connect(self._geometry_debounced.trigger)
-        sform.addRow("Geophone 0 x", self._geo_start)
+        sform.addRow(QCoreApplication.translate("PHGX", "Geophone 0 x"), self._geo_start)
         self._shot_x = QDoubleSpinBox()
         self._shot_x.setRange(-100000.0, 100000.0); self._shot_x.setValue(0.0); self._shot_x.setSuffix(" m")
-        self._shot_x.setToolTip("Shot position for this record; may be before geophone 0 (negative).")
+        self._shot_x.setToolTip(QCoreApplication.translate("PHGX", "Shot position for this record; may be before geophone 0 (negative)."))
         self._shot_x.valueChanged.connect(self._on_shot_x_changed)
-        sform.addRow("Shot x (this record)", self._shot_x)
+        sform.addRow(QCoreApplication.translate("PHGX", "Shot x (this record)"), self._shot_x)
         self._shot_group.setVisible(False)
         layout.addWidget(self._shot_group)
 
-        proc = QGroupBox("Display / processing")
+        proc = QGroupBox(QCoreApplication.translate("PHGX", "Display / processing"))
         form = QFormLayout(proc)
         self._gain = QSlider(Qt.Horizontal)
         self._gain.setRange(1, 100)
         self._gain.setValue(10)
         self._gain.valueChanged.connect(self._recompute_debounced.trigger)
-        form.addRow("Gain", self._gain)
+        form.addRow(QCoreApplication.translate("PHGX", "Gain"), self._gain)
         self._clip = QDoubleSpinBox()
         self._clip.setRange(80.0, 100.0)
         self._clip.setValue(99.0)
         self._clip.setSuffix(" %ile")
         self._clip.valueChanged.connect(self._recompute_debounced.trigger)
-        form.addRow("Clip", self._clip)
+        form.addRow(QCoreApplication.translate("PHGX", "Clip"), self._clip)
         # A locked colour range on the gather replaces the clip, so the clip
         # is greyed while it is locked rather than doing nothing visibly.
         self._viewer.color_range.changed.connect(self._sync_clip_row)
         self._sync_clip_row()
-        self._polarity = QCheckBox("Flip polarity")
+        self._polarity = QCheckBox(QCoreApplication.translate("PHGX", "Flip polarity"))
         self._polarity.setChecked(True)
         self._polarity.toggled.connect(self._recompute)
-        form.addRow(self._polarity)
-        self._normalize = QCheckBox("Normalize trace")
+        form.addRow(i18n.tr(self._polarity))
+        self._normalize = QCheckBox(QCoreApplication.translate("PHGX", "Normalize trace"))
         self._normalize.setChecked(True)
         self._normalize.toggled.connect(self._recompute)
-        form.addRow(self._normalize)
-        self._agc = QCheckBox("AGC")
+        form.addRow(i18n.tr(self._normalize))
+        self._agc = QCheckBox(QCoreApplication.translate("PHGX", "AGC"))
         self._agc.setChecked(True)
         self._agc.toggled.connect(self._recompute)
         self._agc_window = QDoubleSpinBox()
         self._agc_window.setRange(5.0, 500.0)
         self._agc_window.setValue(50.0)
-        self._agc_window.setSuffix(" ms")
+        self._agc_window.setSuffix(QCoreApplication.translate("PHGX", " ms"))
         self._agc_window.valueChanged.connect(self._recompute_debounced.trigger)
         agc_row = QHBoxLayout()
         agc_row.addWidget(self._agc)
         agc_row.addWidget(self._agc_window)
         agc_wrap = QWidget(); agc_wrap.setLayout(agc_row)
-        form.addRow(agc_wrap)
+        form.addRow(i18n.tr(agc_wrap))
         layout.addWidget(proc)
 
-        picks = QGroupBox("First-arrival picking")
+        picks = QGroupBox(QCoreApplication.translate("PHGX", "First-arrival picking"))
         pbox = QVBoxLayout(picks)
-        self._pick_mode = QCheckBox("Manual pick mode (click a trace)")
+        self._pick_mode = QCheckBox(QCoreApplication.translate("PHGX", "Manual pick mode (click a trace)"))
         self._pick_mode.toggled.connect(self._viewer.set_pick_mode)
         pbox.addWidget(self._pick_mode)
-        tip = QLabel("Tip: Ctrl+drag draws a line and picks every trace it crosses.")
+        tip = QLabel(QCoreApplication.translate("PHGX", "Tip: Ctrl+drag draws a line and picks every trace it crosses."))
         tip.setWordWrap(True)
         theme.set_tone(tip, "hint")
         pbox.addWidget(tip)
@@ -406,39 +406,39 @@ class SeismicProcessingModule(BaseModule):
         self._threshold.setSingleStep(0.05)
         self._threshold.setValue(0.20)
         self._threshold.setToolTip(
-            "A first arrival is picked where the trace, with AGC when AGC is on, first "
+            QCoreApplication.translate("PHGX", "A first arrival is picked where the trace, with AGC when AGC is on, first "
             "reaches this fraction of its peak in the search window and five times the "
-            "noise before it (lower = earlier).")
-        tform.addRow("Threshold (of trace peak)", self._threshold)
+            "noise before it (lower = earlier)."))
+        tform.addRow(QCoreApplication.translate("PHGX", "Threshold (of trace peak)"), self._threshold)
         self._pick_window = QDoubleSpinBox()
         self._pick_window.setRange(1.0, 100000.0)
         self._pick_window.setDecimals(0)
         self._pick_window.setValue(150.0)
-        self._pick_window.setSuffix(" ms")
-        self._pick_window.setToolTip("The picker looks for first arrivals up to this time.")
-        tform.addRow("Latest first arrival", self._pick_window)
+        self._pick_window.setSuffix(QCoreApplication.translate("PHGX", " ms"))
+        self._pick_window.setToolTip(QCoreApplication.translate("PHGX", "The picker looks for first arrivals up to this time."))
+        tform.addRow(QCoreApplication.translate("PHGX", "Latest first arrival"), self._pick_window)
         pbox.addLayout(tform)
-        self._screen_picks = QCheckBox("Leave out stray picks and shots")
+        self._screen_picks = QCheckBox(QCoreApplication.translate("PHGX", "Leave out stray picks and shots"))
         self._screen_picks.setChecked(True)
         self._screen_picks.setToolTip(
-            "Leave out what still strays once the stray picks are picked again: a pick that "
+            QCoreApplication.translate("PHGX", "Leave out what still strays once the stray picks are picked again: a pick that "
             "breaks its shot's first-arrival curve (a first arrival cannot come earlier farther "
             "from the shot), and, with all shots picked, a shot whose times disagree with their "
             "reciprocals and a pick that still disagrees with the neighbouring shots at its "
-            "geophone once picked again.")
+            "geophone once picked again."))
         pbox.addWidget(self._screen_picks)
         auto_row = QHBoxLayout()
-        auto_btn = QPushButton("Auto-pick this shot")
+        auto_btn = QPushButton(QCoreApplication.translate("PHGX", "Auto-pick this shot"))
         auto_btn.setIcon(theme.icon("fa5s.magic"))
-        auto_btn.setToolTip("Pick this record's first arrivals as the seismic workflow does; a "
+        auto_btn.setToolTip(QCoreApplication.translate("PHGX", "Pick this record's first arrivals as the seismic workflow does; a "
                             "pick that strays from the shot's first-arrival curve is picked again "
-                            "along it (AIC picker, Maeda 1985).")
+                            "along it (AIC picker, Maeda 1985)."))
         auto_btn.clicked.connect(self._auto_pick)
-        all_btn = QPushButton("All shots")
+        all_btn = QPushButton(QCoreApplication.translate("PHGX", "All shots"))
         all_btn.setIcon(theme.icon("fa5s.layer-group"))
-        all_btn.setToolTip("Auto-pick every shot record, then check each shot against its "
+        all_btn.setToolTip(QCoreApplication.translate("PHGX", "Auto-pick every shot record, then check each shot against its "
                            "reciprocals and each pick against the neighbouring shots at the same "
-                           "geophone. Manual picks are kept.")
+                           "geophone. Manual picks are kept."))
         all_btn.clicked.connect(self._auto_pick_all)
         auto_row.addWidget(auto_btn)
         auto_row.addWidget(all_btn)
@@ -448,28 +448,28 @@ class SeismicProcessingModule(BaseModule):
         self._pick_progress.setVisible(False)
         pbox.addWidget(self._pick_progress)
         row = QHBoxLayout()
-        undo_btn = QPushButton("Undo")
+        undo_btn = QPushButton(QCoreApplication.translate("PHGX", "Undo"))
         undo_btn.setIcon(theme.icon("fa5s.undo"))
         undo_btn.clicked.connect(self._undo_pick)
-        clear_btn = QPushButton("Clear")
+        clear_btn = QPushButton(QCoreApplication.translate("PHGX", "Clear"))
         clear_btn.setIcon(theme.icon("fa5s.eraser"))
         clear_btn.clicked.connect(self._clear_picks_and_publish)
         row.addWidget(undo_btn)
         row.addWidget(clear_btn)
         pbox.addLayout(row)
-        export_btn = QPushButton("Export picks CSV…")
+        export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export picks CSV…"))
         export_btn.setProperty("primary", True)
         export_btn.setIcon(theme.icon("fa5s.file-export", color="#ffffff"))
-        export_btn.setToolTip("Save the picks of every shot, not only the one on screen.")
+        export_btn.setToolTip(QCoreApplication.translate("PHGX", "Save the picks of every shot, not only the one on screen."))
         export_btn.clicked.connect(self._export_picks)
         pbox.addWidget(export_btn)
-        tt_btn = QPushButton("Export travel-time .dat…")
+        tt_btn = QPushButton(QCoreApplication.translate("PHGX", "Export travel-time .dat…"))
         tt_btn.setIcon(theme.icon("fa5s.project-diagram"))
-        tt_btn.setToolTip("Save every shot's picks as travel times for PyGIMLi, as the "
-                          "inversion uses them.")
+        tt_btn.setToolTip(QCoreApplication.translate("PHGX", "Save every shot's picks as travel times for PyGIMLi, as the "
+                          "inversion uses them."))
         tt_btn.clicked.connect(self._export_traveltime)
         pbox.addWidget(tt_btn)
-        self._pick_info = QLabel("0 picks")
+        self._pick_info = QLabel(QCoreApplication.translate("PHGX", "0 picks"))
         self._pick_info.setWordWrap(True)
         pbox.addWidget(self._pick_info)
         layout.addWidget(picks)
@@ -497,25 +497,25 @@ class SeismicProcessingModule(BaseModule):
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
-        src = QGroupBox("Travel times to invert")
+        src = QGroupBox(QCoreApplication.translate("PHGX", "Travel times to invert"))
         srcbox = QVBoxLayout(src)
-        acc = QLabel("Pick first breaks across shots and set each shot's x on the "
-                     "Gather tab, or skip picking and upload pre-picked times.")
+        acc = QLabel(QCoreApplication.translate("PHGX", "Pick first breaks across shots and set each shot's x on the "
+                     "Gather tab, or skip picking and upload pre-picked times."))
         acc.setWordWrap(True)
         theme.set_tone(acc, "hint")
         srcbox.addWidget(acc)
 
         up_row = QHBoxLayout()
-        self._tt_upload_btn = QPushButton("Upload travel times…")
+        self._tt_upload_btn = QPushButton(QCoreApplication.translate("PHGX", "Upload travel times…"))
         self._tt_upload_btn.setIcon(theme.icon("fa5s.file-upload"))
         self._tt_upload_btn.setToolTip(
-            "Load a pre-picked travel-time file and invert it directly (no picking). "
+            QCoreApplication.translate("PHGX", "Load a pre-picked travel-time file and invert it directly (no picking). "
             "Formats: pyGIMLi/BERT .sgt/.dat (sensors + 's g t'), or a CSV/text with columns "
             "source_x, receiver_x, time  (or source_x, source_z, receiver_x, receiver_z, time). "
-            "Times in seconds (milliseconds auto-detected).")
+            "Times in seconds (milliseconds auto-detected)."))
         self._tt_upload_btn.clicked.connect(self._upload_traveltime)
         self._tt_clear_btn = QPushButton("✕")
-        self._tt_clear_btn.setToolTip("Clear the uploaded travel times (go back to using picks).")
+        self._tt_clear_btn.setToolTip(QCoreApplication.translate("PHGX", "Clear the uploaded travel times (go back to using picks)."))
         self._tt_clear_btn.setMaximumWidth(32)
         self._tt_clear_btn.setEnabled(False)
         self._tt_clear_btn.clicked.connect(self._clear_traveltime)
@@ -533,9 +533,9 @@ class SeismicProcessingModule(BaseModule):
         layout.addWidget(self._build_srt_inversion_group())
         layout.addWidget(self._build_srt_assist_group())
 
-        run = QGroupBox("Run")
+        run = QGroupBox(QCoreApplication.translate("PHGX", "Run"))
         runbox = QVBoxLayout(run)
-        self._srt_btn = QPushButton("Run SRT inversion")
+        self._srt_btn = QPushButton(QCoreApplication.translate("PHGX", "Run SRT inversion"))
         self._srt_btn.setProperty("primary", True)
         self._srt_btn.setIcon(theme.icon("fa5s.layer-group", color="#ffffff"))
         self._srt_btn.clicked.connect(self._run_srt)
@@ -544,10 +544,10 @@ class SeismicProcessingModule(BaseModule):
         self._srt_progress.setVisible(False)
         self._srt_stop = self.stop_button("The SRT inversion")
         runbox.addWidget(progress_with_stop(self._srt_progress, self._srt_stop))
-        self._srt_export_btn = QPushButton("Export velocity model…")
+        self._srt_export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export velocity model…"))
         self._srt_export_btn.setIcon(theme.icon("fa5s.cube"))
         self._srt_export_btn.setToolTip(
-            "Write the recovered velocity model as npy, the mesh, and a VTK file.")
+            QCoreApplication.translate("PHGX", "Write the recovered velocity model as npy, the mesh, and a VTK file."))
         self._srt_export_btn.setEnabled(False)
         self._srt_export_btn.clicked.connect(self._export_velocity_model)
         runbox.addWidget(self._srt_export_btn)
@@ -581,63 +581,63 @@ class SeismicProcessingModule(BaseModule):
         theme.set_tone(self._refl_source, "hint")
         layout.addWidget(self._refl_source)
 
-        traces = QGroupBox("Traces")
+        traces = QGroupBox(QCoreApplication.translate("PHGX", "Traces"))
         tbox = QVBoxLayout(traces)
         tform = QFormLayout()
         tbox.addLayout(tform)
         self._refl_skip = QLineEdit()
-        self._refl_skip.setPlaceholderText("none, or e.g. 1, 5, 12")
+        self._refl_skip.setPlaceholderText(QCoreApplication.translate("PHGX", "none, or e.g. 1, 5, 12"))
         self._refl_skip.setToolTip(
-            "Shots to leave out of the stack, by record number: a mistimed trigger, a "
-            "missed blow, wind or traffic. Look through the shots on the Gather tab first.")
-        tform.addRow("Leave out shots", self._refl_skip)
-        self._refl_drop_clipped = QCheckBox("Leave out clipped traces")
+            QCoreApplication.translate("PHGX", "Shots to leave out of the stack, by record number: a mistimed trigger, a "
+            "missed blow, wind or traffic. Look through the shots on the Gather tab first."))
+        tform.addRow(QCoreApplication.translate("PHGX", "Leave out shots"), self._refl_skip)
+        self._refl_drop_clipped = QCheckBox(QCoreApplication.translate("PHGX", "Leave out clipped traces"))
         self._refl_drop_clipped.setChecked(True)
         self._refl_drop_clipped.setToolTip(
-            "A trace whose recorder saturated - usually the geophones next to the hammer - "
-            "has its peaks cut flat, which distorts every wave on it.")
-        tform.addRow(self._refl_drop_clipped)
-        self._refl_drop_early = QCheckBox("Leave out traces with signal before the first arrival")
+            QCoreApplication.translate("PHGX", "A trace whose recorder saturated - usually the geophones next to the hammer - "
+            "has its peaks cut flat, which distorts every wave on it."))
+        tform.addRow(i18n.tr(self._refl_drop_clipped))
+        self._refl_drop_early = QCheckBox(QCoreApplication.translate("PHGX", "Leave out traces with signal before the first arrival"))
         self._refl_drop_early.setChecked(True)
         self._refl_drop_early.setToolTip(
-            "Nothing can reach a geophone two metres from the hammer in the first "
-            "1.5 ms, so a trace with signal there has a trigger or wiring fault.")
-        tform.addRow(self._refl_drop_early)
+            QCoreApplication.translate("PHGX", "Nothing can reach a geophone two metres from the hammer in the first "
+            "1.5 ms, so a trace with signal there has a trigger or wiring fault."))
+        tform.addRow(i18n.tr(self._refl_drop_early))
         # Notes sit under the form, not in a row of it: a wrapped label spanning a
         # form row is given one line's height and cut off.
         self._refl_traces_note = self._reflection_note()
         tbox.addWidget(self._refl_traces_note)
         layout.addWidget(traces)
 
-        clean = QGroupBox("Clean-up")
+        clean = QGroupBox(QCoreApplication.translate("PHGX", "Clean-up"))
         cbox = QVBoxLayout(clean)
         cform = QFormLayout()
         cbox.addLayout(cform)
-        self._refl_align = QCheckBox("Line up shot timing on the air wave")
+        self._refl_align = QCheckBox(QCoreApplication.translate("PHGX", "Line up shot timing on the air wave"))
         self._refl_align.setChecked(True)
         self._refl_align.setToolTip(
-            "A hammer trigger fires a little early or late on each blow. The sound of the "
+            QCoreApplication.translate("PHGX", "A hammer trigger fires a little early or late on each blow. The sound of the "
             "blow crosses the line at the speed of sound, so where it arrives tells each "
-            "shot's timing error, which is then taken out.")
-        cform.addRow(self._refl_align)
-        self._refl_remove_air = QCheckBox("Remove the air wave")
+            "shot's timing error, which is then taken out."))
+        cform.addRow(i18n.tr(self._refl_align))
+        self._refl_remove_air = QCheckBox(QCoreApplication.translate("PHGX", "Remove the air wave"))
         self._refl_remove_air.setChecked(True)
         self._refl_remove_air.setToolTip(
-            "Subtract the sound of the blow and mute what is left of it, so it cannot "
-            "stack into something that looks like a reflection.")
-        cform.addRow(self._refl_remove_air)
+            QCoreApplication.translate("PHGX", "Subtract the sound of the blow and mute what is left of it, so it cannot "
+            "stack into something that looks like a reflection."))
+        cform.addRow(i18n.tr(self._refl_remove_air))
         self._refl_low = make_double_spinbox(50.0, 1.0, 5000.0, 10.0, decimals=0, suffix=" Hz")
         self._refl_high = make_double_spinbox(250.0, 10.0, 20000.0, 10.0, decimals=0, suffix=" Hz")
         band = merged_row(self._refl_low, "to", self._refl_high)
         band.setToolTip(
-            "The frequencies kept. The filter only looks back in time, so it cannot smear "
-            "later energy such as ground roll into earlier times.")
-        cform.addRow("Keep frequencies", band)
+            QCoreApplication.translate("PHGX", "The frequencies kept. The filter only looks back in time, so it cannot smear "
+            "later energy such as ground roll into earlier times."))
+        cform.addRow(QCoreApplication.translate("PHGX", "Keep frequencies"), band)
         self._refl_clean_note = self._reflection_note()
         cbox.addWidget(self._refl_clean_note)
         layout.addWidget(clean)
 
-        vel = QGroupBox("Velocity")
+        vel = QGroupBox(QCoreApplication.translate("PHGX", "Velocity"))
         vbox = QVBoxLayout(vel)
         # The form on a widget of its own: set_rows_visible finds a row's label
         # through the field's parent widget's layout, which must be the form.
@@ -646,27 +646,27 @@ class SeismicProcessingModule(BaseModule):
         vform.setContentsMargins(0, 0, 0, 0)
         vbox.addWidget(form_holder)
         self._refl_vsource = QComboBox()
-        self._refl_vsource.addItem("Values set here", "values")
-        self._refl_vsource.addItem("The refraction model", "model")
+        self._refl_vsource.addItem(QCoreApplication.translate("PHGX", "Values set here"), "values")
+        self._refl_vsource.addItem(QCoreApplication.translate("PHGX", "The refraction model"), "model")
         self._refl_vsource.setToolTip(
-            "The refraction model is the Velocity model tab's result, averaged along the "
-            "stacked part of the line. Only the part the rays reached is used.")
+            QCoreApplication.translate("PHGX", "The refraction model is the Velocity model tab's result, averaged along the "
+            "stacked part of the line. Only the part the rays reached is used."))
         self._refl_vsource.currentIndexChanged.connect(self._sync_reflection_velocity)
-        vform.addRow("Velocity from", self._refl_vsource)
+        vform.addRow(QCoreApplication.translate("PHGX", "Velocity from"), self._refl_vsource)
         self._refl_v1 = make_double_spinbox(300.0, 50.0, 6000.0, decimals=0, step=10.0,
                                             suffix=" m/s")
-        self._refl_v1.setToolTip("How fast the waves travel in the ground below the line.")
-        vform.addRow("Velocity", self._refl_v1)
-        self._refl_layer = QCheckBox("Faster below a certain time")
+        self._refl_v1.setToolTip(QCoreApplication.translate("PHGX", "How fast the waves travel in the ground below the line."))
+        vform.addRow(QCoreApplication.translate("PHGX", "Velocity"), self._refl_v1)
+        self._refl_layer = QCheckBox(QCoreApplication.translate("PHGX", "Faster below a certain time"))
         self._refl_layer.setToolTip(
-            "Use a second, faster velocity below a two-way time - for example below the "
-            "water table, where the refraction on the Travel-time tab shows a faster layer.")
-        vform.addRow(self._refl_layer)
+            QCoreApplication.translate("PHGX", "Use a second, faster velocity below a two-way time - for example below the "
+            "water table, where the refraction on the Travel-time tab shows a faster layer."))
+        vform.addRow(i18n.tr(self._refl_layer))
         self._refl_t2 = make_double_spinbox(12.0, 0.5, 1000.0, decimals=1, step=0.5, suffix=" ms")
-        vform.addRow("From", self._refl_t2)
+        vform.addRow(QCoreApplication.translate("PHGX", "From"), self._refl_t2)
         self._refl_v2 = make_double_spinbox(900.0, 50.0, 6000.0, decimals=0, step=10.0,
                                             suffix=" m/s")
-        vform.addRow("Velocity there", self._refl_v2)
+        vform.addRow(QCoreApplication.translate("PHGX", "Velocity there"), self._refl_v2)
         self._refl_layer.toggled.connect(self._sync_reflection_velocity)
         self._refl_model_note = self._reflection_note()
         vbox.addWidget(self._refl_model_note)
@@ -676,7 +676,7 @@ class SeismicProcessingModule(BaseModule):
         layout.addWidget(vel)
         self._sync_reflection_velocity()
 
-        stack = QGroupBox("Stack")
+        stack = QGroupBox(QCoreApplication.translate("PHGX", "Stack"))
         sform = QFormLayout(stack)
         self._refl_off_lo = make_double_spinbox(2.0, 0.0, 10000.0, decimals=1, step=0.5,
                                                 suffix=" m")
@@ -684,42 +684,42 @@ class SeismicProcessingModule(BaseModule):
                                                 suffix=" m")
         offsets = merged_row(self._refl_off_lo, "to", self._refl_off_hi)
         offsets.setToolTip(
-            "Shot-to-geophone distances that go into the stack. The nearest are clipped "
-            "or swamped by the blow; the farthest mostly carry ground roll.")
-        sform.addRow("Offsets", offsets)
+            QCoreApplication.translate("PHGX", "Shot-to-geophone distances that go into the stack. The nearest are clipped "
+            "or swamped by the blow; the farthest mostly carry ground roll."))
+        sform.addRow(QCoreApplication.translate("PHGX", "Offsets"), offsets)
         self._refl_bin = make_double_spinbox(0.5, 0.05, 100.0, decimals=2, step=0.25, suffix=" m")
-        self._refl_bin.setToolTip("Spacing of the stacked section's traces. The geophone "
-                                  "spacing is a good choice.")
-        sform.addRow("Trace spacing", self._refl_bin)
+        self._refl_bin.setToolTip(QCoreApplication.translate("PHGX", "Spacing of the stacked section's traces. The geophone "
+                                  "spacing is a good choice."))
+        sform.addRow(QCoreApplication.translate("PHGX", "Trace spacing"), self._refl_bin)
         self._refl_tmax = make_double_spinbox(50.0, 5.0, 5000.0, decimals=0, step=5.0, suffix=" ms")
-        sform.addRow("Down to", self._refl_tmax)
+        sform.addRow(QCoreApplication.translate("PHGX", "Down to"), self._refl_tmax)
 
-        self._refl_more = QCheckBox("More settings")
-        sform.addRow(self._refl_more)
+        self._refl_more = QCheckBox(QCoreApplication.translate("PHGX", "More settings"))
+        sform.addRow(i18n.tr(self._refl_more))
         mform = sform
         self._refl_stretch = make_double_spinbox(30.0, 5.0, 100.0, decimals=0, step=5.0, suffix=" %")
         self._refl_stretch.setToolTip(
-            "The velocity correction stretches the far traces' wavelets; past this much "
-            "stretch they are muted rather than stacked.")
-        mform.addRow("Stretch limit", self._refl_stretch)
+            QCoreApplication.translate("PHGX", "The velocity correction stretches the far traces' wavelets; past this much "
+            "stretch they are muted rather than stacked."))
+        mform.addRow(QCoreApplication.translate("PHGX", "Stretch limit"), self._refl_stretch)
         self._refl_min_fold = make_spinbox(3, 1, 100)
-        self._refl_min_fold.setToolTip("A point of the section with fewer traces than this "
-                                       "is left blank.")
-        mform.addRow("Traces per point, at least", self._refl_min_fold)
+        self._refl_min_fold.setToolTip(QCoreApplication.translate("PHGX", "A point of the section with fewer traces than this "
+                                       "is left blank."))
+        mform.addRow(QCoreApplication.translate("PHGX", "Traces per point, at least"), self._refl_min_fold)
         self._refl_ground_roll = make_double_spinbox(220.0, 20.0, 3000.0, decimals=0, step=10.0,
                                                      suffix=" m/s")
         self._refl_ground_roll.setToolTip(
-            "Everything that travels slower than this - ground roll - is muted before "
-            "stacking.")
-        mform.addRow("Ground roll slower than", self._refl_ground_roll)
+            QCoreApplication.translate("PHGX", "Everything that travels slower than this - ground roll - is muted before "
+            "stacking."))
+        mform.addRow(QCoreApplication.translate("PHGX", "Ground roll slower than"), self._refl_ground_roll)
         more = (self._refl_stretch, self._refl_min_fold, self._refl_ground_roll)
         self._refl_more.toggled.connect(lambda on: set_rows_visible(more, on))
         set_rows_visible(more, False)
         layout.addWidget(stack)
 
-        run = QGroupBox("Run")
+        run = QGroupBox(QCoreApplication.translate("PHGX", "Run"))
         runbox = QVBoxLayout(run)
-        self._refl_btn = QPushButton("Stack the line")
+        self._refl_btn = QPushButton(QCoreApplication.translate("PHGX", "Stack the line"))
         self._refl_btn.setProperty("primary", True)
         self._refl_btn.setIcon(theme.icon("fa5s.layer-group", color="#ffffff"))
         self._refl_btn.clicked.connect(self._run_reflection)
@@ -733,23 +733,23 @@ class SeismicProcessingModule(BaseModule):
         self._refl_stop = StopButton(log=lambda text: self.log(text, "warn"),
                                      what="The reflection stack")
         self._refl_stop.setToolTip(
-            "Stop the stack. It stops between steps - checking the traces, cleaning the "
-            "shots, stacking - so the step under way finishes first.")
+            QCoreApplication.translate("PHGX", "Stop the stack. It stops between steps - checking the traces, cleaning the "
+            "shots, stacking - so the step under way finishes first."))
         runbox.addWidget(progress_with_stop(self._refl_progress, self._refl_stop))
         self._refl_summary = QLabel()
         self._refl_summary.setWordWrap(True)
         self._refl_summary.setTextFormat(Qt.RichText)
         runbox.addWidget(self._refl_summary)
-        self._refl_export_btn = QPushButton("Export section…")
+        self._refl_export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export section…"))
         self._refl_export_btn.setIcon(theme.icon("fa5s.file-export"))
-        self._refl_export_btn.setToolTip("Save the section as a picture (PNG) or as numbers "
-                                         "(NumPy .npz, with the velocity and fold).")
+        self._refl_export_btn.setToolTip(QCoreApplication.translate("PHGX", "Save the section as a picture (PNG) or as numbers "
+                                         "(NumPy .npz, with the velocity and fold)."))
         self._refl_export_btn.setEnabled(False)
         self._refl_export_btn.clicked.connect(self._export_reflection)
         runbox.addWidget(self._refl_export_btn)
         self._refl_map_btn = self.map_export_button()
-        self._refl_map_btn.setToolTip("Save the stacked section, in depth, as a survey in the "
-                                      "Project Map, where it can be read beside the wells.")
+        self._refl_map_btn.setToolTip(QCoreApplication.translate("PHGX", "Save the stacked section, in depth, as a survey in the "
+                                      "Project Map, where it can be read beside the wells."))
         self._refl_map_btn.setEnabled(False)
         runbox.addWidget(self._refl_map_btn)
         layout.addWidget(run)
@@ -763,7 +763,7 @@ class SeismicProcessingModule(BaseModule):
     @staticmethod
     def _reflection_note(text: str = "") -> QLabel:
         """A hint line under a group's settings; hidden while it has nothing to say."""
-        note = QLabel(text)
+        note = QLabel(i18n.tr(text))
         note.setTextFormat(Qt.RichText)
         note.setWordWrap(True)
         theme.set_tone(note, "hint")
@@ -772,7 +772,7 @@ class SeismicProcessingModule(BaseModule):
 
     @staticmethod
     def _set_note(note: QLabel, text: str) -> None:
-        note.setText(text)
+        note.setText(i18n.tr(text))
         note.setVisible(bool(text))
 
     def _on_center_tab_changed(self, _index: int = 0) -> None:
@@ -818,19 +818,19 @@ class SeismicProcessingModule(BaseModule):
     # shares ERT's stopping rule, plateau continuation, and lambda search, so it
     # has the same controls rather than running entirely on library defaults.
     def _build_srt_inversion_group(self) -> QGroupBox:
-        box = QGroupBox("Inversion")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Inversion"))
         form = QFormLayout(box)
 
         self._srt_engine = QComboBox()
         for label, value in (("In-house Gauss-Newton", "pyhydro"),
                              ("PyGIMLi TravelTimeManager", "pygimli")):
-            self._srt_engine.addItem(label, value)
+            self._srt_engine.addItem(i18n.tr(label), value)
         self._srt_engine.setToolTip(
-            "Solver. The in-house Gauss-Newton inversion exposes its own stopping "
+            QCoreApplication.translate("PHGX", "Solver. The in-house Gauss-Newton inversion exposes its own stopping "
             "rule, so the fit assistance below can drive it; the PyGIMLi manager "
-            "runs once.")
+            "runs once."))
         self._srt_engine.currentIndexChanged.connect(self._sync_srt_engine)
-        form.addRow("Engine", self._srt_engine)
+        form.addRow(QCoreApplication.translate("PHGX", "Engine"), self._srt_engine)
 
         self._srt_lam = QDoubleSpinBox()
         self._srt_lam.setDecimals(3)
@@ -838,10 +838,10 @@ class SeismicProcessingModule(BaseModule):
         self._srt_lam.setValue(50.0)
         self._srt_lam.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         self._srt_lam.setToolTip(
-            "Smoothness of the velocity model. Lower fits the travel times harder, "
+            QCoreApplication.translate("PHGX", "Smoothness of the velocity model. Lower fits the travel times harder, "
             "higher gives a smoother model. Start on the smooth side: the search "
-            "relaxes downward, continuing each λ from the previous solution.")
-        form.addRow("Lambda", self._srt_lam)
+            "relaxes downward, continuing each λ from the previous solution."))
+        form.addRow(QCoreApplication.translate("PHGX", "Lambda"), self._srt_lam)
 
         # How long the inversion may run and when it counts as done, as on the
         # ERT page. The run checks its progress every few iterations and goes on
@@ -854,7 +854,7 @@ class SeismicProcessingModule(BaseModule):
             "search is on). It normally stops sooner, once χ² stops improving "
             "(next row). Reaching this limit means the fit could still improve, "
             "and the log says so."))
-        form.addRow("Max iterations", self._srt_iter_ceiling)
+        form.addRow(QCoreApplication.translate("PHGX", "Max iterations"), self._srt_iter_ceiling)
 
         self._srt_plateau = QDoubleSpinBox()
         self._srt_plateau.setRange(0.01, 10.0)
@@ -864,74 +864,74 @@ class SeismicProcessingModule(BaseModule):
         self._srt_plateau.setPrefix("< ")
         self._srt_plateau.setSuffix(" % per iteration")
         self._srt_plateau.setToolTip(
-            "The inversion is done when one more iteration lowers χ² by less than "
+            QCoreApplication.translate("PHGX", "The inversion is done when one more iteration lowers χ² by less than "
             "this. Larger stops sooner; smaller makes sure the fit has really run "
-            "out of room.")
-        form.addRow("Stop when χ² improves", self._srt_plateau)
+            "out of room."))
+        form.addRow(QCoreApplication.translate("PHGX", "Stop when χ² improves"), self._srt_plateau)
 
         self._srt_quality = make_double_spinbox(32.0, 20.0, 40.0, 1.0, 1)
         self._srt_quality.setToolTip(
-            "Inversion-mesh quality: the minimum triangle angle. Higher gives a "
-            "finer, better-conditioned triangulation at more cost per iteration.")
-        form.addRow("Mesh quality", self._srt_quality)
+            QCoreApplication.translate("PHGX", "Inversion-mesh quality: the minimum triangle angle. Higher gives a "
+            "finer, better-conditioned triangulation at more cost per iteration."))
+        form.addRow(QCoreApplication.translate("PHGX", "Mesh quality"), self._srt_quality)
 
         self._srt_para_depth = make_double_spinbox(0.0, 0.0, 10000.0, 5.0, 1,
                                                    suffix=" m")
-        self._srt_para_depth.setSpecialValueText("auto")
+        self._srt_para_depth.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
         self._srt_para_depth.setToolTip(
-            "How deep to invert. PyGIMLi sizes the domain from the array length, "
+            QCoreApplication.translate("PHGX", "How deep to invert. PyGIMLi sizes the domain from the array length, "
             "which for refraction reaches well past where any ray turns, so the "
             "deep cells are unconstrained and only slow the run. Cap it when the "
-            "ray-path plot shows the bottom of the section is empty.")
-        form.addRow("Invert to depth", self._srt_para_depth)
+            "ray-path plot shows the bottom of the section is empty."))
+        form.addRow(QCoreApplication.translate("PHGX", "Invert to depth"), self._srt_para_depth)
 
         self._srt_cell_size = make_double_spinbox(0.0, 0.0, 1000.0, 0.5, 2,
                                                   suffix=" m²")
-        self._srt_cell_size.setSpecialValueText("auto")
+        self._srt_cell_size.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
         self._srt_cell_size.setToolTip(
-            "Largest cell in the inverted domain. Smaller resolves more detail "
+            QCoreApplication.translate("PHGX", "Largest cell in the inverted domain. Smaller resolves more detail "
             "and adds unknowns; leave at auto unless the model looks blocky "
-            "against what the ray coverage supports.")
-        form.addRow("Max cell size", self._srt_cell_size)
+            "against what the ray coverage supports."))
+        form.addRow(QCoreApplication.translate("PHGX", "Max cell size"), self._srt_cell_size)
 
         self._srt_sec_nodes = make_spinbox(3, 1, 10, tooltip=(
             "Extra nodes placed along cell edges for the ray tracer. They sharpen "
             "the computed travel times without adding unknowns to the inversion, "
             "so raise this when the fit stalls on a coarse mesh."))
-        form.addRow("Secondary nodes", self._srt_sec_nodes)
+        form.addRow(QCoreApplication.translate("PHGX", "Secondary nodes"), self._srt_sec_nodes)
         return box
 
     def _build_srt_assist_group(self) -> QGroupBox:
-        box = QGroupBox("Fit assistance")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Fit assistance"))
         form = QFormLayout(box)
 
-        self._srt_auto_lam = QCheckBox("Auto-λ: re-invert to reach target χ²")
+        self._srt_auto_lam = QCheckBox(QCoreApplication.translate("PHGX", "Auto-λ: re-invert to reach target χ²"))
         self._srt_auto_lam.setChecked(True)
         self._srt_auto_lam.setToolTip(
-            "The inversion at the λ above always runs first and is always kept. If "
+            QCoreApplication.translate("PHGX", "The inversion at the λ above always runs first and is always kept. If "
             "its χ² misses the target band, the same mesh is re-inverted at other "
             "λ values and the closest one becomes the displayed model. Each trial "
             "continues from the nearest λ already solved, so the later ones are "
-            "cheap, but every trial is still a full inversion.")
+            "cheap, but every trial is still a full inversion."))
         self._srt_auto_lam.toggled.connect(self._sync_srt_engine)
-        form.addRow(self._srt_auto_lam)
+        form.addRow(i18n.tr(self._srt_auto_lam))
 
         self._srt_target_chi2 = make_double_spinbox(1.0, 0.1, 100.0, 0.1, 2)
         self._srt_target_chi2.setToolTip(
-            "χ² = 1 means the model explains the picks to within their assumed "
-            "error. Raise it if the picks are noisier than that admits.")
+            QCoreApplication.translate("PHGX", "χ² = 1 means the model explains the picks to within their assumed "
+            "error. Raise it if the picks are noisier than that admits."))
         self._srt_chi2_tol = make_double_spinbox(0.2, 0.01, 10.0, 0.05, 2)
         self._srt_chi2_tol.setToolTip(
-            "Half-width of the accepted band. The search stops as soon as a trial "
-            "lands inside target ± tolerance.")
+            QCoreApplication.translate("PHGX", "Half-width of the accepted band. The search stops as soon as a trial "
+            "lands inside target ± tolerance."))
         self._srt_chi2_row = merged_row(
             self._srt_target_chi2, "±", self._srt_chi2_tol)
-        form.addRow("Target χ²", self._srt_chi2_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Target χ²"), self._srt_chi2_row)
 
         self._srt_lam_trials = make_spinbox(6, 1, 20, tooltip=(
             "Upper bound on the extra inversions the λ search may run, on top of "
             "the one at your λ. Reached only when the target stays out of range."))
-        form.addRow("Max λ trials", self._srt_lam_trials)
+        form.addRow(QCoreApplication.translate("PHGX", "Max λ trials"), self._srt_lam_trials)
         self._sync_srt_engine()  # establish the interlock before the page shows
         return box
 
@@ -976,13 +976,13 @@ class SeismicProcessingModule(BaseModule):
         from PyHydroGeophysX.qt_apps.widgets.project_dialogs import confirm_project_for_data
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Load seismic data", "", _FILE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load seismic data"), "", _FILE_FILTER)
         if not path:
             return
         self._load_busy = BusyStateController([self._load_btn])
         self._load_busy.start()
-        self._load_btn.setText("Loading…")
-        self._info.setText(f"Loading {Path(path).name}…")
+        self._load_btn.setText(QCoreApplication.translate("PHGX", "Loading…"))
+        self._info.setText(QCoreApplication.translate("PHGX", "Loading {0}…").format(Path(path).name))
         worker = TaskWorker(self._parse_seismic, path)
         worker.succeeded.connect(lambda res: self._on_seismic_loaded(path, res))
         worker.failed.connect(self._on_seismic_load_failed)
@@ -1030,13 +1030,13 @@ class SeismicProcessingModule(BaseModule):
 
     def _on_seismic_load_failed(self, message: str) -> None:
         self.log(f"Could not load seismic data: {message}", "error")
-        self._info.setText(f"Load failed: {message}")
+        self._info.setText(QCoreApplication.translate("PHGX", "Load failed: {0}").format(message))
 
     def _reset_load_btn(self) -> None:
         if self._load_busy is not None:
             self._load_busy.finish()
             self._load_busy = None
-        self._load_btn.setText("Load seismic data…")
+        self._load_btn.setText(QCoreApplication.translate("PHGX", "Load seismic data…"))
 
     def _set_dataset(self, dataset) -> None:
         self._dataset = dataset
@@ -1047,7 +1047,7 @@ class SeismicProcessingModule(BaseModule):
         self._shot_combo.blockSignals(True)
         self._shot_combo.clear()
         for record in records:
-            self._shot_combo.addItem(f"Shot {record}", record)
+            self._shot_combo.addItem(QCoreApplication.translate("PHGX", "Shot {0}").format(record), record)
         self._shot_combo.blockSignals(False)
         self._shot_group.setVisible(True)
         self._all_picks = {}
@@ -1098,7 +1098,7 @@ class SeismicProcessingModule(BaseModule):
         """Keep the column's line on what would actually be inverted current."""
         if not hasattr(self, "_tt_status"):
             return  # still building
-        self._tt_status.setText(self._describe_traveltime_source())
+        self._tt_status.setText(i18n.tr(self._describe_traveltime_source()))
 
     def _set_raw(self, arr: np.ndarray, dt: Optional[float] = None) -> None:
         arr = np.atleast_2d(np.asarray(arr, dtype=float))
@@ -1136,7 +1136,7 @@ class SeismicProcessingModule(BaseModule):
 
     def _update_info(self) -> None:
         if self._raw is None:
-            self._info.setText("No data loaded.")
+            self._info.setText(QCoreApplication.translate("PHGX", "No data loaded."))
             return
         lines = [f"<b>{self._source_path.name}</b>" if self._source_path else "data"]
         lines.append(f"samples × traces: {self._raw.shape}")
@@ -1146,7 +1146,7 @@ class SeismicProcessingModule(BaseModule):
             lines.append("dt: unknown (axis = sample index)")
         if self._dataset is not None:
             lines.append(f"shots: {len(self._dataset.field_records)}  ·  format code: {self._dataset.metadata.format_code}")
-        self._info.setText("<br>".join(lines))
+        self._info.setText(i18n.tr("<br>".join(lines)))
 
     # -- processing ----------------------------------------------------------
     def _processed_base(self) -> Optional[np.ndarray]:
@@ -1196,10 +1196,10 @@ class SeismicProcessingModule(BaseModule):
         locked = self._viewer.color_range.is_locked()
         set_rows_enabled([self._clip], not locked)
         self._clip.setToolTip(
-            "Not used while the gather's colour range is locked: the image is drawn "
-            "between the limits typed beside “Lock range”." if locked else
-            "Amplitudes beyond this percentile are clipped, so a few strong traces "
-            "do not wash out the rest.")
+            QCoreApplication.translate("PHGX", "Not used while the gather's colour range is locked: the image is drawn "
+            "between the limits typed beside “Lock range”.") if locked else
+            QCoreApplication.translate("PHGX", "Amplitudes beyond this percentile are clipped, so a few strong traces "
+            "do not wash out the rest."))
 
     def _recompute(self) -> None:
         disp = self._processed()
@@ -1462,7 +1462,7 @@ class SeismicProcessingModule(BaseModule):
 
     def _load_geometry_dialog(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load geophone positions / topography", "",
+            self, QCoreApplication.translate("PHGX", "Load geophone positions / topography"), "",
             "Text/CSV (*.txt *.csv *.dat);;All files (*)")
         if not path:
             return
@@ -1755,7 +1755,7 @@ class SeismicProcessingModule(BaseModule):
             # The exports and the inversion take every shot's picks, so say so.
             shots = len(others) + int(bool(self._picks))
             text += f" on this shot ({len(self._picks) + sum(others)} on {shots} shots in all)"
-        self._pick_info.setText(text)
+        self._pick_info.setText(i18n.tr(text))
         self._update_tt_qc()
         self._refresh_inversion_source()
 
@@ -1776,8 +1776,7 @@ class SeismicProcessingModule(BaseModule):
                 origin = ("from the file headers" if self._spacing_from_headers
                           else "(no position file)")
                 self._geo_info.setText(
-                    f"Even spacing {origin}: {len(geophones)} geophones, "
-                    f"x {min(geophones):g} to {max(geophones):g} m{self._spread_suffix()}.")
+                    QCoreApplication.translate("PHGX", "Even spacing {0}: {1} geophones, x {2:g} to {3:g} m{4}.").format(origin, len(geophones), min(geophones), max(geophones), self._spread_suffix()))
         picks = self._all_first_breaks()
         if not picks:
             self._tt_plot.enableAutoRange()
@@ -1837,7 +1836,7 @@ class SeismicProcessingModule(BaseModule):
         if not picks:
             self.log("No picks to export.", "warn")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export picks", "seismic_picks.csv", "CSV (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export picks"), "seismic_picks.csv", "CSV (*.csv)")
         if not path:
             return
         if _SEISMIC_OK:
@@ -1856,7 +1855,7 @@ class SeismicProcessingModule(BaseModule):
         if not _SEISMIC_OK:
             self.log("Travel-time export needs the seismic processing module.", "warn")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export travel-time", "traveltime.dat", "PyGIMLi data (*.dat)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export travel-time"), "traveltime.dat", "PyGIMLi data (*.dat)")
         if not path:
             return
         try:
@@ -1918,7 +1917,7 @@ class SeismicProcessingModule(BaseModule):
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
         path, _ = QFileDialog.getOpenFileName(
-            self, "Upload picked travel times", "",
+            self, QCoreApplication.translate("PHGX", "Upload picked travel times"), "",
             "Travel-time data (*.sgt *.tt *.gtt *.dat *.csv *.txt);;All files (*)")
         if not path:
             return
@@ -2157,7 +2156,7 @@ class SeismicProcessingModule(BaseModule):
         self._srt_recipe_path = str(recipe_path)
         self._srt_busy = BusyStateController([self._srt_btn])
         self._srt_busy.start()
-        self._srt_btn.setText("Inverting…")
+        self._srt_btn.setText(QCoreApplication.translate("PHGX", "Inverting…"))
         self._srt_progress.setVisible(True)
         self._srt_progress.setRange(0, 0)
         self.log(start_msg, "info")
@@ -2252,7 +2251,7 @@ class SeismicProcessingModule(BaseModule):
             self.log("Run SRT inversion first.", "warn")
             return
         folder = select_directory(
-            self, "Export velocity model to folder",
+            self, QCoreApplication.translate("PHGX", "Export velocity model to folder"),
             self.state.output_dir or Path.cwd(),
         )
         if not folder:
@@ -2292,7 +2291,7 @@ class SeismicProcessingModule(BaseModule):
         if self._srt_busy is not None:
             self._srt_busy.finish()
             self._srt_busy = None
-        self._srt_btn.setText("Run SRT inversion")
+        self._srt_btn.setText(QCoreApplication.translate("PHGX", "Run SRT inversion"))
         self._srt_progress.setVisible(False)
 
     # -- reflection: run -------------------------------------------------------
@@ -2304,16 +2303,15 @@ class SeismicProcessingModule(BaseModule):
         self._refl_btn.setEnabled(ready and self._refl_busy is None)
         if not ready:
             self._refl_source.setText(
-                "Load a shot file on the Gather tab first: stacking needs several shots "
-                "recorded along one line (SEG-Y or Geometrics DAT).")
+                QCoreApplication.translate("PHGX", "Load a shot file on the Gather tab first: stacking needs several shots "
+                "recorded along one line (SEG-Y or Geometrics DAT)."))
             return
         self._geometry_debounced.flush()
         records = self._agent_records()
         xs = self._geophone_xs()
         step = abs(xs[1] - xs[0]) if len(xs) > 1 else 0.0
         self._refl_source.setText(
-            f"Stacks the {len(records)} shots loaded on the Gather tab, with the geophones "
-            f"and shot positions set there (geophones every {step:g} m).")
+            QCoreApplication.translate("PHGX", "Stacks the {0} shots loaded on the Gather tab, with the geophones and shot positions set there (geophones every {1:g} m).").format(len(records), step))
 
     def _reflection_line(self) -> Tuple[np.ndarray, Any]:
         """Every shot's traces side by side, and where each was recorded.
@@ -2469,7 +2467,7 @@ class SeismicProcessingModule(BaseModule):
         }
 
     def _say_reflection(self, html: str) -> None:
-        self._refl_summary.setText(html)
+        self._refl_summary.setText(i18n.tr(html))
 
     def _run_reflection(self) -> Optional[str]:
         """Start the stack; returns why it could not start, or None."""
@@ -2492,7 +2490,7 @@ class SeismicProcessingModule(BaseModule):
                     if self._refl_prepared is not None and self._refl_prepared[0] == key else None)
         self._refl_busy = BusyStateController([self._refl_btn])
         self._refl_busy.start()
-        self._refl_btn.setText("Stacking…")
+        self._refl_btn.setText(QCoreApplication.translate("PHGX", "Stacking…"))
         self._refl_progress.setVisible(True)
         self._say_reflection("Stacking with the new settings…" if prepared is not None else
                              "Checking the traces, timing and cleaning every shot, then "
@@ -2595,7 +2593,7 @@ class SeismicProcessingModule(BaseModule):
         if self._refl_busy is not None:
             self._refl_busy.finish()
             self._refl_busy = None
-        self._refl_btn.setText("Stack the line")
+        self._refl_btn.setText(QCoreApplication.translate("PHGX", "Stack the line"))
         self._refl_progress.setVisible(False)
         if self._refl_worker is not None and self._refl_worker.is_cancelled():
             # Said as an error too, so the assistant waiting on the stack does
@@ -2665,7 +2663,7 @@ class SeismicProcessingModule(BaseModule):
         if result is None:
             return
         path, chosen = QFileDialog.getSaveFileName(
-            self, "Export reflection section", "reflection_section.png",
+            self, QCoreApplication.translate("PHGX", "Export reflection section"), "reflection_section.png",
             "PNG image (*.png);;NumPy archive (*.npz)")
         if not path:
             return
@@ -3327,7 +3325,7 @@ class SeismicProcessingModule(BaseModule):
                 except ValueError:
                     raise ValueError("skip_shots takes record numbers, e.g. [1, 5, 12] or "
                                      "'1, 5, 12' or '3-6'.") from None
-                self._refl_skip.setText(text)
+                self._refl_skip.setText(i18n.tr(text))
             for key, box in (("leave_out_clipped", self._refl_drop_clipped),
                              ("leave_out_early_signal", self._refl_drop_early),
                              ("align_timing", self._refl_align),

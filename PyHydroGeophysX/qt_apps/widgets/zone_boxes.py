@@ -15,7 +15,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QCoreApplication, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -36,7 +36,7 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.core._mesh_3d_builder import ZONE_MARKER_START, normalize_box_zones
 from PyHydroGeophysX.inversion.ert_zones import zone_colors
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -104,15 +104,15 @@ class ZoneBoxEditor(QGroupBox):
 
         layout = QVBoxLayout(self)
         intro = QLabel(
-            "Bodies known or assumed in the ground - a clay layer, a tank, a plume - "
+            QCoreApplication.translate("PHGX", "Bodies known or assumed in the ground - a clay layer, a tank, a plume - "
             "as boxes. The mesh can follow their faces, each can be a region of its "
-            "own, and the 3D forward model gives each its resistivity.")
+            "own, and the 3D forward model gives each its resistivity."))
         intro.setWordWrap(True)
         intro.setStyleSheet(f"color:{_MUTED}; font-size:8pt;")
         layout.addWidget(intro)
 
         self._table = QTableWidget(0, 3)
-        self._table.setHorizontalHeaderLabels(["Zone", "ρ (Ω·m)", "Cells"])
+        self._table.setHorizontalHeaderLabels([QCoreApplication.translate("PHGX", "Zone"), "ρ (Ω·m)", QCoreApplication.translate("PHGX", "Cells")])
         self._table.verticalHeader().setVisible(False)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -121,9 +121,9 @@ class ZoneBoxEditor(QGroupBox):
         for column in (_RHO, _CELLS):
             header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
         self._table.setToolTip(
-            "Double-click a name to rename the zone. Cells counts the inverted cells "
+            QCoreApplication.translate("PHGX", "Double-click a name to rename the zone. Cells counts the inverted cells "
             "the zone took in the last mesh built; where zones overlap, the one lower "
-            "in the list takes the cell.")
+            "in the list takes the cell."))
         self._table.setMaximumHeight(150)
         self._table.itemChanged.connect(self._on_item_changed)
         self._table.itemSelectionChanged.connect(self._show_selected)
@@ -131,25 +131,25 @@ class ZoneBoxEditor(QGroupBox):
 
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
-        add = QPushButton("Add zone")
+        add = QPushButton(QCoreApplication.translate("PHGX", "Add zone"))
         add.setIcon(theme.icon("fa5s.cube"))
-        add.setToolTip("A box under the middle of the survey, in the upper half of the "
-                       "inverted region; set its extent below.")
+        add.setToolTip(QCoreApplication.translate("PHGX", "A box under the middle of the survey, in the upper half of the "
+                       "inverted region; set its extent below."))
         add.clicked.connect(self._add_zone)
-        layer = QPushButton("Add layer")
+        layer = QPushButton(QCoreApplication.translate("PHGX", "Add layer"))
         layer.setIcon(theme.icon("fa5s.layer-group"))
         layer.setToolTip(
-            "A zone spanning the whole mesh sideways, from the ground (or the bottom "
+            QCoreApplication.translate("PHGX", "A zone spanning the whole mesh sideways, from the ground (or the bottom "
             "of the layer added before it) down a third of the inverted region. It "
             "goes in the list after the layers and before the other zones, so that "
-            "a zone inside it keeps its cells.")
+            "a zone inside it keeps its cells."))
         layer.clicked.connect(self._add_layer)
-        self._remove = QPushButton("Remove")
+        self._remove = QPushButton(QCoreApplication.translate("PHGX", "Remove"))
         self._remove.setIcon(theme.icon("fa5s.trash-alt"))
-        self._remove.setToolTip("Remove the selected zone.")
+        self._remove.setToolTip(QCoreApplication.translate("PHGX", "Remove the selected zone."))
         self._remove.clicked.connect(self._remove_selected)
-        self._clear = QPushButton("Clear")
-        self._clear.setToolTip("Remove every zone.")
+        self._clear = QPushButton(QCoreApplication.translate("PHGX", "Clear"))
+        self._clear.setToolTip(QCoreApplication.translate("PHGX", "Remove every zone."))
         self._clear.clicked.connect(self._clear_zones)
         for button in (add, layer, self._remove, self._clear):
             buttons.addWidget(button)
@@ -167,38 +167,33 @@ class ZoneBoxEditor(QGroupBox):
                                 "or above the ground takes the zone up to the ground.")):
             low, high = _spin(), _spin()
             for spin in (low, high):
-                spin.setToolTip(tip)
+                spin.setToolTip(i18n.tr(tip))
                 spin.valueChanged.connect(self._on_box_edited)
             row = QWidget()
             line = QHBoxLayout(row)
             line.setContentsMargins(0, 0, 0, 0)
             line.addWidget(low, 1)
-            line.addWidget(QLabel("to"))
+            line.addWidget(QLabel(QCoreApplication.translate("PHGX", "to")))
             line.addWidget(high, 1)
-            form.addRow(label, row)
+            form.addRow(i18n.tr(label), row)
             self._ranges[axis] = (low, high)
         layout.addWidget(self._box)
 
         # What the zones do to the mesh, beyond their values. Both are off by
         # default: a mesh built with zones is then the mesh built without them.
-        self._conform = QCheckBox("Mesh follows the zones")
+        self._conform = QCheckBox(QCoreApplication.translate("PHGX", "Mesh follows the zones"))
         self._conform.setToolTip(
-            "Build the mesh so that every zone face is made of cell faces, the way "
+            QCoreApplication.translate("PHGX", "Build the mesh so that every zone face is made of cell faces, the way "
             "E4D meshes its zones: no cell straddles a face, so a zone's resistivity "
             "covers exactly the box. E4D meshes each zone as a zone of its own, the "
             "structured grid puts a grid line on every face, the prism mesh adds the "
             "outlines to its plan triangulation and a layer at every top and bottom, "
             "and Gmsh cuts the boxes into its domain. Generate the mesh again after "
             "moving a zone. Without it a zone takes the cells whose centre lies "
-            "inside it.")
-        self._decouple = QCheckBox("Sharp zone edges")
+            "inside it."))
+        self._decouple = QCheckBox(QCoreApplication.translate("PHGX", "Sharp zone edges"))
         self._decouple.setToolTip(
-            f"Make each zone a region of its own - markers {ZONE_MARKER_START}, "
-            f"{ZONE_MARKER_START + 1}, ... in the order of the list - so that an inversion "
-            "of this mesh in PyGIMLi may put a sharp contrast at its faces: PyGIMLi puts "
-            "no smoothness constraint between regions. Only inverted cells are zoned; "
-            "the outer region keeps its marker. Off, the zones stay in the inverted "
-            "region (marker 2) and are smoothed across like the rest.")
+            QCoreApplication.translate("PHGX", "Make each zone a region of its own - markers {0}, {1}, ... in the order of the list - so that an inversion of this mesh in PyGIMLi may put a sharp contrast at its faces: PyGIMLi puts no smoothness constraint between regions. Only inverted cells are zoned; the outer region keeps its marker. Off, the zones stay in the inverted region (marker 2) and are smoothed across like the rest.").format(ZONE_MARKER_START, ZONE_MARKER_START + 1))
         # A check box cannot wrap its text, so each says what it does on a line
         # of its own underneath.
         for check, text in (
@@ -207,7 +202,7 @@ class ZoneBoxEditor(QGroupBox):
                 (self._decouple, "Each zone a region of its own, so an inversion does "
                                  "not smooth across its faces.")):
             check.toggled.connect(lambda _on: self.optionsChanged.emit())
-            hint = QLabel(text)
+            hint = QLabel(i18n.tr(text))
             hint.setWordWrap(True)
             hint.setContentsMargins(22, 0, 0, 2)
             hint.setStyleSheet(f"color:{_MUTED}; font-size:8pt;")
@@ -264,7 +259,7 @@ class ZoneBoxEditor(QGroupBox):
         """What the mesh engine does with the zones, under the options."""
         colour = theme.PALETTE["red"] if warn else _MUTED
         self._note.setStyleSheet(f"color:{colour}; font-size:8pt;")
-        self._note.setText(text)
+        self._note.setText(i18n.tr(text))
         self._note.setVisible(bool(text))
 
     def note(self) -> str:
@@ -363,7 +358,7 @@ class ZoneBoxEditor(QGroupBox):
         name = item.text().strip()
         if not name:
             self._table.blockSignals(True)
-            item.setText(self._zones[row]["name"])
+            item.setText(i18n.tr(self._zones[row]["name"]))
             self._table.blockSignals(False)
             return
         self._zones[row]["name"] = name
@@ -416,8 +411,8 @@ class ZoneBoxEditor(QGroupBox):
             swatch.fill(QColor(colour))
             name = QTableWidgetItem(QIcon(swatch), zone["name"])
             (x0, x1), (y0, y1), (z0, z1) = zone["x"], zone["y"], zone["z"]
-            name.setToolTip(f"Across the whole mesh, z {z0:g} to {z1:g} m" if _is_layer(zone)
-                            else f"x {x0:g} to {x1:g}, y {y0:g} to {y1:g}, z {z0:g} to {z1:g} m")
+            name.setToolTip(QCoreApplication.translate("PHGX", "Across the whole mesh, z {0:g} to {1:g} m").format(z0, z1) if _is_layer(zone)
+                            else QCoreApplication.translate("PHGX", "x {0:g} to {1:g}, y {2:g} to {3:g}, z {4:g} to {5:g} m").format(x0, x1, y0, y1, z0, z1))
             table.setItem(index, _NAME, name)
             rho = QDoubleSpinBox()
             rho.setRange(0.01, 1e7)
@@ -434,8 +429,8 @@ class ZoneBoxEditor(QGroupBox):
             cells.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
             if count == 0:
                 cells.setForeground(QColor(theme.PALETTE["red"]))
-                cells.setToolTip("This zone took no cell in the last mesh: it lies outside "
-                                 "the inverted region, or zones lower in the list cover it.")
+                cells.setToolTip(QCoreApplication.translate("PHGX", "This zone took no cell in the last mesh: it lies outside "
+                                 "the inverted region, or zones lower in the list cover it."))
             table.setItem(index, _CELLS, cells)
         table.blockSignals(False)
         self._clear.setEnabled(bool(self._zones))

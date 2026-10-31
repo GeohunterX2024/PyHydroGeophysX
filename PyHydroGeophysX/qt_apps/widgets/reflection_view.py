@@ -23,7 +23,7 @@ from typing import Any, List, Optional
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import functions as pg_fn
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QCoreApplication, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPainterPath, QPen
 from PySide6.QtWidgets import (
     QComboBox,
@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
@@ -92,17 +92,17 @@ class ReflectionView(QWidget):
         self._view_combo = QComboBox()
         self._view_combo.addItems(_VIEWS)
         self._view_combo.setToolTip(
-            "Stacked section: the result.\n"
+            QCoreApplication.translate("PHGX", "Stacked section: the result.\n"
             "Velocity check: is the stacking velocity right?\n"
-            "Flat-event check: is an event a reflection, or left over from the mutes?")
+            "Flat-event check: is an event a reflection, or left over from the mutes?"))
         self._view_combo.currentTextChanged.connect(lambda *_: self._render())
-        bar.addWidget(group("Show", self._view_combo))
+        bar.addWidget(group(QCoreApplication.translate("PHGX", "Show"), self._view_combo))
         self._vertical = QComboBox()
         self._vertical.addItems((_TIME, _DEPTH))
-        self._vertical.setToolTip("Depth converts two-way time with the stacking velocity, "
-                                  "so it is only as right as that velocity.")
+        self._vertical.setToolTip(QCoreApplication.translate("PHGX", "Depth converts two-way time with the stacking velocity, "
+                                  "so it is only as right as that velocity."))
         self._vertical.currentTextChanged.connect(lambda *_: self._render())
-        self._vertical_group = group("Vertical", self._vertical)
+        self._vertical_group = group(QCoreApplication.translate("PHGX", "Vertical"), self._vertical)
         bar.addWidget(self._vertical_group)
         self._style = QComboBox()
         self._style.addItems(_STYLES)
@@ -111,7 +111,7 @@ class ReflectionView(QWidget):
         # The same colour map as the shot gathers: both are seismic amplitudes.
         self._colormap = cmaps.ColormapChooser(cmaps.SEISMIC_GATHER, cmaps.GATHER, shared=colormaps)
         self._colormap.colormapChanged.connect(lambda *_: self._render())
-        self._style_group = group("Display", self._style, self._colormap)
+        self._style_group = group(QCoreApplication.translate("PHGX", "Display"), self._style, self._colormap)
         bar.addWidget(self._style_group)
         # The colour limits beside the colour map: one pair for amplitudes (the
         # stacked section and the flat-event check), shown while an amplitude
@@ -128,7 +128,7 @@ class ReflectionView(QWidget):
         layout.addLayout(bar)
 
         self._stack = QStackedLayout()
-        self._placeholder = QLabel(_PLACEHOLDER)
+        self._placeholder = QLabel(i18n.tr(_PLACEHOLDER))
         self._placeholder.setAlignment(Qt.AlignCenter)
         self._placeholder.setWordWrap(True)
         theme.set_tone(self._placeholder, "muted")
@@ -241,7 +241,7 @@ class ReflectionView(QWidget):
         self._fill.setPath(QPainterPath())
 
     def _title(self, text: str) -> None:
-        self._plot.setTitle(text, color=theme.color("canvas_text"), size="10pt")
+        self._plot.setTitle(i18n.tr(text), color=theme.color("canvas_text"), size="10pt")
 
     def _render(self) -> None:
         self._sync_controls()
@@ -304,7 +304,7 @@ class ReflectionView(QWidget):
 
     def _time_axis(self) -> None:
         self._plot.getAxis("left").setScale(1.0)
-        self._plot.setLabel("left", "Two-way time (ms)")
+        self._plot.setLabel("left", QCoreApplication.translate("PHGX", "Two-way time (ms)"))
 
     def _draw_section(self) -> None:
         res = self._result
@@ -360,7 +360,7 @@ class ReflectionView(QWidget):
         self._curve.setData(np.asarray(res.velocity.rms(t_line * 1e-3), dtype=float), t_line,
                             pen=pg.mkPen(theme.color("primary"), width=2.5))
         self._plot.getAxis("bottom").setScale(1.0)
-        self._plot.setLabel("bottom", "Stacking velocity (m/s)")
+        self._plot.setLabel("bottom", QCoreApplication.translate("PHGX", "Stacking velocity (m/s)"))
         self._time_axis()
         self._plot.getViewBox().setRange(xRange=(float(vels[0]), float(vels[-1])),
                                          yRange=(0.0, float(t_ms[-1])), padding=0.0)
@@ -402,11 +402,11 @@ class ReflectionView(QWidget):
         if shown["view"] == VELOCITY:
             a = int(np.clip(np.searchsorted(shown["t"], y), 0, shown["t"].size - 1))
             b = int(np.clip(np.searchsorted(shown["v"], x), 0, shown["v"].size - 1))
-            self._readout.setText(f"{x:.0f} m/s, {y:.1f} ms, semblance {shown['panel'][a, b]:.2f}")
+            self._readout.setText(QCoreApplication.translate("PHGX", "{0:.0f} m/s, {1:.1f} ms, semblance {2:.2f}").format(x, y, shown['panel'][a, b]))
             return
         where = f"{to_display_length(x, unit):.2f} {unit}"
         if shown["view"] == FLATNESS:
-            self._readout.setText(f"offset {where}, {y:.1f} ms")
+            self._readout.setText(QCoreApplication.translate("PHGX", "offset {0}, {1:.1f} ms").format(where, y))
             return
         k = int(np.argmin(np.abs(shown["x"] - x)))
         i = int(np.clip(np.searchsorted(shown["y"], y), 0, shown["y"].size - 1))
@@ -416,4 +416,4 @@ class ReflectionView(QWidget):
         else:
             depth = float(self._result.velocity.depth(np.array([y * 1e-3]))[0])
             when = f"{y:.1f} ms ({to_display_length(depth, unit):.2f} {unit} deep)"
-        self._readout.setText(f"position {where}, {when}, {traces} traces")
+        self._readout.setText(QCoreApplication.translate("PHGX", "position {0}, {1}, {2} traces").format(where, when, traces))

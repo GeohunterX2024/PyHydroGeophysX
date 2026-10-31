@@ -24,10 +24,11 @@ import os
 import time
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton,
                                QSlider)
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -344,16 +345,16 @@ class ReplayBar(QFrame):
         row = QHBoxLayout(self)
         row.setContentsMargins(16, 8, 16, 8)
         row.setSpacing(10)
-        tag = QLabel("REPLAY")
+        tag = QLabel(QCoreApplication.translate("PHGX", "REPLAY"))
         tag.setObjectName("agentGoalTag")
         row.addWidget(tag)
-        self.play = QPushButton("Play")
+        self.play = QPushButton(QCoreApplication.translate("PHGX", "Play"))
         self.play.setProperty("primary", True)
-        self.play.clicked.connect(lambda: self.playToggled.emit(self.play.text() == "Play"))
+        self.play.clicked.connect(lambda: self.playToggled.emit(self.play.text() == QCoreApplication.translate("PHGX", "Play")))
         row.addWidget(self.play)
         self.speed = QComboBox()
         for label, value in self.SPEEDS:
-            self.speed.addItem(label, value)
+            self.speed.addItem(i18n.tr(label), value)
         self.speed.setCurrentIndex(2)
         self.speed.currentIndexChanged.connect(
             lambda _i: self.speedChanged.emit(float(self.speed.currentData())))
@@ -366,13 +367,13 @@ class ReplayBar(QFrame):
         row.addWidget(self.slider, 1)
         self.time = QLabel("0:00 / 0:00")
         self.time.setObjectName("agentClock")
-        self.time.setToolTip("The run's own clock: how long it had been running at this point.")
+        self.time.setToolTip(QCoreApplication.translate("PHGX", "The run's own clock: how long it had been running at this point."))
         row.addWidget(self.time)
-        frame = QPushButton("Save frame")
-        frame.setToolTip("Save the Live tab as it looks now, as a PNG in the run's folder.")
+        frame = QPushButton(QCoreApplication.translate("PHGX", "Save frame"))
+        frame.setToolTip(QCoreApplication.translate("PHGX", "Save the Live tab as it looks now, as a PNG in the run's folder."))
         frame.clicked.connect(self.frameRequested.emit)
         row.addWidget(frame)
-        close = QPushButton("Close replay")
+        close = QPushButton(QCoreApplication.translate("PHGX", "Close replay"))
         close.clicked.connect(self.closed.emit)
         row.addWidget(close)
         self._run_length = 0.0
@@ -381,7 +382,7 @@ class ReplayBar(QFrame):
         return float(self.speed.currentData())
 
     def set_playing(self, playing: bool) -> None:
-        self.play.setText("Pause" if playing else "Play")
+        self.play.setText(QCoreApplication.translate("PHGX", "Pause") if playing else QCoreApplication.translate("PHGX", "Play"))
 
     def set_run_length(self, seconds: float) -> None:
         self._run_length = float(seconds or 0.0)

@@ -27,7 +27,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QCoreApplication, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -54,7 +54,7 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.data_processing import run_inputs
 from PyHydroGeophysX.Geophy_modular import ERT_to_WC as geo_pipeline
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -209,7 +209,7 @@ class _LayerMapView(QWidget):
             ax.legend(handles=handles, loc="lower right", fontsize=8, framealpha=0.9)
             z = np.concatenate([p[:, 1] for p in self._polygons])
             set_section_axes(ax, z=z, unit=length_units.current())
-            ax.set_title("Layers the rock physics is set for")
+            ax.set_title(QCoreApplication.translate("PHGX", "Layers the rock physics is set for"))
         self._canvas.draw_idle()
         self._toolbar.update()
 
@@ -250,11 +250,11 @@ class GeoHydrologyModule(BaseModule):
 
         root = QHBoxLayout(self)
         self._tabs = QTabWidget()
-        self._tabs.addTab(self._build_model_tab(), "Model")
+        self._tabs.addTab(self._build_model_tab(), QCoreApplication.translate("PHGX", "Model"))
         self._layer_view = _LayerMapView()
-        self._tabs.addTab(self._layer_view, "Layers")
-        self._tabs.addTab(self._build_results_tab(), "Results")
-        self._tabs.addTab(self._build_series_tab(), "Time series")
+        self._tabs.addTab(self._layer_view, QCoreApplication.translate("PHGX", "Layers"))
+        self._tabs.addTab(self._build_results_tab(), QCoreApplication.translate("PHGX", "Results"))
+        self._tabs.addTab(self._build_series_tab(), QCoreApplication.translate("PHGX", "Time series"))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         self._guide = NextStepStrip()
         self._reproduce = ReproduceBar()
@@ -272,12 +272,12 @@ class GeoHydrologyModule(BaseModule):
     def _example_button(self) -> QPushButton:
         """"Use example", or "Use project data" when the studio was opened on a project's."""
         context = self._context_dir() is not None
-        button = QPushButton("Use project data" if context else "Use example")
+        button = QPushButton(QCoreApplication.translate("PHGX", "Use project data") if context else QCoreApplication.translate("PHGX", "Use example"))
         button.setIcon(theme.icon("fa5s.box-open"))
         button.setToolTip(
-            "Load this project's inverted ERT model." if context else
-            "Load the Treeline time-lapse ERT model of the Ex_MC_Hydro example: "
-            "12 surveys over regolith and bedrock.")
+            QCoreApplication.translate("PHGX", "Load this project's inverted ERT model.") if context else
+            QCoreApplication.translate("PHGX", "Load the Treeline time-lapse ERT model of the Ex_MC_Hydro example: "
+            "12 surveys over regolith and bedrock."))
         button.clicked.connect(self._use_context_data)
         return button
 
@@ -285,19 +285,19 @@ class GeoHydrologyModule(BaseModule):
         example_btn = self._example_button()
         example_btn.setProperty("primary", True)
         example_btn.setIcon(theme.icon("fa5s.box-open", color="#ffffff"))
-        open_btn = QPushButton("Open folder…")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open folder…"))
         open_btn.setIcon(theme.icon("fa5s.folder-open"))
         open_btn.clicked.connect(self._select_folder)
-        format_btn = QPushButton("Data format")
+        format_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         format_btn.setIcon(theme.icon("fa5s.question-circle"))
         format_btn.clicked.connect(self._show_format_help)
         return start_card(
-            "Estimate water content from an ERT model",
-            "Turn an inverted, time-lapse ERT resistivity model into water content, "
-            "with its uncertainty, through rock physics sampled many times over.",
-            ["Load an inverted ERT model: its mesh, resistivity and layers.",
-             "Tick the layers to estimate in, and check each one's rock physics.",
-             "Press Estimate water content."],
+            QCoreApplication.translate("PHGX", "Estimate water content from an ERT model"),
+            QCoreApplication.translate("PHGX", "Turn an inverted, time-lapse ERT resistivity model into water content, "
+            "with its uncertainty, through rock physics sampled many times over."),
+            [QCoreApplication.translate("PHGX", "Load an inverted ERT model: its mesh, resistivity and layers."),
+             QCoreApplication.translate("PHGX", "Tick the layers to estimate in, and check each one's rock physics."),
+             QCoreApplication.translate("PHGX", "Press Estimate water content.")],
             [example_btn, open_btn, format_btn],
             note=("The example is the Treeline time-lapse ERT model of the Ex_MC_Hydro "
                   "example." if self._context_dir() is None else ""))
@@ -312,11 +312,11 @@ class GeoHydrologyModule(BaseModule):
         row = QHBoxLayout()
         self._survey = QSpinBox()
         self._survey.setRange(0, 0)
-        self._survey.setToolTip("The survey of the time-lapse series shown here and in "
-                                "the result maps. Every survey is estimated.")
+        self._survey.setToolTip(QCoreApplication.translate("PHGX", "The survey of the time-lapse series shown here and in "
+                                "the result maps. Every survey is estimated."))
         self._survey.valueChanged.connect(self._show_model)
         self._survey_range = QLabel("")
-        row.addWidget(QLabel("Survey"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Survey")))
         row.addWidget(self._survey)
         row.addWidget(self._survey_range)
         row.addStretch(1)
@@ -334,11 +334,11 @@ class GeoHydrologyModule(BaseModule):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
-        header.addWidget(QLabel("Show"))
+        header.addWidget(QLabel(QCoreApplication.translate("PHGX", "Show")))
         self._result_figure = QComboBox()
         self._result_figure.currentIndexChanged.connect(self._show_selected_result_map)
         header.addWidget(self._result_figure, stretch=1)
-        open_btn = QPushButton("Open output folder")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open output folder"))
         open_btn.setIcon(theme.icon("fa5s.folder-open"))
         open_btn.clicked.connect(self._open_output_folder)
         header.addWidget(open_btn)
@@ -357,13 +357,13 @@ class GeoHydrologyModule(BaseModule):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(_hint("Water content through the surveys at two points, with "
-                               "the ±1σ band the rock-physics uncertainty gives it."))
+        layout.addWidget(_hint(QCoreApplication.translate("PHGX", "Water content through the surveys at two points, with "
+                               "the ±1σ band the rock-physics uncertainty gives it.")))
         self._mx1 = _number(30.0, -1e6, 1e6, 1.0, 1, " m")
         self._my1 = _number(1610.0, -1e6, 1e6, 1.0, 1, " m")
         self._mx2 = _number(65.0, -1e6, 1e6, 1.0, 1, " m")
         self._my2 = _number(1613.0, -1e6, 1e6, 1.0, 1, " m")
-        plot_btn = QPushButton("Plot")
+        plot_btn = QPushButton(QCoreApplication.translate("PHGX", "Plot"))
         plot_btn.setIcon(theme.icon("fa5s.chart-line"))
         plot_btn.clicked.connect(self._plot_points)
         row = QHBoxLayout()
@@ -410,13 +410,13 @@ class GeoHydrologyModule(BaseModule):
         flayout.addWidget(rule)
         self._run_reason = _hint()
         flayout.addWidget(self._run_reason)
-        self._run_btn = QPushButton("Estimate water content")
+        self._run_btn = QPushButton(QCoreApplication.translate("PHGX", "Estimate water content"))
         self._run_btn.setProperty("primary", True)
         self._run_btn.setIcon(theme.icon("fa5s.play", color="#ffffff"))
         self._run_btn.setToolTip(
-            "Sample each layer's rock physics many times, turn every survey's "
+            QCoreApplication.translate("PHGX", "Sample each layer's rock physics many times, turn every survey's "
             "resistivity into water content with each sample, and map the mean and "
-            "the spread.")
+            "the spread."))
         self._run_btn.clicked.connect(self._run_inverse)
         flayout.addWidget(self._run_btn)
         self._progress = QProgressBar()
@@ -436,67 +436,67 @@ class GeoHydrologyModule(BaseModule):
         return column
 
     def _build_data_group(self) -> QGroupBox:
-        box = QGroupBox("1  Inverted ERT model")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "1  Inverted ERT model"))
         form = QFormLayout(box)
-        open_btn = QPushButton("Open folder…")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open folder…"))
         open_btn.setProperty("primary", True)
         open_btn.setIcon(theme.icon("fa5s.folder-open", color="#ffffff"))
-        open_btn.setToolTip("Open an ERT inversion's output folder, or a folder with "
+        open_btn.setToolTip(QCoreApplication.translate("PHGX", "Open an ERT inversion's output folder, or a folder with "
                             "mesh_res.bms, resmodel.npy and index_marker.npy "
-                            "(all_coverage.npy is optional).")
+                            "(all_coverage.npy is optional)."))
         open_btn.clicked.connect(self._select_folder)
         reload_btn = QPushButton()
         reload_btn.setIcon(theme.icon("fa5s.sync"))
-        reload_btn.setToolTip("Read the folder again, after its files changed.")
+        reload_btn.setToolTip(QCoreApplication.translate("PHGX", "Read the folder again, after its files changed."))
         reload_btn.clicked.connect(self._reload)
         help_btn = QPushButton()
         help_btn.setIcon(theme.icon("fa5s.question-circle"))
-        help_btn.setToolTip("What the folder must contain.")
+        help_btn.setToolTip(QCoreApplication.translate("PHGX", "What the folder must contain."))
         help_btn.clicked.connect(self._show_format_help)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         for button in (open_btn, self._example_button(), reload_btn, help_btn):
             row.addWidget(button)
         row.addStretch(1)
-        form.addRow(row)
+        form.addRow(i18n.tr(row))
         self._data_status = QLabel("")
         self._data_status.setWordWrap(True)
-        form.addRow(self._data_status)
+        form.addRow(i18n.tr(self._data_status))
         return box
 
     def _build_layers_group(self) -> QGroupBox:
-        box = QGroupBox("2  Layers")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "2  Layers"))
         layout = QVBoxLayout(box)
-        layout.addWidget(_hint("Tick the layers to estimate water content in, and name "
-                               "them as you like. The Layers tab shows where they are."))
+        layout.addWidget(_hint(QCoreApplication.translate("PHGX", "Tick the layers to estimate water content in, and name "
+                               "them as you like. The Layers tab shows where they are.")))
         self._layers_host = QWidget()
         self._layers_form = QGridLayout(self._layers_host)
         self._layers_form.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._layers_host)
         adv, aform = fold()
-        struct_btn = QPushButton("Layers from a seismic bedrock interface…")
+        struct_btn = QPushButton(QCoreApplication.translate("PHGX", "Layers from a seismic bedrock interface…"))
         struct_btn.setIcon(theme.icon("fa5s.mountain"))
         struct_btn.setToolTip(
-            "Split the model into regolith (above) and bedrock (below) along a bedrock "
-            "interface: the one sent from Seismic → Structure, or one read from a file.")
+            QCoreApplication.translate("PHGX", "Split the model into regolith (above) and bedrock (below) along a bedrock "
+            "interface: the one sent from Seismic → Structure, or one read from a file."))
         struct_btn.clicked.connect(self._derive_markers_from_structure)
-        reset_btn = QPushButton("Back to the layers in the file")
+        reset_btn = QPushButton(QCoreApplication.translate("PHGX", "Back to the layers in the file"))
         reset_btn.setIcon(theme.icon("fa5s.undo"))
-        reset_btn.setToolTip("Use the model's own index_marker.npy again, with its "
-                             "layers ticked and named as they start.")
+        reset_btn.setToolTip(QCoreApplication.translate("PHGX", "Use the model's own index_marker.npy again, with its "
+                             "layers ticked and named as they start."))
         reset_btn.clicked.connect(self._reset_layers)
-        aform.addRow(merged_row(struct_btn))
-        aform.addRow(merged_row(reset_btn))
+        aform.addRow(i18n.tr(merged_row(struct_btn)))
+        aform.addRow(i18n.tr(merged_row(reset_btn)))
         layout.addWidget(adv)
         return box
 
     def _build_physics_group(self) -> QGroupBox:
-        box = QGroupBox("3  Rock physics")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "3  Rock physics"))
         layout = QVBoxLayout(box)
         layout.addWidget(_hint(
-            "How resistivity becomes water content in each ticked layer. Each value "
+            QCoreApplication.translate("PHGX", "How resistivity becomes water content in each ticked layer. Each value "
             "is a mean ± spread, sampled many times so the result carries its "
-            "uncertainty. Unfold a layer to change them."))
+            "uncertainty. Unfold a layer to change them.")))
         self._physics_host = QWidget()
         self._physics_layout = QVBoxLayout(self._physics_host)
         self._physics_layout.setContentsMargins(0, 0, 0, 0)
@@ -504,45 +504,45 @@ class GeoHydrologyModule(BaseModule):
         return box
 
     def _build_estimate_group(self) -> QGroupBox:
-        box = QGroupBox("4  Estimate")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "4  Estimate"))
         form = QFormLayout(box)
         self._product_boxes: Dict[str, QCheckBox] = {}
         products = QWidget()
         prow = QVBoxLayout(products)
         prow.setContentsMargins(0, 0, 0, 0)
         for key, label in _PRODUCTS:
-            check = QCheckBox(label)
+            check = QCheckBox(i18n.tr(label))
             check.setChecked(key == "water_content")
             check.toggled.connect(self._on_products_changed)
             self._product_boxes[key] = check
             prow.addWidget(check)
         self._product_boxes["porosity"].setToolTip(
-            "Porosity instead of water content, for ground of known saturation "
-            "(1 = saturated).")
-        form.addRow(products)
+            QCoreApplication.translate("PHGX", "Porosity instead of water content, for ground of known saturation "
+            "(1 = saturated)."))
+        form.addRow(i18n.tr(products))
         self._saturation = _number(1.0, 0.01, 1.0, 0.05, 2,
                                    tip="The saturation assumed for the porosity estimate.")
-        form.addRow("Assumed saturation", self._saturation)
+        form.addRow(QCoreApplication.translate("PHGX", "Assumed saturation"), self._saturation)
         self._n_real = make_spinbox(
             100, 2, 5000, tooltip="How many times the rock physics is sampled. More "
                                   "gives a steadier mean and spread, and a longer run.")
-        form.addRow("Samples", self._n_real)
+        form.addRow(QCoreApplication.translate("PHGX", "Samples"), self._n_real)
         adv, aform = fold()
         self._seed = make_spinbox(7, 0, 10_000_000,
                                   tooltip="The same seed gives the same samples.")
         self._tortuosity = _number(1.0, 0.1, 5.0, 0.1, 2, tip="Archie's tortuosity factor a.")
         self._wc_cmin = _number(0.0, 0.0, 1.0, 0.01, 2)
         self._wc_cmax = _number(0.32, 0.01, 1.0, 0.01, 2)
-        aform.addRow("Random seed", self._seed)
-        aform.addRow("Tortuosity a", self._tortuosity)
-        aform.addRow("Map colours", merged_row(self._wc_cmin, "to", self._wc_cmax))
-        export_btn = QPushButton("Save rock-physics settings")
+        aform.addRow(QCoreApplication.translate("PHGX", "Random seed"), self._seed)
+        aform.addRow(QCoreApplication.translate("PHGX", "Tortuosity a"), self._tortuosity)
+        aform.addRow(QCoreApplication.translate("PHGX", "Map colours"), merged_row(self._wc_cmin, "to", self._wc_cmax))
+        export_btn = QPushButton(QCoreApplication.translate("PHGX", "Save rock-physics settings"))
         export_btn.setIcon(theme.icon("fa5s.file-export"))
-        export_btn.setToolTip("Write the layers and their rock physics to "
-                              "petro_config.json, without estimating anything.")
+        export_btn.setToolTip(QCoreApplication.translate("PHGX", "Write the layers and their rock physics to "
+                              "petro_config.json, without estimating anything."))
         export_btn.clicked.connect(self._export_config)
-        aform.addRow(merged_row(export_btn))
-        form.addRow(adv)
+        aform.addRow(i18n.tr(merged_row(export_btn)))
+        form.addRow(i18n.tr(adv))
         self._on_products_changed()
         return box
 
@@ -606,14 +606,14 @@ class GeoHydrologyModule(BaseModule):
         if not hasattr(self, "_run_reason"):
             return
         reason = self._run_blocker()
-        self._run_reason.setText(reason)
+        self._run_reason.setText(i18n.tr(reason))
         self._run_reason.setVisible(bool(reason))
         if self._run_busy is None:
             self._run_btn.setEnabled(not reason)
         loaded = self._summary is not None
         self._model_stack.setCurrentIndex(1 if loaded else 0)
         self._guide.setVisible(loaded or self._run_busy is not None)
-        self._guide.setText(self._next_step())
+        self._guide.setText(i18n.tr(self._next_step()))
         for group in (self._layers_group, self._physics_group, self._estimate_group):
             group.setEnabled(loaded)
         layers = bool(self._enabled_layers())
@@ -621,7 +621,7 @@ class GeoHydrologyModule(BaseModule):
                 self._physics_group: layers,
                 self._estimate_group: layers and bool(self._collect_products())}
         for group, title in self._step_titles.items():
-            group.setTitle(f"{title}  ✓" if done[group] else title)
+            group.setTitle(f"{title}  ✓" if done[group] else i18n.tr(title))
         self._tabs.setTabEnabled(_LAYERS_TAB, loaded)
         self._tabs.setTabEnabled(_RESULTS_TAB, self._has_results)
         self._tabs.setTabEnabled(_SERIES_TAB, self._last_result is not None
@@ -671,7 +671,7 @@ class GeoHydrologyModule(BaseModule):
             _logger.debug("GeoHydrologyModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
         dlg = QDialog(self)
-        dlg.setWindowTitle("ERT → Water Content input format")
+        dlg.setWindowTitle(QCoreApplication.translate("PHGX", "ERT → Water Content input format"))
         dlg.resize(760, 640)
         lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
@@ -681,13 +681,13 @@ class GeoHydrologyModule(BaseModule):
             _logger.debug("GeoHydrologyModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close_btn = QPushButton("Close"); close_btn.clicked.connect(dlg.accept)
+        close_btn = QPushButton(QCoreApplication.translate("PHGX", "Close")); close_btn.clicked.connect(dlg.accept)
         lay.addWidget(close_btn)
         dlg.exec()
 
     def _select_folder(self) -> None:
         start = str(self._data_dir() or Path.cwd())
-        path = select_directory(self, "Select inverted-model folder", start)
+        path = select_directory(self, QCoreApplication.translate("PHGX", "Select inverted-model folder"), start)
         if path:
             self._manual_dir = path
             self._markers_override = None
@@ -702,8 +702,8 @@ class GeoHydrologyModule(BaseModule):
             self._load_problem = (f"Folder not found: {data_dir}" if data_dir is not None
                                   else "No model folder set.")
             self._data_status.setText(
-                "No model loaded. Open an ERT inversion's output folder, or a folder "
-                "with mesh_res.bms, resmodel.npy and index_marker.npy, or use the example.")
+                QCoreApplication.translate("PHGX", "No model loaded. Open an ERT inversion's output folder, or a folder "
+                "with mesh_res.bms, resmodel.npy and index_marker.npy, or use the example."))
             theme.set_tone(self._data_status, None)
             self._refresh_layer_rows()
             return
@@ -717,7 +717,7 @@ class GeoHydrologyModule(BaseModule):
         except Exception as exc:  # noqa: BLE001
             self._summary = None
             self._load_problem = str(exc)
-            self._data_status.setText(f"Could not read the model: {exc}")
+            self._data_status.setText(QCoreApplication.translate("PHGX", "Could not read the model: {0}").format(exc))
             theme.set_tone(self._data_status, "warn")
             self.log(f"Failed to read inverted model: {exc}", "error")
             self._refresh_layer_rows()
@@ -729,9 +729,7 @@ class GeoHydrologyModule(BaseModule):
         name = "Example: Treeline time-lapse ERT" if same else f"Folder: {Path(data_dir).name}"
         n_time = int(s["n_timesteps"])
         self._data_status.setText(
-            f"<b>{name}</b><br>{n_time} survey{'s' if n_time != 1 else ''} · "
-            f"{s['n_cells']:,} cells · {len(s['layers'])} layer"
-            f"{'s' if len(s['layers']) != 1 else ''}")
+            QCoreApplication.translate("PHGX", "<b>{0}</b><br>{1} survey{2} · {3:,} cells · {4} layer{5}").format(name, n_time, 's' if n_time != 1 else '', s['n_cells'], len(s['layers']), 's' if len(s['layers']) != 1 else ''))
         self._data_status.setToolTip(str(data_dir) + (f"\n{s['layering_note']}"
                                                       if s.get("layering_note") else ""))
         if s.get("layering_note"):
@@ -741,7 +739,7 @@ class GeoHydrologyModule(BaseModule):
         self._survey.setRange(0, max(0, n_time - 1))
         self._survey.blockSignals(False)
         self._survey.setEnabled(n_time > 1)
-        self._survey_range.setText(f"of 0–{n_time - 1}" if n_time > 1 else "(one survey)")
+        self._survey_range.setText(QCoreApplication.translate("PHGX", "of 0–{0}").format(n_time - 1) if n_time > 1 else QCoreApplication.translate("PHGX", "(one survey)"))
         self.log(f"Loaded inverted model from {data_dir}", "success")
         self._refresh_layer_rows()
         self._show_model()
@@ -771,7 +769,7 @@ class GeoHydrologyModule(BaseModule):
         except Exception as exc:  # noqa: BLE001 - pyGIMLi missing or the mesh unreadable
             self._mesh = None
             message = f"The model's mesh could not be read ({exc}); the estimate needs it too."
-        self._model_note.setText(message)
+        self._model_note.setText(i18n.tr(message))
         self._layer_view.set_mesh(polygons, message)
 
     def _show_model(self, *_args) -> None:
@@ -788,7 +786,7 @@ class GeoHydrologyModule(BaseModule):
                 self._mesh, self._resistivity[:, t], kind="ert", coverage=coverage,
                 title=f"Inverted resistivity, survey {t}")
         except Exception as exc:  # noqa: BLE001
-            self._model_note.setText(f"The model could not be drawn: {exc}")
+            self._model_note.setText(QCoreApplication.translate("PHGX", "The model could not be drawn: {0}").format(exc))
 
     # -- layers --------------------------------------------------------------
     def _refresh_layer_rows(self) -> None:
@@ -804,7 +802,7 @@ class GeoHydrologyModule(BaseModule):
                 enabled.toggled.connect(self._on_layers_changed)
                 name = QLineEdit(str(layer.get("name", f"Layer {marker}")))
                 name.editingFinished.connect(self._on_layers_changed)
-                size = _hint(f"marker {marker} · {int(layer['n_cells']):,} cells")
+                size = _hint(QCoreApplication.translate("PHGX", "marker {0} · {1:,} cells").format(marker, int(layer['n_cells'])))
                 self._layers_form.addWidget(enabled, i, 0)
                 self._layers_form.addWidget(name, i, 1)
                 self._layers_form.addWidget(size, i, 2)
@@ -865,7 +863,7 @@ class GeoHydrologyModule(BaseModule):
             source = str(ss.get("source", "seismic handoff"))
         else:
             path, _ = QFileDialog.getOpenFileName(
-                self, "Load bedrock interface (x, z)", str(self._data_dir() or Path.cwd()),
+                self, QCoreApplication.translate("PHGX", "Load bedrock interface (x, z)"), str(self._data_dir() or Path.cwd()),
                 "Interface (*.csv *.txt *.npy);;All files (*)")
             if not path:
                 return
@@ -924,18 +922,18 @@ class GeoHydrologyModule(BaseModule):
         self._param_summaries = {}
         self._param_titles = {}
         if not enabled:
-            self._physics_layout.addWidget(_hint("Tick a layer in 2 to set its rock physics."))
+            self._physics_layout.addWidget(_hint(QCoreApplication.translate("PHGX", "Tick a layer in 2 to set its rock physics.")))
             return
         for row in enabled:
             marker = int(row["marker"])
             title = QLabel(f"<b>{names.get(marker, marker)}</b>")
             summary = _hint()
-            adv, aform = fold("Change")
+            adv, aform = fold(QCoreApplication.translate("PHGX", "Change"))
             grid_host = QWidget()
             grid = QGridLayout(grid_host)
             grid.setContentsMargins(0, 0, 0, 0)
-            grid.addWidget(QLabel("<b>Mean</b>"), 0, 1)
-            grid.addWidget(QLabel("<b>± spread</b>"), 0, 2)
+            grid.addWidget(QLabel(QCoreApplication.translate("PHGX", "<b>Mean</b>")), 0, 1)
+            grid.addWidget(QLabel(QCoreApplication.translate("PHGX", "<b>± spread</b>")), 0, 2)
             defaults = self._layer_default(marker)
             kept = self._param_values.get(marker, {})
             self._param_widgets[marker] = {}
@@ -947,11 +945,11 @@ class GeoHydrologyModule(BaseModule):
                 std_box = _number(float(std), slo, shi, sstep, sdec)
                 for box in (mean_box, std_box):
                     box.valueChanged.connect(lambda _v, m=marker: self._update_param_summary(m))
-                grid.addWidget(QLabel(_PARAM_LABELS[key]), r, 0)
+                grid.addWidget(QLabel(i18n.tr(_PARAM_LABELS[key])), r, 0)
                 grid.addWidget(mean_box, r, 1)
                 grid.addWidget(std_box, r, 2)
                 self._param_widgets[marker][key] = (mean_box, std_box)
-            aform.addRow(grid_host)
+            aform.addRow(i18n.tr(grid_host))
             for widget in (title, summary, adv):
                 self._physics_layout.addWidget(widget)
             self._param_titles[marker] = title
@@ -969,8 +967,7 @@ class GeoHydrologyModule(BaseModule):
             mean, std = (box.value() for box in widgets[key])
             return f"{mean:g} ± {std:g}" if std else f"{mean:g}"
 
-        label.setText(f"porosity {value('porosity')}, m {value('m')}, n {value('n')}, "
-                      f"pore water {value('rho_fluid')} Ω·m")
+        label.setText(QCoreApplication.translate("PHGX", "porosity {0}, m {1}, n {2}, pore water {3} Ω·m").format(value('porosity'), value('m'), value('n'), value('rho_fluid')))
 
     # -- what to estimate ----------------------------------------------------
     def _on_products_changed(self, *_args) -> None:
@@ -988,13 +985,10 @@ class GeoHydrologyModule(BaseModule):
         products = [dict(_PRODUCTS).get(str(p), str(p)) for p in result.get("products", [])]
         if result.get("status") == "config_exported":
             self._result_summary.setText(
-                "Nothing was estimated; the rock-physics settings were saved instead.")
+                QCoreApplication.translate("PHGX", "Nothing was estimated; the rock-physics settings were saved instead."))
         else:
             self._result_summary.setText(
-                f"Estimated {', '.join(products).lower() or 'nothing'} from "
-                f"{result.get('n_realizations', '—')} samples of the rock physics, for "
-                f"{result.get('n_timesteps', '—')} surveys. The maps show survey "
-                f"{result.get('preview_timestep', '—')}.")
+                QCoreApplication.translate("PHGX", "Estimated {0} from {1} samples of the rock physics, for {2} surveys. The maps show survey {3}.").format(', '.join(products).lower() or 'nothing', result.get('n_realizations', '—'), result.get('n_timesteps', '—'), result.get('preview_timestep', '—')))
 
         entries: List[Tuple[str, str]] = []
         # The estimate and its uncertainty first, then the percentiles.
@@ -1015,7 +1009,7 @@ class GeoHydrologyModule(BaseModule):
         self._result_figure.blockSignals(True)
         self._result_figure.clear()
         for label, path in entries:
-            self._result_figure.addItem(label, path)
+            self._result_figure.addItem(i18n.tr(label), path)
         self._result_figure.blockSignals(False)
         if self._result_figure.count():
             self._result_figure.setCurrentIndex(0)
@@ -1027,7 +1021,7 @@ class GeoHydrologyModule(BaseModule):
             bits.append(f"Rock-physics settings: {result['config_path']}")
         if result.get("output_dir"):
             bits.append(f"Folder: {result['output_dir']}")
-        self._result_files.setText("<br>".join(bit for bit in bits if bit))
+        self._result_files.setText(i18n.tr("<br>".join(bit for bit in bits if bit)))
         self._sync_page()
 
     @staticmethod
@@ -1082,8 +1076,8 @@ class GeoHydrologyModule(BaseModule):
                 if stds is not None:
                     ax.fill_between(t, series[i] - stds[i], series[i] + stds[i],
                                     color="tab:blue", alpha=0.2, label="±1σ")
-                ax.set_xlabel("Survey"); ax.set_ylabel("Water content (-)")
-                ax.set_title(f"Point {i + 1} (cell {idx[i]})"); ax.grid(True, alpha=0.3)
+                ax.set_xlabel(QCoreApplication.translate("PHGX", "Survey")); ax.set_ylabel(QCoreApplication.translate("PHGX", "Water content (-)"))
+                ax.set_title(QCoreApplication.translate("PHGX", "Point {0} (cell {1})").format(i + 1, idx[i])); ax.grid(True, alpha=0.3)
                 if i == 0:
                     ax.legend(frameon=False)
             out = Path(res.get("output_dir", ".")) / "monitoring_series.png"
@@ -1234,10 +1228,10 @@ class GeoHydrologyModule(BaseModule):
         self._workflow_recipe_path = str(recipe_path)
         self._run_busy = BusyStateController([self._run_btn])
         self._run_busy.start()
-        self._run_btn.setText("Estimating…")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Estimating…"))
         self._progress.setVisible(True)
         self._progress.setRange(0, 0)
-        self._run_status.setText("Starting the estimate…")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Starting the estimate…"))
         theme.set_tone(self._run_status, None)
         self._sync_page()
         self.log("Starting geophysics → hydrology estimation…", "info")
@@ -1268,13 +1262,13 @@ class GeoHydrologyModule(BaseModule):
         self._on_run_ok(result.legacy_payload())
 
     def _on_worker_log(self, message: str, level: str) -> None:
-        self._run_status.setText(message)
+        self._run_status.setText(i18n.tr(message))
         self.log(message, level)
 
     def _on_run_ok(self, result: dict) -> None:
         self._progress.setRange(0, 1); self._progress.setValue(1)
         self.log(f"Estimation complete: {result.get('products')}.", "success")
-        self._run_status.setText("Finished. The maps are on the Results tab.")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Finished. The maps are on the Results tab."))
         theme.set_tone(self._run_status, "ok")
         self._last_result = result
         # Strip the in-process numpy payload before publishing to the bridge JSON.
@@ -1294,14 +1288,14 @@ class GeoHydrologyModule(BaseModule):
             # changed before trying again. Exporting the configuration in its
             # place would blame a backend that is there.
             self.log(f"Estimation failed: {message}", "error")
-            self._run_status.setText(f"The estimate failed: {message}")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "The estimate failed: {0}").format(message))
             theme.set_tone(self._run_status, "error")
             return
         self.log(f"Estimation could not run: {message}", "warn")
         config_path = self._export_config()
         note = ("The Monte Carlo engine (pygimli) is not installed or could not be loaded. "
                 f"The rock-physics settings were saved to {config_path}.")
-        self._run_status.setText(note)
+        self._run_status.setText(i18n.tr(note))
         theme.set_tone(self._run_status, "warn")
         self.log(note, "warn")
         self._populate_results({"status": "config_exported",
@@ -1313,12 +1307,12 @@ class GeoHydrologyModule(BaseModule):
         if self._run_busy is not None:
             self._run_busy.finish()
             self._run_busy = None
-        self._run_btn.setText("Estimate water content")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Estimate water content"))
         self._progress.setVisible(False)
         if self._worker is not None and self._worker.is_cancelled():
             self._run_problem = "Stopped by user"
-            self._run_status.setText("Stopped before it finished. Press Estimate water "
-                                     "content to start again.")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "Stopped before it finished. Press Estimate water "
+                                     "content to start again."))
             theme.set_tone(self._run_status, "warn")
         self._sync_page()
 

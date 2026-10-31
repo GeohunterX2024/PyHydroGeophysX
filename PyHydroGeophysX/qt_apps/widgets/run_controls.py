@@ -8,6 +8,7 @@ as in Python - and the page is free for the next run straight away.
 from __future__ import annotations
 
 from typing import Any, Callable, Optional
+from PySide6.QtCore import QCoreApplication
 
 from PySide6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton, QWidget
 
@@ -38,8 +39,8 @@ class StopButton(QPushButton):
         self._default_what = self._what = what
         self.setIcon(theme.icon("fa5s.stop"))
         self.setToolTip(
-            "End the running computation now. Nothing it computed so far is kept; "
-            "run it again to start over.")
+            QCoreApplication.translate("PHGX", "End the running computation now. Nothing it computed so far is kept; "
+            "run it again to start over."))
         self.clicked.connect(self.stop)
         self.setVisible(False)
 

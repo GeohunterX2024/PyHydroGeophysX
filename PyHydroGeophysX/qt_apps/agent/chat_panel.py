@@ -33,7 +33,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from typing import Any, Dict, List, Optional, Tuple
 
-from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QProcess, QProcessEnvironment
+from PySide6.QtCore import QCoreApplication, Qt, QTimer, QUrl, Signal, QProcess, QProcessEnvironment
 from PySide6.QtGui import QColor, QImage, QTextDocument
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -56,7 +56,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.agent.controller import StudioController
 from PyHydroGeophysX.qt_apps.agent.providers import (
     MODEL_TIERS,
@@ -565,7 +565,7 @@ class AssistantChatPanel(QWidget):
         # Which assistant this is. One that cannot run here - not installed, or
         # still in development - is listed but greyed out, with the reason.
         self._assistant_combo = QComboBox()
-        self._assistant_combo.setToolTip("The AI assistant you are talking to")
+        self._assistant_combo.setToolTip(QCoreApplication.translate("PHGX", "The AI assistant you are talking to"))
         # A styled delegate, so a greyed-out entry is drawn grey: the combo's
         # default menu delegate draws every entry alike.
         self._assistant_combo.setItemDelegate(QStyledItemDelegate(self._assistant_combo))
@@ -574,7 +574,7 @@ class AssistantChatPanel(QWidget):
             # the tooltip, the welcome note and the Workflow page's title.
             ready, why = agent.availability()
             label = agent.name if ready else f"{agent.name} ({agent.status if agent.status != 'ready' else 'unavailable'})"
-            self._assistant_combo.addItem(label, agent.key)
+            self._assistant_combo.addItem(i18n.tr(label), agent.key)
             index = self._assistant_combo.count() - 1
             self._assistant_combo.setItemData(
                 index, f"{agent.title}\n{agent.summary}" + (f"\n\n{why}" if why else ""),
@@ -595,13 +595,13 @@ class AssistantChatPanel(QWidget):
         # and then only read back, so they collapse behind this button. What
         # stays out is what changes per message: the status line (can I send,
         # and what does it cost).
-        self._settings_btn = QPushButton("Settings")
+        self._settings_btn = QPushButton(QCoreApplication.translate("PHGX", "Settings"))
         self._settings_btn.setCheckable(True)
         self._settings_btn.setIcon(theme.icon("fa5s.chevron-right"))
-        self._settings_btn.setToolTip("Provider, model, API key, and the RAG / MCP switches")
+        self._settings_btn.setToolTip(QCoreApplication.translate("PHGX", "Provider, model, API key, and the RAG / MCP switches"))
         self._settings_btn.toggled.connect(self._on_settings_toggled)
         header.addWidget(self._settings_btn)
-        self._new_btn = QPushButton("New chat")
+        self._new_btn = QPushButton(QCoreApplication.translate("PHGX", "New chat"))
         self._new_btn.setIcon(theme.icon("fa5s.broom"))
         self._new_btn.clicked.connect(self._reset_conversation)
         header.addWidget(self._new_btn)
@@ -664,10 +664,10 @@ class AssistantChatPanel(QWidget):
         clay.addWidget(self._confirm_code)
         cbtns = QHBoxLayout()
         cbtns.addStretch(1)
-        self._reject_btn = QPushButton("Reject")
+        self._reject_btn = QPushButton(QCoreApplication.translate("PHGX", "Reject"))
         self._reject_btn.setIcon(theme.icon("fa5s.times", color=_P["red"]))
         self._reject_btn.clicked.connect(self._on_reject)
-        self._approve_btn = QPushButton("Approve & run")
+        self._approve_btn = QPushButton(QCoreApplication.translate("PHGX", "Approve & run"))
         self._approve_btn.setProperty("primary", True)
         self._approve_btn.setIcon(theme.icon("fa5s.check", color="#ffffff"))
         self._approve_btn.clicked.connect(self._on_approve)
@@ -688,10 +688,10 @@ class AssistantChatPanel(QWidget):
         choice_layout.addWidget(self._choice_label)
         choice_btns = QHBoxLayout()
         choice_btns.addStretch(1)
-        self._guided_btn = QPushButton("Step by step")
+        self._guided_btn = QPushButton(QCoreApplication.translate("PHGX", "Step by step"))
         self._guided_btn.setIcon(theme.icon("fa5s.list-ol"))
         self._guided_btn.clicked.connect(lambda: self._choose_mode("guided"))
-        self._auto_btn = QPushButton("Auto to report")
+        self._auto_btn = QPushButton(QCoreApplication.translate("PHGX", "Auto to report"))
         self._auto_btn.setProperty("primary", True)
         self._auto_btn.setIcon(theme.icon("fa5s.forward", color="#ffffff"))
         self._auto_btn.clicked.connect(lambda: self._choose_mode("auto"))
@@ -709,9 +709,9 @@ class AssistantChatPanel(QWidget):
         self._attachments.setMaximumHeight(82)
         self._attachments.setTextElideMode(Qt.ElideMiddle)
         self._attachments.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._attachments.setToolTip('Files shared with the assistant; RAG references are searched when RAG is enabled.')
+        self._attachments.setToolTip(QCoreApplication.translate("PHGX", 'Files shared with the assistant; RAG references are searched when RAG is enabled.'))
         attachments_layout.addWidget(self._attachments, 1)
-        self._remove_attachment_btn = QPushButton('Remove')
+        self._remove_attachment_btn = QPushButton(QCoreApplication.translate("PHGX", 'Remove'))
         self._remove_attachment_btn.clicked.connect(self._remove_attachment)
         attachments_layout.addWidget(self._remove_attachment_btn)
         root.addWidget(self._attachments_box)
@@ -719,27 +719,27 @@ class AssistantChatPanel(QWidget):
         composer = QVBoxLayout()
         composer.setSpacing(5)
         self._input = ChatInputEdit()
-        self._input.setPlaceholderText("e.g. Build a 3D crosshole mesh with 12 sensors per borehole")
+        self._input.setPlaceholderText(QCoreApplication.translate("PHGX", "e.g. Build a 3D crosshole mesh with 12 sensors per borehole"))
         self._input.sendRequested.connect(self._on_send)
         self._input.filesPasted.connect(self._paste_files)
         self._input.textChanged.connect(self._prewarm_provider)
-        self._send_btn = QPushButton("Send")
+        self._send_btn = QPushButton(QCoreApplication.translate("PHGX", "Send"))
         self._send_btn.setProperty("primary", True)
         self._send_btn.setIcon(theme.icon("fa5s.paper-plane", color="#ffffff"))
         self._send_btn.clicked.connect(self._on_send)
         composer.addWidget(self._input)
         input_actions = QHBoxLayout()
-        input_hint = QLabel('Paste or drop files · Ctrl+Enter to send')
+        input_hint = QLabel(QCoreApplication.translate("PHGX", 'Paste or drop files · Ctrl+Enter to send'))
         theme.set_tone(input_hint, 'muted')
         input_hint.setWordWrap(True)
         input_actions.addWidget(input_hint)
         input_actions.addStretch(1)
         # Step by step runs routine actions without asking; Stop is the
         # user's way to cut in while it does.
-        self._stop_btn = QPushButton("Stop")
+        self._stop_btn = QPushButton(QCoreApplication.translate("PHGX", "Stop"))
         self._stop_btn.setIcon(theme.icon("fa5s.stop"))
-        self._stop_btn.setToolTip("Stop the assistant after the action in hand. Anything "
-                                  "already running on a page carries on there.")
+        self._stop_btn.setToolTip(QCoreApplication.translate("PHGX", "Stop the assistant after the action in hand. Anything "
+                                  "already running on a page carries on there."))
         self._stop_btn.clicked.connect(self._on_stop)
         self._stop_btn.setVisible(False)
         input_actions.addWidget(self._stop_btn)
@@ -817,11 +817,11 @@ class AssistantChatPanel(QWidget):
         lrow = QHBoxLayout(self._level_row)
         lrow.setContentsMargins(0, 0, 0, 0)
         lrow.setSpacing(6)
-        lrow.addWidget(QLabel("Level"))
+        lrow.addWidget(QLabel(QCoreApplication.translate("PHGX", "Level")))
         self._level_combo = QComboBox()
         for tier_id in TIER_ORDER:
-            self._level_combo.addItem(tier_id, tier_id)  # text filled in by _sync
-        self._level_combo.addItem("Custom model", TIER_CUSTOM)
+            self._level_combo.addItem(i18n.tr(tier_id), tier_id)  # text filled in by _sync
+        self._level_combo.addItem(QCoreApplication.translate("PHGX", "Custom model"), TIER_CUSTOM)
         self._level_combo.currentIndexChanged.connect(self._on_level_changed)
         # What the level is for is a tooltip, not a label. Visible, it would wrap
         # to three lines - more height than every other control here put
@@ -829,14 +829,14 @@ class AssistantChatPanel(QWidget):
         lrow.addWidget(self._level_combo, stretch=1)
         lay.addWidget(self._level_row, 0, 0, 1, 4)
 
-        lay.addWidget(QLabel("Provider"), 1, 0)
+        lay.addWidget(QLabel(QCoreApplication.translate("PHGX", "Provider")), 1, 0)
         self._provider_combo = QComboBox()
         for pid in PROVIDER_ORDER:
-            self._provider_combo.addItem(PROVIDER_META[pid]["label"], pid)
+            self._provider_combo.addItem(i18n.tr(PROVIDER_META[pid]["label"]), pid)
         self._provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         lay.addWidget(self._provider_combo, 1, 1)
 
-        lay.addWidget(QLabel("Model"), 1, 2)
+        lay.addWidget(QLabel(QCoreApplication.translate("PHGX", "Model")), 1, 2)
         self._model_combo = QComboBox()
         self._model_combo.setEditable(True)
         self._model_combo.currentTextChanged.connect(self._on_model_changed)
@@ -846,17 +846,17 @@ class AssistantChatPanel(QWidget):
         burl = QHBoxLayout(self._base_url_row)
         burl.setContentsMargins(0, 0, 0, 0)
         burl.setSpacing(6)
-        burl.addWidget(QLabel("Base URL"))
+        burl.addWidget(QLabel(QCoreApplication.translate("PHGX", "Base URL")))
         self._base_url_edit = QLineEdit()
-        self._base_url_edit.setPlaceholderText("https://api.example.com/v1")
+        self._base_url_edit.setPlaceholderText(QCoreApplication.translate("PHGX", "https://api.example.com/v1"))
         burl.addWidget(self._base_url_edit, stretch=1)
         lay.addWidget(self._base_url_row, 2, 0, 1, 4)
 
         self._key_edit = QLineEdit()
         self._key_edit.setEchoMode(QLineEdit.Password)
-        self._key_edit.setPlaceholderText("Paste API key for this session")
+        self._key_edit.setPlaceholderText(QCoreApplication.translate("PHGX", "Paste API key for this session"))
         lay.addWidget(self._key_edit, 3, 0, 1, 3)
-        self._apply_btn = QPushButton("Apply")
+        self._apply_btn = QPushButton(QCoreApplication.translate("PHGX", "Apply"))
         self._apply_btn.clicked.connect(self._on_apply_settings)
         lay.addWidget(self._apply_btn, 3, 3)
 
@@ -872,38 +872,38 @@ class AssistantChatPanel(QWidget):
         self._login_help.setWordWrap(True)
         self._login_help.setOpenExternalLinks(True)
         login_row.addWidget(self._login_help, 1)
-        self._login_btn = QPushButton("Log in")
+        self._login_btn = QPushButton(QCoreApplication.translate("PHGX", "Log in"))
         self._login_btn.clicked.connect(self._on_cli_login_button)
-        self._cli_retry_btn = QPushButton("Retry")
-        self._cli_retry_btn.setToolTip("Run the CLI setup again.")
+        self._cli_retry_btn = QPushButton(QCoreApplication.translate("PHGX", "Retry"))
+        self._cli_retry_btn.setToolTip(QCoreApplication.translate("PHGX", "Run the CLI setup again."))
         self._cli_retry_btn.clicked.connect(self._retry_cli_setup)
-        self._cancel_login_btn = QPushButton("Cancel")
-        self._cancel_login_btn.setToolTip("Stop waiting for the browser sign-in.")
+        self._cancel_login_btn = QPushButton(QCoreApplication.translate("PHGX", "Cancel"))
+        self._cancel_login_btn.setToolTip(QCoreApplication.translate("PHGX", "Stop waiting for the browser sign-in."))
         self._cancel_login_btn.clicked.connect(self._cancel_cli_login)
         for button in (self._login_btn, self._cli_retry_btn, self._cancel_login_btn):
             button.setProperty("compact", True)
             login_row.addWidget(button, 0, Qt.AlignTop)
         lay.addWidget(self._cli_login_row, 5, 0, 1, 4)
 
-        lay.addWidget(QLabel("Reasoning"), 4, 0)
+        lay.addWidget(QLabel(QCoreApplication.translate("PHGX", "Reasoning")), 4, 0)
         self._reasoning = QComboBox()
         self._reasoning.addItems(['none', 'low', 'medium', 'high', 'xhigh', 'max'])
         self._reasoning.setCurrentText('medium')
         self._reasoning.setToolTip(
-            'How hard the model thinks before answering. Follows the level until '
+            QCoreApplication.translate("PHGX", 'How hard the model thinks before answering. Follows the level until '
             'you change it, then stays where you put it. Chat pays this on every '
             'tool call, so a high effort is felt one step at a time. Applies to '
-            'reasoning models; not a display of private chain-of-thought.')
+            'reasoning models; not a display of private chain-of-thought.'))
         self._reasoning.currentTextChanged.connect(self._on_reasoning_changed)
         lay.addWidget(self._reasoning, 4, 1)
 
         # Short labels, full sentences in the tooltips: the names are what you
         # scan for, the explanation is what you hover for.
-        self._rag = QCheckBox('RAG')
+        self._rag = QCheckBox(QCoreApplication.translate("PHGX", 'RAG'))
         self._rag.setChecked(True)
-        self._rag.setToolTip('Retrieve relevant excerpts from local documentation and selected reference files; record sources in the report.')
-        self._mcp = QCheckBox('MCP')
-        self._mcp.setToolTip('Connect to the bundled stdio MCP server and retrieve available workflow APIs. Requires the mcp extra.')
+        self._rag.setToolTip(QCoreApplication.translate("PHGX", 'Retrieve relevant excerpts from local documentation and selected reference files; record sources in the report.'))
+        self._mcp = QCheckBox(QCoreApplication.translate("PHGX", 'MCP'))
+        self._mcp.setToolTip(QCoreApplication.translate("PHGX", 'Connect to the bundled stdio MCP server and retrieve available workflow APIs. Requires the mcp extra.'))
         lay.addWidget(self._rag, 4, 2)
         lay.addWidget(self._mcp, 4, 3)
         return box
@@ -994,12 +994,12 @@ class AssistantChatPanel(QWidget):
         # Show the endpoint already set (OPENAI_COMPAT_BASE_URL), so Apply
         # keeps it rather than clearing it with an empty field.
         self._base_url_edit.setText(getattr(self._provider, "_base_url", None) or "")
-        self._key_edit.setPlaceholderText(f"Paste {meta['env_key']} for this session")
+        self._key_edit.setPlaceholderText(QCoreApplication.translate("PHGX", "Paste {0} for this session").format(meta['env_key']))
         cli = self._provider_id in CLI_PROVIDER_IDS
         self._key_edit.clear()
         self._key_edit.setVisible(not cli)
         self._apply_btn.setVisible(not cli)
-        self._login_help.setText(meta.get("login_help", ""))
+        self._login_help.setText(i18n.tr(meta.get("login_help", "")))
         self._login_help.setVisible(cli)
         self._cli_login_row.setVisible(cli)
         self._reasoning.setEnabled(self._provider_id != "claude_code")
@@ -1037,7 +1037,7 @@ class AssistantChatPanel(QWidget):
             tooltip += " Available models are read automatically from Codex after sign-in."
             if pid in self._cli_model_errors:
                 tooltip += "\nCould not refresh models: " + self._cli_model_errors[pid]
-        self._model_combo.setToolTip(tooltip)
+        self._model_combo.setToolTip(i18n.tr(tooltip))
 
     def _start_cli_setup(self, provider, check_only=False):
         pid = provider.id
@@ -1095,16 +1095,15 @@ class AssistantChatPanel(QWidget):
 
     def _refresh_cli_controls(self):
         status = self._cli_states.get(self._provider_id, {"state": "preparing", "message": "Setting up automatically…"})
-        self._login_help.setText(html.escape(status["message"]))
+        self._login_help.setText(i18n.tr(html.escape(status["message"])))
         signed_in = status["state"] == "ready"
         label = PROVIDER_META.get(self._provider_id, {}).get("label", "the CLI").split(" (")[0]
-        self._login_btn.setText("Log out" if signed_in else "Log in")
+        self._login_btn.setText(QCoreApplication.translate("PHGX", "Log out") if signed_in else QCoreApplication.translate("PHGX", "Log in"))
         self._login_btn.setVisible(status["state"] in ("login", "ready"))
         self._login_btn.setEnabled(not self._busy)
         self._login_btn.setToolTip(
-            f"Sign {label} out on this computer. To use another account, log out, "
-            "then log in." if signed_in else "Sign in with your subscription account "
-                                             "in the browser.")
+            QCoreApplication.translate("PHGX", "Sign {0} out on this computer. To use another account, log out, then log in.").format(label) if signed_in else QCoreApplication.translate("PHGX", "Sign in with your subscription account "
+                                             "in the browser."))
         self._cli_retry_btn.setVisible(status["state"] == "error")
         self._cli_retry_btn.setEnabled(self._provider_id not in self._cli_workers)
         self._cancel_login_btn.setVisible(status["state"] == "signing_in")
@@ -1137,9 +1136,8 @@ class AssistantChatPanel(QWidget):
             return
         label = PROVIDER_META.get(pid, {}).get("label", "the CLI").split(" (")[0]
         answer = QMessageBox.question(
-            self, "Log out",
-            f"Log out of {label}?\n\nThis signs {label} out on this computer, including "
-            "where you use it in a terminal. You can log in again here.",
+            self, QCoreApplication.translate("PHGX", "Log out"),
+            QCoreApplication.translate("PHGX", "Log out of {0}?\n\nThis signs {1} out on this computer, including where you use it in a terminal. You can log in again here.").format(label, label),
             QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if answer != QMessageBox.Yes:
             return
@@ -1261,7 +1259,7 @@ class AssistantChatPanel(QWidget):
         if pos >= 0:
             self._level_combo.setCurrentIndex(pos)
         self._level_combo.blockSignals(False)
-        self._level_combo.setToolTip(self._level_help_text(current))
+        self._level_combo.setToolTip(i18n.tr(self._level_help_text(current)))
         self._apply_tier_effort(current)
 
     def _on_reasoning_changed(self, value: str) -> None:
@@ -1304,10 +1302,10 @@ class AssistantChatPanel(QWidget):
         tier_id = self._level_combo.currentData()
         model = tier_model(tier_id, self._provider_id) if tier_id else None
         if not model:  # "Custom model" — keep whatever is in the model box
-            self._level_combo.setToolTip(self._level_help_text(TIER_CUSTOM))
+            self._level_combo.setToolTip(i18n.tr(self._level_help_text(TIER_CUSTOM)))
             return
         self._model_combo.setCurrentText(model)  # _on_model_changed applies it
-        self._level_combo.setToolTip(self._level_help_text(tier_id))
+        self._level_combo.setToolTip(i18n.tr(self._level_help_text(tier_id)))
 
     def _on_provider_changed(self, _index: int) -> None:
         pid = self._provider_combo.currentData()
@@ -1407,10 +1405,9 @@ class AssistantChatPanel(QWidget):
             tier = MODEL_TIERS.get(tier_for_model(self._provider_id, self._provider.model))
             level = f"{html.escape(tier['name'])} · " if tier else ""
             self._status_label.setText(
-                f"{level}{html.escape(label)} · {html.escape(self._provider.model)}"
-                f" — ready{cost}{eye}")
+                QCoreApplication.translate("PHGX", "{0}{1} · {2} — ready{3}{4}").format(level, html.escape(label), html.escape(self._provider.model), cost, eye))
         else:
-            self._status_label.setText('Local numerical tasks are ready · Configure AI only for interpretation'
+            self._status_label.setText(QCoreApplication.translate("PHGX", 'Local numerical tasks are ready · Configure AI only for interpretation')
                                        if assistant_registry.active().offline_workflow else
                                        f"{html.escape(label)}: {html.escape(reason)}")
 
@@ -1576,17 +1573,12 @@ class AssistantChatPanel(QWidget):
         auto = self._auto_supported()
         self._auto_btn.setEnabled(auto)
         self._auto_btn.setToolTip(
-            "Run the whole task and write the report without stopping." if auto else
-            f"Auto to report with {agent.name} runs on {', '.join(agent.providers)}; "
-            "choose one of those in Settings.")
+            QCoreApplication.translate("PHGX", "Run the whole task and write the report without stopping.") if auto else
+            QCoreApplication.translate("PHGX", "Auto to report with {0} runs on {1}; choose one of those in Settings.").format(agent.name, ', '.join(agent.providers)))
         self._guided_btn.setToolTip(
-            f"{agent.name} does the routine steps itself and asks you at the decisions. "
-            "Ask for the final result at any point and the rest runs automatically.")
+            QCoreApplication.translate("PHGX", "{0} does the routine steps itself and asks you at the decisions. Ask for the final result at any point and the rest runs automatically.").format(agent.name))
         self._choice_label.setText(
-            f"<b>How should {html.escape(agent.name)} carry this out?</b><br>"
-            "Step by step, it does the routine steps itself, asks you at the decisions, "
-            "and you can ask for the final result at any point. Auto to report runs "
-            "straight through to the report.")
+            QCoreApplication.translate("PHGX", "<b>How should {0} carry this out?</b><br>Step by step, it does the routine steps itself, asks you at the decisions, and you can ask for the final result at any point. Auto to report runs straight through to the report.").format(html.escape(agent.name)))
         self._choice.setVisible(True)
         self._set_busy(False)
         self._scroll_to_end()
@@ -1834,7 +1826,7 @@ class AssistantChatPanel(QWidget):
         worker = LlmCallWorker(self._provider, self._system, self._messages, self._tool_specs)
         worker.succeeded.connect(self._on_llm_ok)
         worker.failed.connect(self._on_llm_failed)
-        worker.finished.connect(lambda: self._send_btn.setText("Send"))
+        worker.finished.connect(lambda: self._send_btn.setText(QCoreApplication.translate("PHGX", "Send")))
         # Only the request in flight may take the indicator down: a finished
         # signal delivered late must not hide the next request's.
         worker.finished.connect(
@@ -2008,7 +2000,7 @@ class AssistantChatPanel(QWidget):
         script = name == SCRIPT_TOOL
         self._confirm_code.setPlainText(str(args.get("code") or "") if script else "")
         self._confirm_code.setVisible(script)
-        self._approve_btn.setText("Run this script" if script else "Approve & run")
+        self._approve_btn.setText(QCoreApplication.translate("PHGX", "Run this script") if script else QCoreApplication.translate("PHGX", "Approve & run"))
         self._confirm.setVisible(True)
         self._approve_btn.setEnabled(True)
         self._reject_btn.setEnabled(True)

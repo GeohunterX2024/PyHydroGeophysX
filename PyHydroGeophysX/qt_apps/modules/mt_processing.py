@@ -27,7 +27,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QCoreApplication, Qt, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -52,7 +52,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.data_processing import mt
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -270,13 +270,13 @@ class MTProcessingModule(BaseModule):
         self._series_pane = _FigurePane((9, 6))
         self._series_stream = QComboBox()
         self._series_stream.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self._series_stream.setToolTip("The recording's streams, one per sample rate.")
+        self._series_stream.setToolTip(QCoreApplication.translate("PHGX", "The recording's streams, one per sample rate."))
         self._series_stream.currentIndexChanged.connect(lambda _i: self._on_stream_changed())
         self._series_index = QSpinBox()
-        self._series_index.setPrefix("Run ")
+        self._series_index.setPrefix(QCoreApplication.translate("PHGX", "Run "))
         self._series_index.setKeyboardTracking(False)
-        self._series_index.setToolTip("Which run of the stream to draw. The arrow keys and "
-                                      "Page Up / Page Down step through them.")
+        self._series_index.setToolTip(QCoreApplication.translate("PHGX", "Which run of the stream to draw. The arrow keys and "
+                                      "Page Up / Page Down step through them."))
         self._series_when = QLabel()
         theme.set_tone(self._series_when, "hint")
         # Holding an arrow asks for runs faster than they draw: the last one asked for is drawn.
@@ -290,7 +290,7 @@ class MTProcessingModule(BaseModule):
         self._zoom_timer.setSingleShot(True)
         self._zoom_timer.setInterval(150)
         self._zoom_timer.timeout.connect(self._on_series_zoom)
-        self._series_pane.controls.addWidget(QLabel("Stream:"))
+        self._series_pane.controls.addWidget(QLabel(QCoreApplication.translate("PHGX", "Stream:")))
         self._series_pane.controls.addWidget(self._series_stream)
         self._series_pane.controls.addWidget(self._series_index)
         self._series_pane.controls.addWidget(self._series_when, 1)
@@ -304,13 +304,13 @@ class MTProcessingModule(BaseModule):
         for pane, title in ((self._series_pane, "Time series"), (self._sounding_pane, "Sounding"),
                             (self._dimension_pane, "Dimensionality"), (self._model_pane, "1D model"),
                             (self._profile_pane, "Phase tensors"), (self._section_pane, "2D section")):
-            self._tabs.addTab(pane, title)
-        self._series_pane.message("Open a recording to see its channels.")
-        self._sounding_pane.message("Process a recording, or add EDI / XML sites in the panel on the right.")
-        self._dimension_pane.message("Process a recording, or add EDI / XML sites in the panel on the right.")
-        self._model_pane.message("Run the 1D inversion from the panel on the right.")
-        self._profile_pane.message("Tick two or more sites in the panel on the right.")
-        self._section_pane.message("Run the 2D inversion from the panel on the right.")
+            self._tabs.addTab(pane, i18n.tr(title))
+        self._series_pane.message(QCoreApplication.translate("PHGX", "Open a recording to see its channels."))
+        self._sounding_pane.message(QCoreApplication.translate("PHGX", "Process a recording, or add EDI / XML sites in the panel on the right."))
+        self._dimension_pane.message(QCoreApplication.translate("PHGX", "Process a recording, or add EDI / XML sites in the panel on the right."))
+        self._model_pane.message(QCoreApplication.translate("PHGX", "Run the 1D inversion from the panel on the right."))
+        self._profile_pane.message(QCoreApplication.translate("PHGX", "Tick two or more sites in the panel on the right."))
+        self._section_pane.message(QCoreApplication.translate("PHGX", "Run the 2D inversion from the panel on the right."))
         self._reproduce = ReproduceBar()
         center = QWidget()
         center_layout = QVBoxLayout(center)
@@ -345,22 +345,22 @@ class MTProcessingModule(BaseModule):
 
     @staticmethod
     def _hint(text: str) -> QLabel:
-        label = QLabel(text); label.setWordWrap(True); theme.set_tone(label, "hint")
+        label = QLabel(i18n.tr(text)); label.setWordWrap(True); theme.set_tone(label, "hint")
         return label
 
     @staticmethod
     def _primary(text: str, icon: str, slot: Callable[[], Any]) -> QPushButton:
-        button = QPushButton(text); button.setProperty("primary", True)
+        button = QPushButton(i18n.tr(text)); button.setProperty("primary", True)
         button.setIcon(theme.icon(icon, color="#ffffff"))
         button.clicked.connect(slot)
         return button
 
     @staticmethod
     def _button(text: str, icon: str, slot: Callable[[], Any], tip: str = "") -> QPushButton:
-        button = QPushButton(text); button.setIcon(theme.icon(icon))
+        button = QPushButton(i18n.tr(text)); button.setIcon(theme.icon(icon))
         button.clicked.connect(slot)
         if tip:
-            button.setToolTip(tip)
+            button.setToolTip(i18n.tr(tip))
         return button
 
     @staticmethod
@@ -391,24 +391,24 @@ class MTProcessingModule(BaseModule):
     def _build_data_panel(self) -> ContentWidthScrollArea:
         # Wrapped text sits in the box layout, not in form rows: a form row
         # keeps the height its text first had and cuts the lines after it.
-        recording = QGroupBox("Recording"); outer = QVBoxLayout(recording)
+        recording = QGroupBox(QCoreApplication.translate("PHGX", "Recording")); outer = QVBoxLayout(recording)
         row = QHBoxLayout()
-        row.addWidget(self._primary("Open folder…", "fa5s.folder-open",
+        row.addWidget(self._primary(QCoreApplication.translate("PHGX", "Open folder…"), "fa5s.folder-open",
                                     lambda: self._browse_recording(folder=True)))
-        row.addWidget(self._button("Open file…", "fa5s.file", lambda: self._browse_recording(folder=False)))
-        row.addWidget(self._button("Data format", "fa5s.file-alt", self._show_format_help))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Open file…"), "fa5s.file", lambda: self._browse_recording(folder=False)))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Data format"), "fa5s.file-alt", self._show_format_help))
         outer.addLayout(row)
         outer.addWidget(self._hint(
-            "Phoenix MTU-5C and legacy MTU, Metronix ATS, Zonge Z3D and LEMI-424 are "
+            QCoreApplication.translate("PHGX", "Phoenix MTU-5C and legacy MTU, Metronix ATS, Zonge Z3D and LEMI-424 are "
             "recognised from the files. Open a recording folder, or one file to read only "
-            "that stream."))
+            "that stream.")))
         form = QFormLayout(); outer.addLayout(form)
-        self._calibration = QLineEdit(); self._calibration.setPlaceholderText("found by the reader")
+        self._calibration = QLineEdit(); self._calibration.setPlaceholderText(QCoreApplication.translate("PHGX", "found by the reader"))
         self._calibration.setToolTip(
-            "Phoenix and Metronix: a calibration file or a folder of them (searched through), "
+            QCoreApplication.translate("PHGX", "Phoenix and Metronix: a calibration file or a folder of them (searched through), "
             "used instead of what the reader finds near the recording - its folder, the two "
-            "above it, and any folder there named for calibrations.")
-        form.addRow("Calibration", self._path_row(self._calibration, self._browse_calibration))
+            "above it, and any folder there named for calibrations."))
+        form.addRow(QCoreApplication.translate("PHGX", "Calibration"), self._path_row(self._calibration, self._browse_calibration))
         # A Phoenix receiver that did not detect its coils records serial 0, so
         # which coil was on which connector has to be said here.
         self._coil_boxes: Dict[str, QComboBox] = {}
@@ -416,14 +416,12 @@ class MTProcessingModule(BaseModule):
             box = QComboBox()
             box.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
             box.setMinimumContentsLength(14)
-            box.addItem("as recorded", None)
+            box.addItem(QCoreApplication.translate("PHGX", "as recorded"), None)
             box.setEnabled(False)
-            box.setToolTip(f"The coil on {tag}. Phoenix receivers record it only when they detect "
-                           "the coil; otherwise choose its calibration here. The list holds the coil "
-                           "calibrations in the Calibration folder, or found near the recording.")
+            box.setToolTip(QCoreApplication.translate("PHGX", "The coil on {0}. Phoenix receivers record it only when they detect the coil; otherwise choose its calibration here. The list holds the coil calibrations in the Calibration folder, or found near the recording.").format(tag))
             box.currentIndexChanged.connect(lambda _i: self._calibration_timer.start())
             self._coil_boxes[tag] = box
-            form.addRow(f"{component} coil ({tag})", box)
+            form.addRow(QCoreApplication.translate("PHGX", "{0} coil ({1})").format(component, tag), box)
         # A changed calibration or coil means reading the recording again: its
         # channels' responses are set as it is read.
         self._calibration_timer = QTimer(self)
@@ -436,348 +434,342 @@ class MTProcessingModule(BaseModule):
         self._azimuth_boxes: Dict[str, QDoubleSpinBox] = {}
         for component in ("ex", "ey", "hx", "hy"):
             box = self._dspin(_AS_RECORDED, _AS_RECORDED, 360.0, 90.0, 0)
-            box.setSpecialValueText("as recorded")
+            box.setSpecialValueText(QCoreApplication.translate("PHGX", "as recorded"))
             box.setSuffix("°")
             box.setKeyboardTracking(False)
             name = component.capitalize()
-            box.setToolTip(f"Which way {name} points, in degrees clockwise from north: 0 north, "
-                           "90 east, 180 south, 270 west. Leave it as recorded unless the layout "
-                           f"differs from what the receiver was told - {name} laid out to the "
-                           f"{'south' if component.endswith('x') else 'west'} is "
-                           f"{'180' if component.endswith('x') else '270'}. Processing turns every "
-                           "channel into the frame of Hx. A remote reference keeps its own "
-                           "directions, which do not change the impedance.")
+            box.setToolTip(QCoreApplication.translate("PHGX", "Which way {0} points, in degrees clockwise from north: 0 north, 90 east, 180 south, 270 west. Leave it as recorded unless the layout differs from what the receiver was told - {1} laid out to the {2} is {3}. Processing turns every channel into the frame of Hx. A remote reference keeps its own directions, which do not change the impedance.").format(name, name, 'south' if component.endswith('x') else 'west', '180' if component.endswith('x') else '270'))
             box.valueChanged.connect(lambda _v: self._calibration_timer.start())
             self._azimuth_boxes[component] = box
-        form.addRow("Directions", merged_row("Ex", self._azimuth_boxes["ex"],
+        form.addRow(QCoreApplication.translate("PHGX", "Directions"), merged_row("Ex", self._azimuth_boxes["ex"],
                                              "Ey", self._azimuth_boxes["ey"]))
         form.addRow("", merged_row("Hx", self._azimuth_boxes["hx"], "Hy", self._azimuth_boxes["hy"]))
         self._dipole_ex = self._dspin(100.0, 0.1, 10000.0, 10.0, 1)
         self._dipole_ey = self._dspin(100.0, 0.1, 10000.0, 10.0, 1)
         self._dipole_row = merged_row(self._dipole_ex, "Ex ×", self._dipole_ey, "Ey (m)")
-        self._dipole_row.setToolTip("LEMI-424 files hold the electric field in mV, not mV/km; "
-                                    "the dipole lengths convert it. Other formats store them.")
-        form.addRow("LEMI dipoles", self._dipole_row)
-        self._recording_info = QLabel("No recording loaded."); self._recording_info.setWordWrap(True)
+        self._dipole_row.setToolTip(QCoreApplication.translate("PHGX", "LEMI-424 files hold the electric field in mV, not mV/km; "
+                                    "the dipole lengths convert it. Other formats store them."))
+        form.addRow(QCoreApplication.translate("PHGX", "LEMI dipoles"), self._dipole_row)
+        self._recording_info = QLabel(QCoreApplication.translate("PHGX", "No recording loaded.")); self._recording_info.setWordWrap(True)
         outer.addWidget(self._recording_info)
 
-        remote = QGroupBox("Remote reference"); rv = QVBoxLayout(remote)
+        remote = QGroupBox(QCoreApplication.translate("PHGX", "Remote reference")); rv = QVBoxLayout(remote)
         rv.addWidget(self._hint(
-            "A recording made at the same time at a quiet site. Its magnetic fields are the "
+            QCoreApplication.translate("PHGX", "A recording made at the same time at a quiet site. Its magnetic fields are the "
             "instruments of the regression, which keeps noise local to this site from biasing "
-            "the impedance downward. Optional."))
+            "the impedance downward. Optional.")))
         row = QHBoxLayout()
-        row.addWidget(self._button("Open remote…", "fa5s.broadcast-tower", self._browse_remote))
-        row.addWidget(self._button("Clear", "fa5s.times", self._clear_remote))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Open remote…"), "fa5s.broadcast-tower", self._browse_remote))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Clear"), "fa5s.times", self._clear_remote))
         rv.addLayout(row)
-        self._remote_info = QLabel("No remote reference."); self._remote_info.setWordWrap(True)
+        self._remote_info = QLabel(QCoreApplication.translate("PHGX", "No remote reference.")); self._remote_info.setWordWrap(True)
         rv.addWidget(self._remote_info)
 
-        processing = QGroupBox("Processing"); form = QFormLayout(processing)
-        form.addRow(self._hint(
-            "Windows are tapered, decimated level by level and Fourier transformed; in each "
-            "band a robust regression (Huber, then a redescending cut) solves E = Z·H."))
+        processing = QGroupBox(QCoreApplication.translate("PHGX", "Processing")); form = QFormLayout(processing)
+        form.addRow(i18n.tr(self._hint(
+            QCoreApplication.translate("PHGX", "Windows are tapered, decimated level by level and Fourier transformed; in each "
+            "band a robust regression (Huber, then a redescending cut) solves E = Z·H."))))
         self._rates = QComboBox()
         self._rates.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self._rates.setMinimumContentsLength(16)
-        self._rates.setToolTip("Which of the recording's sample rates to process. All of them "
-                               "are processed separately and merged band by band.")
-        form.addRow("Sample rates", self._rates)
+        self._rates.setToolTip(QCoreApplication.translate("PHGX", "Which of the recording's sample rates to process. All of them "
+                               "are processed separately and merged band by band."))
+        form.addRow(QCoreApplication.translate("PHGX", "Sample rates"), self._rates)
         defaults = mt.ProcessingConfig()
         self._window = self._ispin(defaults.window_length, 16, 65536)
         self._overlap = self._ispin(defaults.overlap, 0, 32768)
-        form.addRow("Window", merged_row(self._window, "samples, overlap", self._overlap))
+        form.addRow(QCoreApplication.translate("PHGX", "Window"), merged_row(self._window, "samples, overlap", self._overlap))
         self._decimation = self._ispin(defaults.decimation_factor, 2, 16)
         self._levels = self._ispin(0, 0, 20)
-        self._levels.setSpecialValueText("auto")
-        self._levels.setToolTip("Decimation levels; auto adds levels while a band still holds "
-                                "enough windows.")
-        form.addRow("Decimate by", merged_row(self._decimation, "levels", self._levels))
+        self._levels.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
+        self._levels.setToolTip(QCoreApplication.translate("PHGX", "Decimation levels; auto adds levels while a band still holds "
+                                "enough windows."))
+        form.addRow(QCoreApplication.translate("PHGX", "Decimate by"), merged_row(self._decimation, "levels", self._levels))
         self._huber = self._dspin(defaults.huber, 0.5, 5.0, 0.1, 2)
         self._redescend = self._dspin(defaults.redescend, 1.0, 10.0, 0.1, 2)
-        self._huber.setToolTip("Huber cut, in residual standard deviations.")
-        self._redescend.setToolTip("Redescending cut: residuals well past it get no weight.")
-        form.addRow("Robust cuts", merged_row(self._huber, "Huber,", self._redescend, "redescend"))
+        self._huber.setToolTip(QCoreApplication.translate("PHGX", "Huber cut, in residual standard deviations."))
+        self._redescend.setToolTip(QCoreApplication.translate("PHGX", "Redescending cut: residuals well past it get no weight."))
+        form.addRow(QCoreApplication.translate("PHGX", "Robust cuts"), merged_row(self._huber, "Huber,", self._redescend, "redescend"))
         self._tapers = self._ispin(defaults.tapers, 1, 7)
-        self._tapers.setSpecialValueText("1 (Hamming)")
+        self._tapers.setSpecialValueText(QCoreApplication.translate("PHGX", "1 (Hamming)"))
         self._tapers.setToolTip(
-            "Tapers per window. 3 or 5 Slepian tapers (multitaper) give a band several "
+            QCoreApplication.translate("PHGX", "Tapers per window. 3 or 5 Slepian tapers (multitaper) give a band several "
             "independent estimates from each window: smaller errors at the longest periods of "
-            "each level, where windows are few, for a little frequency smoothing.")
-        form.addRow("Tapers", self._tapers)
-        self._bounded = QCheckBox("Limit the pull of noisy Hx, Hy (bounded influence)")
+            "each level, where windows are few, for a little frequency smoothing."))
+        form.addRow(QCoreApplication.translate("PHGX", "Tapers"), self._tapers)
+        self._bounded = QCheckBox(QCoreApplication.translate("PHGX", "Limit the pull of noisy Hx, Hy (bounded influence)"))
         self._bounded.setChecked(defaults.bounded_influence)
         self._bounded.setToolTip(
-            "Also downweight windows whose magnetic fields are unusually large - a burst of "
-            "noise in Hx or Hy - which the usual robust weights let through.")
-        form.addRow(self._bounded)
+            QCoreApplication.translate("PHGX", "Also downweight windows whose magnetic fields are unusually large - a burst of "
+            "noise in Hx or Hy - which the usual robust weights let through."))
+        form.addRow(i18n.tr(self._bounded))
         self._coherence = self._dspin(defaults.min_coherence, 0.0, 0.99, 0.05, 2)
-        self._coherence.setSpecialValueText("off")
+        self._coherence.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._coherence.setToolTip(
-            "Coherence presorting: in each band, leave out stretches of 10 windows where E "
+            QCoreApplication.translate("PHGX", "Coherence presorting: in each band, leave out stretches of 10 windows where E "
             "and H are less coherent than this. Helps a single site; with a remote reference "
-            "it can drop good data.")
-        form.addRow("Min coherence", self._coherence)
-        self._jackknife = QCheckBox("Error bars from the data's spread (jackknife)")
+            "it can drop good data."))
+        form.addRow(QCoreApplication.translate("PHGX", "Min coherence"), self._coherence)
+        self._jackknife = QCheckBox(QCoreApplication.translate("PHGX", "Error bars from the data's spread (jackknife)"))
         self._jackknife.setChecked(defaults.jackknife)
         self._jackknife.setToolTip(
-            "Estimate each band again without each twentieth of the record; the spread of "
-            "those estimates is the error. Makes no assumption about the noise.")
-        form.addRow(self._jackknife)
-        self._multi_window = QCheckBox("Stack windows of several lengths (multi-window)")
+            QCoreApplication.translate("PHGX", "Estimate each band again without each twentieth of the record; the spread of "
+            "those estimates is the error. Makes no assumption about the noise."))
+        form.addRow(i18n.tr(self._jackknife))
+        self._multi_window = QCheckBox(QCoreApplication.translate("PHGX", "Stack windows of several lengths (multi-window)"))
         self._multi_window.setChecked(defaults.multi_window)
         self._multi_window.setToolTip(
-            "Each band also uses the windows four times longer or shorter at its frequencies "
+            QCoreApplication.translate("PHGX", "Each band also uses the windows four times longer or shorter at its frequencies "
             "(multi-window stacking, Ernst et al. 2001). Error bars then come from the "
-            "jackknife, since those windows share the same stretch of record.")
-        form.addRow(self._multi_window)
+            "jackknife, since those windows share the same stretch of record."))
+        form.addRow(i18n.tr(self._multi_window))
         self._noise_classes = self._ispin(defaults.noise_classes, 0, 10)
-        self._noise_classes.setSpecialValueText("off")
+        self._noise_classes.setSpecialValueText(QCoreApplication.translate("PHGX", "off"))
         self._noise_classes.setToolTip(
-            "For noise that grows with the signal, from more than one source: sort the "
+            QCoreApplication.translate("PHGX", "For noise that grows with the signal, from more than one source: sort the "
             "points into up to this many noise classes, weight each by its own noise level, "
-            "and stop once the residuals are close to Gaussian (stable index 1.8).")
-        form.addRow("Noise classes", self._noise_classes)
+            "and stop once the residuals are close to Gaussian (stable index 1.8)."))
+        form.addRow(QCoreApplication.translate("PHGX", "Noise classes"), self._noise_classes)
         self._min_points = self._ispin(defaults.min_points, 3, 1000)
-        self._min_points.setToolTip("Bands with fewer independent estimates than this are dropped.")
-        form.addRow("Min estimates", self._min_points)
-        self._prewhiten = QCheckBox("Prewhiten (first difference)"); self._prewhiten.setChecked(defaults.prewhiten)
-        self._tipper = QCheckBox("Tipper from Hz"); self._tipper.setChecked(defaults.tipper)
-        self._uncalibrated = QCheckBox("Allow uncalibrated channels")
-        self._uncalibrated.setToolTip("Process channels still in recorded units. The impedance "
-                                      "is then wrong in scale and phase; for checks only.")
-        form.addRow(self._prewhiten)
-        form.addRow(self._tipper)
-        form.addRow(self._uncalibrated)
+        self._min_points.setToolTip(QCoreApplication.translate("PHGX", "Bands with fewer independent estimates than this are dropped."))
+        form.addRow(QCoreApplication.translate("PHGX", "Min estimates"), self._min_points)
+        self._prewhiten = QCheckBox(QCoreApplication.translate("PHGX", "Prewhiten (first difference)")); self._prewhiten.setChecked(defaults.prewhiten)
+        self._tipper = QCheckBox(QCoreApplication.translate("PHGX", "Tipper from Hz")); self._tipper.setChecked(defaults.tipper)
+        self._uncalibrated = QCheckBox(QCoreApplication.translate("PHGX", "Allow uncalibrated channels"))
+        self._uncalibrated.setToolTip(QCoreApplication.translate("PHGX", "Process channels still in recorded units. The impedance "
+                                      "is then wrong in scale and phase; for checks only."))
+        form.addRow(i18n.tr(self._prewhiten))
+        form.addRow(i18n.tr(self._tipper))
+        form.addRow(i18n.tr(self._uncalibrated))
         self._per_decade = self._ispin(10, 0, 20)
-        self._per_decade.setSpecialValueText("EMTF bands")
+        self._per_decade.setSpecialValueText(QCoreApplication.translate("PHGX", "EMTF bands"))
         self._per_decade.setToolTip(
-            "Frequencies per decade, each band spanning about a factor of 2 so that "
+            QCoreApplication.translate("PHGX", "Frequencies per decade, each band spanning about a factor of 2 so that "
             "neighbours share data: continuous curves, as commercial processing gives. "
-            "EMTF bands do not overlap: independent points, better for inversion.")
-        form.addRow("Frequencies / decade", self._per_decade)
-        self._band_setup = QLineEdit(); self._band_setup.setPlaceholderText("EMTF default bands")
-        self._band_setup.setToolTip("An EMTF band-setup file (bs_*.cfg) to use its bands.")
-        form.addRow("Band setup", self._path_row(self._band_setup, self._browse_band_setup))
-        self._periodic = QLineEdit(); self._periodic.setPlaceholderText("none")
+            "EMTF bands do not overlap: independent points, better for inversion."))
+        form.addRow(QCoreApplication.translate("PHGX", "Frequencies / decade"), self._per_decade)
+        self._band_setup = QLineEdit(); self._band_setup.setPlaceholderText(QCoreApplication.translate("PHGX", "EMTF default bands"))
+        self._band_setup.setToolTip(QCoreApplication.translate("PHGX", "An EMTF band-setup file (bs_*.cfg) to use its bands."))
+        form.addRow(QCoreApplication.translate("PHGX", "Band setup"), self._path_row(self._band_setup, self._browse_band_setup))
+        self._periodic = QLineEdit(); self._periodic.setPlaceholderText(QCoreApplication.translate("PHGX", "none"))
         self._periodic.setToolTip(
-            "Interference that repeats exactly on the receiver's clock, in seconds (e.g. 4, 30): "
+            QCoreApplication.translate("PHGX", "Interference that repeats exactly on the receiver's clock, in seconds (e.g. 4, 30): "
             "its waveform is averaged over the cycles around each one and subtracted before "
             "processing. That removes only the narrow lines at its harmonics. Filled in when "
             "the recording is read and such interference is found; clear it to keep the data "
-            "as recorded.")
-        form.addRow("Periodic noise (s)", self._periodic)
+            "as recorded."))
+        form.addRow(QCoreApplication.translate("PHGX", "Periodic noise (s)"), self._periodic)
         self._periodic.textChanged.connect(lambda _t: self._update_recording_info())
         self._periodic_cycles = self._ispin(defaults.periodic_cycles, 3, 201)
         self._periodic_cycles.setToolTip(
-            "How many repeats of the periodic noise are averaged into the waveform taken off each "
+            QCoreApplication.translate("PHGX", "How many repeats of the periodic noise are averaged into the waveform taken off each "
             "one. Fewer follow interference whose shape drifts (each line removed is then a little "
-            "wider); more keep more of the field.")
-        form.addRow("Repeats averaged", self._periodic_cycles)
+            "wider); more keep more of the field."))
+        form.addRow(QCoreApplication.translate("PHGX", "Repeats averaged"), self._periodic_cycles)
         self._powerline = QComboBox()
         for label, value in (("off", None), ("50 Hz", 50.0), ("60 Hz", 60.0)):
-            self._powerline.addItem(label, value)
+            self._powerline.addItem(i18n.tr(label), value)
         self._powerline.setToolTip(
-            "Notch the grid's hum and its harmonics out of every run before processing. When the "
+            QCoreApplication.translate("PHGX", "Notch the grid's hum and its harmonics out of every run before processing. When the "
             "sample rate puts the hum inside the record (60 Hz in 150 Hz data) it leaks into bands "
             "far from it and passes for a phase near 0, which a remote site on the same grid does "
-            "not remove. Set when the recording is read and hum is found.")
-        form.addRow("Power line", self._powerline)
+            "not remove. Set when the recording is read and hum is found."))
+        form.addRow(QCoreApplication.translate("PHGX", "Power line"), self._powerline)
 
-        run = QGroupBox("Run"); rv = QVBoxLayout(run)
-        self._process_btn = self._primary("Process time series", "fa5s.wave-square", self._run_processing)
+        run = QGroupBox(QCoreApplication.translate("PHGX", "Run")); rv = QVBoxLayout(run)
+        self._process_btn = self._primary(QCoreApplication.translate("PHGX", "Process time series"), "fa5s.wave-square", self._run_processing)
         rv.addWidget(self._process_btn)
         self._process_progress = self._progress_bar()
         self._process_stop = self.stop_button("The processing")
         rv.addWidget(progress_with_stop(self._process_progress, self._process_stop))
-        rv.addWidget(self._hint("The processed site is added to the sites and opens on the "
-                                "Sounding tab."))
+        rv.addWidget(self._hint(QCoreApplication.translate("PHGX", "The processed site is added to the sites and opens on the "
+                                "Sounding tab.")))
 
-        elsewhere = QGroupBox("Sites processed elsewhere"); ev = QVBoxLayout(elsewhere)
-        ev.addWidget(self._hint("EDI, EMTF XML, Z- and J-files skip this step."))
-        ev.addWidget(self._button("Add EDI / XML sites…", "fa5s.plus", self._add_sites_and_show))
+        elsewhere = QGroupBox(QCoreApplication.translate("PHGX", "Sites processed elsewhere")); ev = QVBoxLayout(elsewhere)
+        ev.addWidget(self._hint(QCoreApplication.translate("PHGX", "EDI, EMTF XML, Z- and J-files skip this step.")))
+        ev.addWidget(self._button(QCoreApplication.translate("PHGX", "Add EDI / XML sites…"), "fa5s.plus", self._add_sites_and_show))
         return self._column(recording, remote, processing, run, elsewhere)
 
     # -- panel: sites (Sounding and Dimensionality tabs) ------------------------
     def _build_sites_panel(self) -> ContentWidthScrollArea:
-        sites = QGroupBox("Sites"); v = QVBoxLayout(sites)
+        sites = QGroupBox(QCoreApplication.translate("PHGX", "Sites")); v = QVBoxLayout(sites)
         row = QHBoxLayout()
-        row.addWidget(self._button("Add EDI / XML…", "fa5s.plus", self._browse_sites))
-        row.addWidget(self._button("Example site", "fa5s.flask", self._load_example,
-                                   "NMX20, a USMTArray long-period site in New Mexico (EMTF XML)."))
-        row.addWidget(self._button("Remove", "fa5s.trash", self._remove_site))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Add EDI / XML…"), "fa5s.plus", self._browse_sites))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Example site"), "fa5s.flask", self._load_example,
+                                   QCoreApplication.translate("PHGX", "NMX20, a USMTArray long-period site in New Mexico (EMTF XML).")))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Remove"), "fa5s.trash", self._remove_site))
         v.addLayout(row)
         self._site_list = QListWidget(); self._site_list.setMinimumHeight(130)
         self._site_list.currentRowChanged.connect(self._select_site)
         v.addWidget(self._site_list)
-        v.addWidget(self._hint("The selected site is drawn on the Sounding and Dimensionality "
-                               "tabs, and is the one the 1D model tab inverts."))
+        v.addWidget(self._hint(QCoreApplication.translate("PHGX", "The selected site is drawn on the Sounding and Dimensionality "
+                               "tabs, and is the one the 1D model tab inverts.")))
 
-        selected = QGroupBox("Selected site"); sv = QVBoxLayout(selected)
+        selected = QGroupBox(QCoreApplication.translate("PHGX", "Selected site")); sv = QVBoxLayout(selected)
         self._site_info = QLabel(); self._site_info.setWordWrap(True)
         self._site_info.setTextInteractionFlags(Qt.TextSelectableByMouse)
         sv.addWidget(self._site_info)
-        sv.addWidget(self._button("Export EDI / XML…", "fa5s.file-export", self._export_site,
-                                  "Write the selected site as EDI and EMTF XML to a folder."))
+        sv.addWidget(self._button(QCoreApplication.translate("PHGX", "Export EDI / XML…"), "fa5s.file-export", self._export_site,
+                                  QCoreApplication.translate("PHGX", "Write the selected site as EDI and EMTF XML to a folder.")))
 
-        display = QGroupBox("Sounding display"); dform = QFormLayout(display)
-        self._show_xy = QCheckBox("Zxy"); self._show_xy.setChecked(True)
-        self._show_yx = QCheckBox("Zyx"); self._show_yx.setChecked(True)
-        self._show_det = QCheckBox("det(Z)")
-        dform.addRow("Components", merged_row(self._show_xy, self._show_yx, self._show_det))
-        self._show_errors = QCheckBox("Error bars"); self._show_errors.setChecked(True)
-        self._show_fit = QCheckBox("1D model's fit")
+        display = QGroupBox(QCoreApplication.translate("PHGX", "Sounding display")); dform = QFormLayout(display)
+        self._show_xy = QCheckBox(QCoreApplication.translate("PHGX", "Zxy")); self._show_xy.setChecked(True)
+        self._show_yx = QCheckBox(QCoreApplication.translate("PHGX", "Zyx")); self._show_yx.setChecked(True)
+        self._show_det = QCheckBox(QCoreApplication.translate("PHGX", "det(Z)"))
+        dform.addRow(QCoreApplication.translate("PHGX", "Components"), merged_row(self._show_xy, self._show_yx, self._show_det))
+        self._show_errors = QCheckBox(QCoreApplication.translate("PHGX", "Error bars")); self._show_errors.setChecked(True)
+        self._show_fit = QCheckBox(QCoreApplication.translate("PHGX", "1D model's fit"))
         self._show_fit.setChecked(True)
-        self._show_fit.setToolTip("Draw the 1D inversion's predicted curve when the selected site "
-                                  "has been inverted.")
-        dform.addRow(merged_row(self._show_errors, self._show_fit))
+        self._show_fit.setToolTip(QCoreApplication.translate("PHGX", "Draw the 1D inversion's predicted curve when the selected site "
+                                  "has been inverted."))
+        dform.addRow(i18n.tr(merged_row(self._show_errors, self._show_fit)))
         for box in (self._show_xy, self._show_yx, self._show_det, self._show_errors, self._show_fit):
             box.toggled.connect(lambda _c: self._draw_sounding())
 
-        next_step = QGroupBox("Next"); nv = QVBoxLayout(next_step)
+        next_step = QGroupBox(QCoreApplication.translate("PHGX", "Next")); nv = QVBoxLayout(next_step)
         row = QHBoxLayout()
-        row.addWidget(self._button("1D model →", "fa5s.layer-group", lambda: self._go_to(self._model_pane),
-                                   "Invert the selected site for a layered model."))
-        row.addWidget(self._button("Profile →", "fa5s.th", lambda: self._go_to(self._profile_pane),
-                                   "Tick the sites of a line, check their phase tensors and "
-                                   "invert them in 2D."))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "1D model →"), "fa5s.layer-group", lambda: self._go_to(self._model_pane),
+                                   QCoreApplication.translate("PHGX", "Invert the selected site for a layered model.")))
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Profile →"), "fa5s.th", lambda: self._go_to(self._profile_pane),
+                                   QCoreApplication.translate("PHGX", "Tick the sites of a line, check their phase tensors and "
+                                   "invert them in 2D.")))
         nv.addLayout(row)
         return self._column(sites, selected, display, next_step)
 
     # -- panel: 1D inversion (1D model tab) ---------------------------------------
     def _build_1d_panel(self) -> ContentWidthScrollArea:
-        site = QGroupBox("Site"); sform = QFormLayout(site)
+        site = QGroupBox(QCoreApplication.translate("PHGX", "Site")); sform = QFormLayout(site)
         self._site_combo = QComboBox()
         self._site_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self._site_combo.setMinimumContentsLength(20)
         self._site_combo.currentIndexChanged.connect(self._select_site)
-        sform.addRow("Invert", self._site_combo)
-        sform.addRow(self._hint("Occam's smoothest layered model that fits the site to the "
-                                "target RMS."))
+        sform.addRow(QCoreApplication.translate("PHGX", "Invert"), self._site_combo)
+        sform.addRow(i18n.tr(self._hint(QCoreApplication.translate("PHGX", "Occam's smoothest layered model that fits the site to the "
+                                "target RMS."))))
 
-        data = QGroupBox("Data and layers"); form = QFormLayout(data)
+        data = QGroupBox(QCoreApplication.translate("PHGX", "Data and layers")); form = QFormLayout(data)
         self._mode = QComboBox()
         for label, value in (("det(Z) - rotation invariant", "det"), ("Zxy", "xy"), ("Zyx", "yx"),
                              ("Zxy and Zyx together", "both")):
-            self._mode.addItem(label, value)
-        form.addRow("Data", self._mode)
+            self._mode.addItem(i18n.tr(label), value)
+        form.addRow(QCoreApplication.translate("PHGX", "Data"), self._mode)
         self._layers = self._ispin(50, 5, 200)
         self._target_rms = self._dspin(1.0, 0.3, 10.0, 0.1, 2)
-        form.addRow("Layers", merged_row(self._layers, "target RMS", self._target_rms))
+        form.addRow(QCoreApplication.translate("PHGX", "Layers"), merged_row(self._layers, "target RMS", self._target_rms))
         self._error_floor_1d = self._dspin(0.05, 0.0, 0.5, 0.01, 3)
-        self._error_floor_1d.setToolTip("Floor on the relative impedance error: 0.05 = 5 % of |Z|, "
-                                        "about 10 % in apparent resistivity and 1.4° in phase.")
-        form.addRow("Error floor", self._error_floor_1d)
+        self._error_floor_1d.setToolTip(QCoreApplication.translate("PHGX", "Floor on the relative impedance error: 0.05 = 5 % of |Z|, "
+                                        "about 10 % in apparent resistivity and 1.4° in phase."))
+        form.addRow(QCoreApplication.translate("PHGX", "Error floor"), self._error_floor_1d)
 
-        shift = QGroupBox("Static shift"); form = QFormLayout(shift)
-        self._static_shift = QCheckBox("Solve for a shift per mode")
+        shift = QGroupBox(QCoreApplication.translate("PHGX", "Static shift")); form = QFormLayout(shift)
+        self._static_shift = QCheckBox(QCoreApplication.translate("PHGX", "Solve for a shift per mode"))
         self._static_shift.setToolTip(
-            "One multiplier of each mode's apparent resistivity. From MT alone it is only "
-            "relative between the modes; a TEM sounding fixes its absolute level.")
-        form.addRow(self._static_shift)
-        self._tem = QLineEdit(); self._tem.setPlaceholderText("none")
-        self._tem.setToolTip("A central-loop TDEM sounding at the site: gate time (s) and "
-                             "response columns, or a .npz with times and response.")
+            QCoreApplication.translate("PHGX", "One multiplier of each mode's apparent resistivity. From MT alone it is only "
+            "relative between the modes; a TEM sounding fixes its absolute level."))
+        form.addRow(i18n.tr(self._static_shift))
+        self._tem = QLineEdit(); self._tem.setPlaceholderText(QCoreApplication.translate("PHGX", "none"))
+        self._tem.setToolTip(QCoreApplication.translate("PHGX", "A central-loop TDEM sounding at the site: gate time (s) and "
+                             "response columns, or a .npz with times and response."))
         self._tem.textChanged.connect(lambda _t: self._sync_options())
-        form.addRow("TEM sounding", self._path_row(self._tem, self._browse_tem))
+        form.addRow(QCoreApplication.translate("PHGX", "TEM sounding"), self._path_row(self._tem, self._browse_tem))
         self._tem_radius = self._dspin(20.0, 0.5, 1000.0, 1.0, 1)
         self._tem_error = self._dspin(0.03, 0.005, 0.5, 0.01, 3)
         self._tem_row = merged_row(self._tem_radius, "m loop, error", self._tem_error)
-        form.addRow("TEM loop", self._tem_row)
-        form.addRow(self._hint("TEM measures no electric field, so it carries no static shift: "
-                               "fitted jointly, it fixes the shift's absolute level."))
+        form.addRow(QCoreApplication.translate("PHGX", "TEM loop"), self._tem_row)
+        form.addRow(i18n.tr(self._hint(QCoreApplication.translate("PHGX", "TEM measures no electric field, so it carries no static shift: "
+                               "fitted jointly, it fixes the shift's absolute level."))))
 
-        water = QGroupBox("Water content"); form = QFormLayout(water)
-        self._water = QCheckBox("Convert the model (Waxman-Smits)")
+        water = QGroupBox(QCoreApplication.translate("PHGX", "Water content")); form = QFormLayout(water)
+        self._water = QCheckBox(QCoreApplication.translate("PHGX", "Convert the model (Waxman-Smits)"))
         self._water.toggled.connect(lambda _c: self._sync_options())
-        form.addRow(self._water)
+        form.addRow(i18n.tr(self._water))
         self._rhos = self._dspin(20.0, 0.01, 10000.0, 1.0, 2)
         self._sat_n = self._dspin(2.0, 1.0, 5.0, 0.1, 2)
         self._porosity = self._dspin(0.3, 0.01, 0.9, 0.01, 3)
         self._sigma_sur = self._dspin(0.0, 0.0, 1.0, 0.001, 4)
         self._water_row = merged_row(self._rhos, "Ω·m water, n", self._sat_n)
         self._porosity_row = merged_row(self._porosity, "porosity, σsur", self._sigma_sur, "S/m")
-        form.addRow("Pore water", self._water_row)
-        form.addRow("Rock", self._porosity_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Pore water"), self._water_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Rock"), self._porosity_row)
 
-        run = QGroupBox("Run"); rv = QVBoxLayout(run)
-        self._run_1d_btn = self._primary("Run 1D inversion", "fa5s.layer-group", self._run_1d)
+        run = QGroupBox(QCoreApplication.translate("PHGX", "Run")); rv = QVBoxLayout(run)
+        self._run_1d_btn = self._primary(QCoreApplication.translate("PHGX", "Run 1D inversion"), "fa5s.layer-group", self._run_1d)
         rv.addWidget(self._run_1d_btn)
         self._progress_1d = self._progress_bar()
         self._stop_1d = self.stop_button("The 1D inversion")
         rv.addWidget(progress_with_stop(self._progress_1d, self._stop_1d))
-        self._result_1d_info = QLabel("No 1D model yet."); self._result_1d_info.setWordWrap(True)
+        self._result_1d_info = QLabel(QCoreApplication.translate("PHGX", "No 1D model yet.")); self._result_1d_info.setWordWrap(True)
         rv.addWidget(self._result_1d_info)
         row = QHBoxLayout()
-        row.addWidget(self._button("Export model…", "fa5s.file-csv",
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Export model…"), "fa5s.file-csv",
                                    lambda: self._export_outputs("mt.invert_1d"),
-                                   "The layered model and its fit as CSV, with the site's EDI."))
+                                   QCoreApplication.translate("PHGX", "The layered model and its fit as CSV, with the site's EDI.")))
         row.addWidget(self.map_export_button())
         rv.addLayout(row)
         return self._column(site, data, shift, water, run)
 
     # -- panel: profile (Phase tensors and 2D section tabs) --------------------------
     def _build_2d_panel(self) -> ContentWidthScrollArea:
-        profile = QGroupBox("Profile sites"); v = QVBoxLayout(profile)
+        profile = QGroupBox(QCoreApplication.translate("PHGX", "Profile sites")); v = QVBoxLayout(profile)
         self._profile_list = QListWidget(); self._profile_list.setMinimumHeight(130)
         self._profile_list.setSelectionMode(QAbstractItemView.NoSelection)
         self._profile_list.itemChanged.connect(lambda _item: self._on_profile_changed())
         v.addWidget(self._profile_list)
-        v.addWidget(self._hint("The ticked sites, in this order, form the profile. Their "
-                               "distances come from their coordinates, or from the spacing below."))
+        v.addWidget(self._hint(QCoreApplication.translate("PHGX", "The ticked sites, in this order, form the profile. Their "
+                               "distances come from their coordinates, or from the spacing below.")))
         form = QFormLayout()
         self._spacing = self._dspin(500.0, 1.0, 1e6, 50.0, 1)
-        self._spacing.setToolTip("Used only when the sites carry no latitude and longitude.")
+        self._spacing.setToolTip(QCoreApplication.translate("PHGX", "Used only when the sites carry no latitude and longitude."))
         self._spacing.valueChanged.connect(lambda _v: self._on_profile_changed())
-        form.addRow("Site spacing (m)", self._spacing)
+        form.addRow(QCoreApplication.translate("PHGX", "Site spacing (m)"), self._spacing)
         self._ellipse_colour = QComboBox()
         for label, value in (("Φmin (°)", "phi_min"), ("Skew β (°)", "beta"), ("Φmax (°)", "phi_max")):
-            self._ellipse_colour.addItem(label, value)
+            self._ellipse_colour.addItem(i18n.tr(label), value)
         self._ellipse_colour.currentIndexChanged.connect(lambda _i: self._draw_phase_tensors())
-        form.addRow("Ellipse colour", self._ellipse_colour)
+        form.addRow(QCoreApplication.translate("PHGX", "Ellipse colour"), self._ellipse_colour)
         v.addLayout(form)
         self._profile_info = QLabel(); self._profile_info.setWordWrap(True)
         v.addWidget(self._profile_info)
 
-        strike = QGroupBox("Strike and modes"); form = QFormLayout(strike)
+        strike = QGroupBox(QCoreApplication.translate("PHGX", "Strike and modes")); form = QFormLayout(strike)
         self._modes_2d = QComboBox()
         for label, value in (("TE + TM", ["te", "tm"]), ("TE only", ["te"]), ("TM only", ["tm"])):
-            self._modes_2d.addItem(label, value)
-        form.addRow("Modes", self._modes_2d)
-        self._strike_auto = QCheckBox("normal to the profile")
+            self._modes_2d.addItem(i18n.tr(label), value)
+        form.addRow(QCoreApplication.translate("PHGX", "Modes"), self._modes_2d)
+        self._strike_auto = QCheckBox(QCoreApplication.translate("PHGX", "normal to the profile"))
         self._strike_auto.setChecked(True)
         self._strike_auto.toggled.connect(lambda _c: self._sync_options())
         self._strike = self._dspin(0.0, 0.0, 180.0, 5.0, 1)
-        self._strike.setToolTip("Geoelectric strike, degrees clockwise from north. Check it against "
-                                "the phase tensors before inverting.")
-        form.addRow("Strike (°)", merged_row(self._strike, self._strike_auto))
-        form.addRow(self._hint("The impedances are rotated to the strike: TE is the electric "
+        self._strike.setToolTip(QCoreApplication.translate("PHGX", "Geoelectric strike, degrees clockwise from north. Check it against "
+                                "the phase tensors before inverting."))
+        form.addRow(QCoreApplication.translate("PHGX", "Strike (°)"), merged_row(self._strike, self._strike_auto))
+        form.addRow(i18n.tr(self._hint(QCoreApplication.translate("PHGX", "The impedances are rotated to the strike: TE is the electric "
                                "field along it, TM across it. Read the strike off the Phase "
-                               "tensors tab, where Φmax and Φmin part."))
+                               "tensors tab, where Φmax and Φmin part."))))
 
-        inversion = QGroupBox("Inversion"); form = QFormLayout(inversion)
+        inversion = QGroupBox(QCoreApplication.translate("PHGX", "Inversion")); form = QFormLayout(inversion)
         self._error_floor_2d = self._dspin(0.05, 0.01, 0.5, 0.01, 3)
         self._iterations_2d = self._ispin(20, 1, 100)
-        form.addRow("Error floor", merged_row(self._error_floor_2d, "iterations", self._iterations_2d))
+        form.addRow(QCoreApplication.translate("PHGX", "Error floor"), merged_row(self._error_floor_2d, "iterations", self._iterations_2d))
         self._n_freq_2d = self._ispin(16, 3, 200)
-        self._n_freq_2d.setToolTip("Frequencies inverted, spread evenly in log over the first "
-                                   "site's. Each costs one 2D forward solve per mode.")
-        form.addRow("Frequencies", self._n_freq_2d)
-        form.addRow(self._hint("SimPEG solves the 2D problem on a mesh laid out from the sites "
-                               "and the frequencies, with air above and padding around."))
+        self._n_freq_2d.setToolTip(QCoreApplication.translate("PHGX", "Frequencies inverted, spread evenly in log over the first "
+                                   "site's. Each costs one 2D forward solve per mode."))
+        form.addRow(QCoreApplication.translate("PHGX", "Frequencies"), self._n_freq_2d)
+        form.addRow(i18n.tr(self._hint(QCoreApplication.translate("PHGX", "SimPEG solves the 2D problem on a mesh laid out from the sites "
+                               "and the frequencies, with air above and padding around."))))
 
-        run = QGroupBox("Run"); rv = QVBoxLayout(run)
-        self._run_2d_btn = self._primary("Run 2D inversion", "fa5s.th", self._run_2d)
+        run = QGroupBox(QCoreApplication.translate("PHGX", "Run")); rv = QVBoxLayout(run)
+        self._run_2d_btn = self._primary(QCoreApplication.translate("PHGX", "Run 2D inversion"), "fa5s.th", self._run_2d)
         rv.addWidget(self._run_2d_btn)
         self._progress_2d = self._progress_bar()
         self._stop_2d = self.stop_button("The 2D inversion")
         rv.addWidget(progress_with_stop(self._progress_2d, self._stop_2d))
-        self._result_2d_info = QLabel("No 2D section yet."); self._result_2d_info.setWordWrap(True)
+        self._result_2d_info = QLabel(QCoreApplication.translate("PHGX", "No 2D section yet.")); self._result_2d_info.setWordWrap(True)
         rv.addWidget(self._result_2d_info)
         row = QHBoxLayout()
-        row.addWidget(self._button("Export section…", "fa5s.file-csv",
+        row.addWidget(self._button(QCoreApplication.translate("PHGX", "Export section…"), "fa5s.file-csv",
                                    lambda: self._export_outputs("mt.invert_profile"),
-                                   "The section as NPZ and CSV."))
+                                   QCoreApplication.translate("PHGX", "The section as NPZ and CSV.")))
         row.addWidget(self.map_export_button())
         rv.addLayout(row)
         return self._column(profile, strike, inversion, run)
@@ -805,14 +797,14 @@ class MTProcessingModule(BaseModule):
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
         if folder:
-            path = QFileDialog.getExistingDirectory(self, "Open MT recording folder")
+            path = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", "Open MT recording folder"))
         else:
-            path, _ = QFileDialog.getOpenFileName(self, "Open MT time-series file", "", _RECORDING_FILTER)
+            path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Open MT time-series file"), "", _RECORDING_FILTER)
         if path:
             self._read_recording(Path(path), remote=False)
 
     def _browse_remote(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Open remote-reference recording folder")
+        path = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", "Open remote-reference recording folder"))
         if path:
             self._read_recording(Path(path), remote=True)
 
@@ -821,25 +813,25 @@ class MTProcessingModule(BaseModule):
         self._update_recording_info()
 
     def _browse_calibration(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Calibration folder")
+        path = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", "Calibration folder"))
         if path:
-            self._calibration.setText(path)
+            self._calibration.setText(i18n.tr(path))
 
     def _browse_band_setup(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "EMTF band setup", "", "Band setup (*.cfg *.txt);;All files (*)")
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "EMTF band setup"), "", "Band setup (*.cfg *.txt);;All files (*)")
         if path:
-            self._band_setup.setText(path)
+            self._band_setup.setText(i18n.tr(path))
 
     def _browse_tem(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "TEM sounding", "", _TEM_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "TEM sounding"), "", _TEM_FILTER)
         if path:
-            self._tem.setText(path)
+            self._tem.setText(i18n.tr(path))
 
     def _browse_sites(self) -> None:
         from PyHydroGeophysX.qt_apps.widgets.project_dialogs import confirm_project_for_data
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
-        paths, _ = QFileDialog.getOpenFileNames(self, "Add MT sites", "", _TF_FILTER)
+        paths, _ = QFileDialog.getOpenFileNames(self, QCoreApplication.translate("PHGX", "Add MT sites"), "", _TF_FILTER)
         for path in paths:
             self._add_site_file(Path(path))
 
@@ -916,9 +908,9 @@ class MTProcessingModule(BaseModule):
             chosen = box.currentData()
             box.blockSignals(True)
             box.clear()
-            box.addItem("as recorded", None)
+            box.addItem(QCoreApplication.translate("PHGX", "as recorded"), None)
             for coil in coils:
-                box.addItem(f"{coil['serial']} ({coil['model']})" if coil.get("model") else coil["serial"],
+                box.addItem(f"{coil['serial']} ({coil['model']})" if coil.get("model") else i18n.tr(coil["serial"]),
                             coil["serial"])
                 box.setItemData(box.count() - 1, coil["file"], Qt.ToolTipRole)
             box.setCurrentIndex(max(box.findData(chosen), 0) if chosen else 0)
@@ -937,7 +929,7 @@ class MTProcessingModule(BaseModule):
             self.log(f"Could not inspect {path.name}: {exc}", "error")
             return
         self.log(f"Reading {'remote ' if remote else ''}recording {path} …", "info")
-        (self._remote_info if remote else self._recording_info).setText(f"Reading {path.name} …")
+        (self._remote_info if remote else self._recording_info).setText(QCoreApplication.translate("PHGX", "Reading {0} …").format(path.name))
         worker = TaskWorker(_read_with_saturation, path, **options)
         worker.succeeded.connect(lambda read: self._on_recording_read(
             path, read["runs"], remote, options=options, saturated=read["saturated"],
@@ -970,7 +962,7 @@ class MTProcessingModule(BaseModule):
             if self._periodic_found and not self._periodic.text().strip():
                 # Found, so removed unless the user clears it: what it does is said below.
                 self._periodic_autofill = ", ".join(f"{p:g}" for p in sorted(self._periodic_found))
-                self._periodic.setText(self._periodic_autofill)
+                self._periodic.setText(i18n.tr(self._periodic_autofill))
             if self._periodic_found:
                 self.log("Interference repeating exactly every "
                          + " and ".join(f"{p:g} s ({', '.join(c)})" for p, c in sorted(self._periodic_found.items()))
@@ -985,9 +977,9 @@ class MTProcessingModule(BaseModule):
             self._saturation = _saturation_summary(self._runs) if saturated is None else saturated
             self._streams = _streams(self._runs)
             self._rates.clear()
-            self._rates.addItem("All sample rates", None)
+            self._rates.addItem(QCoreApplication.translate("PHGX", "All sample rates"), None)
             for rate, indices in self._streams:
-                self._rates.addItem(f"{rate:g} Hz ({len(indices)} run{'s' if len(indices) > 1 else ''})",
+                self._rates.addItem(QCoreApplication.translate("PHGX", "{0:g} Hz ({1} run{2})").format(rate, len(indices), 's' if len(indices) > 1 else ''),
                                     rate)
             self._series_stream.blockSignals(True)
             self._series_stream.clear()
@@ -1076,15 +1068,13 @@ class MTProcessingModule(BaseModule):
             no_electric = self._missing_electric()
             if no_electric:
                 lines.append(f"<span style='color:#9b5a00'>{no_electric}</span>")
-            self._recording_info.setText("<br>".join(lines))
+            self._recording_info.setText(i18n.tr("<br>".join(lines)))
         else:
-            self._recording_info.setText("No recording loaded.")
+            self._recording_info.setText(QCoreApplication.translate("PHGX", "No recording loaded."))
         if self._remote_runs:
-            self._remote_info.setText(f"<b>{self._remote_runs[0].station or self._remote_path.name}</b> · "
-                                      f"{len(self._remote_runs)} run(s), "
-                                      f"{', '.join(self._remote_runs[0].components)}")
+            self._remote_info.setText(QCoreApplication.translate("PHGX", "<b>{0}</b> · {1} run(s), {2}").format(self._remote_runs[0].station or self._remote_path.name, len(self._remote_runs), ', '.join(self._remote_runs[0].components)))
         else:
-            self._remote_info.setText("No remote reference.")
+            self._remote_info.setText(QCoreApplication.translate("PHGX", "No remote reference."))
 
     def _selected_runs(self) -> List[Any]:
         rate = self._rates.currentData()
@@ -1115,7 +1105,7 @@ class MTProcessingModule(BaseModule):
         self._series_index.blockSignals(True)
         self._series_index.setRange(1, max(count, 1))
         self._series_index.setValue(1)
-        self._series_index.setSuffix(f" of {count}")
+        self._series_index.setSuffix(QCoreApplication.translate("PHGX", " of {0}").format(count))
         self._series_index.setEnabled(count > 1)
         self._series_index.blockSignals(False)
         self._draw_series()
@@ -1127,7 +1117,7 @@ class MTProcessingModule(BaseModule):
         if not (0 <= position < len(indices)):
             return
         run = self._runs[indices[position]]
-        self._series_when.setText(f"{str(run.start)[:19]} UTC, {_span(run.duration)}")
+        self._series_when.setText(QCoreApplication.translate("PHGX", "{0} UTC, {1}").format(str(run.start)[:19], _span(run.duration)))
         # Ex, Ey, Hx and Hy are always drawn, in that order: one the run lacks
         # gets an empty panel saying why, so a recording without its electric
         # field does not pass for a complete one.
@@ -1143,7 +1133,7 @@ class MTProcessingModule(BaseModule):
                 ax.text(0.5, 0.5, f"Not recorded: {self._not_recorded(run, name)}",
                         transform=ax.transAxes, ha="center", va="center", color="#6e6e73", fontsize=9)
                 ax.set_yticks([])
-                ax.set_ylabel(name, fontsize=8)
+                ax.set_ylabel(i18n.tr(name), fontsize=8)
                 continue
             channel = run.channels[name]
             self._series_view["axes"][name] = ax
@@ -1151,7 +1141,7 @@ class MTProcessingModule(BaseModule):
             ax.set_ylabel(f"{name}\n({channel.units})", fontsize=8)
             ax.grid(True, alpha=0.25)
         self._draw_traces(0, run.n_samples, max(1, run.n_samples // _MAX_POINTS))
-        axes[-1].set_xlabel("Time (s)")
+        axes[-1].set_xlabel(QCoreApplication.translate("PHGX", "Time (s)"))
         for ax in axes:
             ax.callbacks.connect("xlim_changed", lambda _ax: self._zoom_timer.start())
         self._series_pane.finish()
@@ -1242,7 +1232,7 @@ class MTProcessingModule(BaseModule):
         tip = str(source) if source else "processed in this session"
         self._site_list.blockSignals(True)
         self._site_list.addItem(label)
-        self._site_list.item(self._site_list.count() - 1).setToolTip(tip)
+        self._site_list.item(self._site_list.count() - 1).setToolTip(i18n.tr(tip))
         self._site_list.blockSignals(False)
         self._site_combo.blockSignals(True)
         self._site_combo.addItem(label)
@@ -1250,7 +1240,7 @@ class MTProcessingModule(BaseModule):
         item = QListWidgetItem(label)
         item.setFlags((item.flags() | Qt.ItemIsUserCheckable) & ~Qt.ItemIsSelectable)
         item.setCheckState(Qt.Checked)
-        item.setToolTip(tip)
+        item.setToolTip(i18n.tr(tip))
         self._profile_list.blockSignals(True)
         self._profile_list.addItem(item)
         self._profile_list.blockSignals(False)
@@ -1317,8 +1307,8 @@ class MTProcessingModule(BaseModule):
                 widget.blockSignals(False)
         self._update_site_info()
         if self._current_site() is None:
-            self._sounding_pane.message("Process a recording, or add EDI / XML sites in the panel on the right.")
-            self._dimension_pane.message("Process a recording, or add EDI / XML sites in the panel on the right.")
+            self._sounding_pane.message(QCoreApplication.translate("PHGX", "Process a recording, or add EDI / XML sites in the panel on the right."))
+            self._dimension_pane.message(QCoreApplication.translate("PHGX", "Process a recording, or add EDI / XML sites in the panel on the right."))
             return
         self._draw_sounding()
         self._draw_dimensionality()
@@ -1326,7 +1316,7 @@ class MTProcessingModule(BaseModule):
     def _update_site_info(self) -> None:
         site = self._current_site()
         if site is None:
-            self._site_info.setText("No site selected.")
+            self._site_info.setText(QCoreApplication.translate("PHGX", "No site selected."))
             return
         tf = site["tf"]
         lines = [f"<b>{tf.station or 'site'}</b>: {tf.n_frequencies} periods, "
@@ -1340,7 +1330,7 @@ class MTProcessingModule(BaseModule):
         lines.append("Impedance" + (" and tipper" if tf.has_tipper else "")
                      + (", with errors" if tf.z_err is not None else ", no errors"))
         lines.append(f"From {Path(site['source']).name}" if site.get("source") else "Processed in this session")
-        self._site_info.setText("<br>".join(lines))
+        self._site_info.setText(i18n.tr("<br>".join(lines)))
 
     def _site_positions(self, sites: Sequence[Dict[str, Any]]):
         """Distances along the profile (m) and its azimuth, from coordinates or the spacing."""
@@ -1353,13 +1343,13 @@ class MTProcessingModule(BaseModule):
     def _on_profile_changed(self) -> None:
         sites = self._checked_sites()
         if len(sites) < 2:
-            self._profile_info.setText(f"{len(sites)} site ticked; the profile needs two or more.")
+            self._profile_info.setText(QCoreApplication.translate("PHGX", "{0} site ticked; the profile needs two or more.").format(len(sites)))
         else:
             positions, azimuth = self._site_positions(sites)
             where = (f"azimuth {azimuth:.0f}°, so the strike normal to it is "
                      f"{(azimuth + 90.0) % 180.0:.0f}°" if azimuth is not None
                      else f"no coordinates, so spaced {self._spacing.value():g} m apart")
-            self._profile_info.setText(f"<b>{len(sites)} sites over {np.ptp(positions):.0f} m</b>; {where}.")
+            self._profile_info.setText(QCoreApplication.translate("PHGX", "<b>{0} sites over {1:.0f} m</b>; {2}.").format(len(sites), np.ptp(positions), where))
         self._draw_phase_tensors()
 
     # -- drawing -------------------------------------------------------------
@@ -1373,7 +1363,7 @@ class MTProcessingModule(BaseModule):
         components = tuple(name for name, box in (("xy", self._show_xy), ("yx", self._show_yx),
                                                   ("det", self._show_det)) if box.isChecked())
         if not components:
-            self._sounding_pane.message("Tick a component to draw in the panel on the right.")
+            self._sounding_pane.message(QCoreApplication.translate("PHGX", "Tick a component to draw in the panel on the right."))
             return
         figure = self._sounding_pane.reset()
         axes = figure.subplots(2, 1, sharex=True, gridspec_kw={"height_ratios": [3, 2]})
@@ -1389,7 +1379,7 @@ class MTProcessingModule(BaseModule):
             plot_mt_sounding(tf, components=components, axes=axes, predicted=predicted,
                              title=tf.station or "MT sounding", errors=self._show_errors.isChecked())
         except Exception as exc:  # noqa: BLE001
-            self._sounding_pane.message(f"Cannot draw this sounding: {exc}")
+            self._sounding_pane.message(QCoreApplication.translate("PHGX", "Cannot draw this sounding: {0}").format(exc))
             return
         self._sounding_pane.finish()
 
@@ -1406,15 +1396,15 @@ class MTProcessingModule(BaseModule):
                                    title=f"{tf.station or 'site'}: |β| under 3° (grey) reads as 1D "
                                          "or 2D; strike is ambiguous by 90°")
         except Exception as exc:  # noqa: BLE001
-            self._dimension_pane.message(f"No phase tensor: {exc}")
+            self._dimension_pane.message(QCoreApplication.translate("PHGX", "No phase tensor: {0}").format(exc))
             return
         self._dimension_pane.finish()
 
     def _draw_phase_tensors(self) -> None:
         sites = self._checked_sites()
         if len(sites) < 2:
-            self._profile_pane.message("Tick two or more sites in the panel on the right to see their "
-                                       "phase tensors along the profile.")
+            self._profile_pane.message(QCoreApplication.translate("PHGX", "Tick two or more sites in the panel on the right to see their "
+                                       "phase tensors along the profile."))
             return
         from PyHydroGeophysX.visualization import plot_phase_tensor_pseudosection
 
@@ -1426,7 +1416,7 @@ class MTProcessingModule(BaseModule):
                                             color_by=str(self._ellipse_colour.currentData()),
                                             length_unit=length_units.current())
         except Exception as exc:  # noqa: BLE001
-            self._profile_pane.message(f"Cannot draw the phase tensors: {exc}")
+            self._profile_pane.message(QCoreApplication.translate("PHGX", "Cannot draw the phase tensors: {0}").format(exc))
             return
         self._profile_pane.finish()
 
@@ -1447,7 +1437,7 @@ class MTProcessingModule(BaseModule):
             depth, _rho = result.depth_profile()
             values = np.repeat(np.asarray(water["water_content"], dtype=float), 2)
             axes[1].plot(values, depth, lw=1.8, color="#007aff")
-            axes[1].set_xlabel("Water content (-)")
+            axes[1].set_xlabel(QCoreApplication.translate("PHGX", "Water content (-)"))
             set_length_axis(axes[1], "y", "Depth", unit=unit)
             axes[1].grid(True, alpha=0.25)
         self._model_pane.finish()
@@ -1767,7 +1757,7 @@ class MTProcessingModule(BaseModule):
 
     # -- export and map ------------------------------------------------------
     def _export_folder(self) -> Optional[Path]:
-        folder = select_directory(self, "Export MT results to folder", self.state.output_dir or Path.cwd())
+        folder = select_directory(self, QCoreApplication.translate("PHGX", "Export MT results to folder"), self.state.output_dir or Path.cwd())
         return io_utils.ensure_dir(folder) if folder else None
 
     def _write_site(self, site: Dict[str, Any], out: Path) -> List[str]:
@@ -2142,12 +2132,12 @@ class MTProcessingModule(BaseModule):
             "multi_window": lambda v: self._multi_window.setChecked(bool(v)),
             "noise_classes": lambda v: self._noise_classes.setValue(int(v or 0)),
             "bands_per_decade": lambda v: self._per_decade.setValue(int(v or 0)),
-            "band_setup": lambda v: self._band_setup.setText(str(v or "")),
-            "calibration": lambda v: self._calibration.setText(str(v or "")),
+            "band_setup": lambda v: self._band_setup.setText(i18n.tr(str(v or ""))),
+            "calibration": lambda v: self._calibration.setText(i18n.tr(str(v or ""))),
             "coils": coil_choice,
             "azimuths": directions,
             "periodic_noise": lambda v: self._periodic.setText(
-                ", ".join(f"{float(p):g}" for p in (v if isinstance(v, (list, tuple)) else [v]) if p)
+                i18n.tr(", ".join(f"{float(p):g}" for p in (v if isinstance(v, (list, tuple)) else [v]) if p))
                 if v else ""),
             "periodic_cycles": lambda v: self._periodic_cycles.setValue(int(v or 31)),
             "powerline": lambda v: self._powerline.setCurrentIndex(
@@ -2157,7 +2147,7 @@ class MTProcessingModule(BaseModule):
             "target_rms": lambda v: self._target_rms.setValue(float(v)),
             "error_floor": lambda v: self._error_floor_1d.setValue(float(v)),
             "static_shift": lambda v: self._static_shift.setChecked(bool(v)),
-            "tem_file": lambda v: self._tem.setText(str(v or "")),
+            "tem_file": lambda v: self._tem.setText(i18n.tr(str(v or ""))),
             "tem_loop_radius": lambda v: self._tem_radius.setValue(float(v)),
             "tem_error": lambda v: self._tem_error.setValue(float(v)),
             "water_content": lambda v: self._water.setChecked(bool(v)),
@@ -2193,7 +2183,7 @@ class MTProcessingModule(BaseModule):
         except Exception:  # noqa: BLE001
             _logger.debug("MTProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "Open a recording folder (Phoenix, Metronix, Zonge, LEMI) or add EDI / EMTF XML sites."
-        dlg = QDialog(self); dlg.setWindowTitle("Magnetotelluric input formats")
+        dlg = QDialog(self); dlg.setWindowTitle(QCoreApplication.translate("PHGX", "Magnetotelluric input formats"))
         dlg.resize(760, 620); lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
         try:
@@ -2202,5 +2192,5 @@ class MTProcessingModule(BaseModule):
             _logger.debug("MTProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)
+        close = QPushButton(QCoreApplication.translate("PHGX", "Close")); close.clicked.connect(dlg.accept); lay.addWidget(close)
         dlg.exec()

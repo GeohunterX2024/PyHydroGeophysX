@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QCoreApplication, Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -43,6 +43,7 @@ from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout, group
 from PyHydroGeophysX.visualization.axis_units import length_factor, to_display_length
+from PyHydroGeophysX.qt_apps import i18n
 
 #: Columns of the station table, as (heading, row key, format).
 _COLUMNS = (
@@ -155,12 +156,12 @@ class EMSurveyView(QWidget):
         row.setContentsMargins(6, 4, 6, 2)
         self._colour_by = QComboBox()
         for label, key in _COLOUR_FIELDS:
-            self._colour_by.addItem(label, key)
+            self._colour_by.addItem(i18n.tr(label), key)
         self._colour_by.currentIndexChanged.connect(lambda _i: self._on_colour_by_changed())
         # ... and in which colours: viridis until another map is chosen.
         self._colormap = cmaps.ColormapChooser(cmaps.EM_STATIONS, "viridis", shared=colormaps)
         self._colormap.colormapChanged.connect(lambda _name: self._draw_map())
-        row.addWidget(group("Colour by:", self._colour_by, self._colormap))
+        row.addWidget(group(QCoreApplication.translate("PHGX", "Colour by:"), self._colour_by, self._colormap))
         # ... between which values: the field's own extremes, or typed and locked.
         # A length is typed in the studio's length unit, as the title gives it.
         self._range = ColorRange(what="the station colours")
@@ -169,9 +170,9 @@ class EMSurveyView(QWidget):
         row.addWidget(self._range)
         self._totals = QLabel("")
         self._totals.setToolTip(
-            "What the gate selection above the plot keeps, over the whole "
+            QCoreApplication.translate("PHGX", "What the gate selection above the plot keeps, over the whole "
             "survey. A station whose every gate is dropped disappears from the "
-            "inversion entirely, so it is counted separately.")
+            "inversion entirely, so it is counted separately."))
         row.addWidget(self._totals)
 
         self._plot = pg.PlotWidget()
@@ -372,7 +373,7 @@ class EMMetadataView(QTreeWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setColumnCount(2)
-        self.setHeaderLabels(["Field", "Value"])
+        self.setHeaderLabels([QCoreApplication.translate("PHGX", "Field"), QCoreApplication.translate("PHGX", "Value")])
         self.setAlternatingRowColors(True)
         self.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
 
@@ -406,7 +407,7 @@ class EMMetadataView(QTreeWidget):
                 note = _FIELD_NOTES.get(str(key))
                 if note:
                     for column in (0, 1):
-                        child.setToolTip(column, note)
+                        child.setToolTip(i18n.tr(column), note)
                 parent.addChild(child)
 
 
@@ -457,23 +458,23 @@ class EMSignalNoiseView(QWidget):
         controls = QWidget()
         row = QHBoxLayout(controls)
         row.setContentsMargins(6, 4, 6, 2)
-        row.addWidget(QLabel("Line:"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Line:")))
         self._line = QComboBox()
         self._line.setToolTip(
-            "Which survey line to draw. Distance runs from that line's own "
-            "first station.")
+            QCoreApplication.translate("PHGX", "Which survey line to draw. Distance runs from that line's own "
+            "first station."))
         self._line.currentIndexChanged.connect(lambda _i: self._redraw())
         row.addWidget(self._line)
         row.addSpacing(12)
-        row.addWidget(QLabel("Smoothing:"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Smoothing:")))
         self._smooth = QSpinBox()
         self._smooth.setRange(1, 201)
         self._smooth.setValue(21)
-        self._smooth.setSuffix(" stations")
+        self._smooth.setSuffix(QCoreApplication.translate("PHGX", " stations"))
         self._smooth.setToolTip(
-            "Width of a running mean over stations. Cosmetic: the "
+            QCoreApplication.translate("PHGX", "Width of a running mean over stations. Cosmetic: the "
             "station-to-station scatter obscures the trend this is drawn to "
-            "show. Set it to 1 to plot the values themselves.")
+            "show. Set it to 1 to plot the values themselves."))
         self._smooth.valueChanged.connect(lambda _v: self._redraw())
         row.addWidget(self._smooth)
         row.addSpacing(12)

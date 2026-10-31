@@ -12,6 +12,7 @@ import/wiring errors without needing a display.
 from __future__ import annotations
 
 import argparse
+from PySide6.QtCore import QCoreApplication
 import sys
 from typing import Optional, Sequence
 import logging
@@ -93,10 +94,10 @@ def _install_excepthook(show_dialog: bool) -> None:
                 if QApplication.instance() is not None:
                     box = QMessageBox()
                     box.setIcon(QMessageBox.Icon.Critical)
-                    box.setWindowTitle("PyHydroGeophysX Studio: unexpected error")
+                    box.setWindowTitle(QCoreApplication.translate("PHGX", "PyHydroGeophysX Studio: unexpected error"))
                     box.setText(
-                        "An unexpected error occurred. The application will try to "
-                        "keep running; details are below."
+                        QCoreApplication.translate("PHGX", "An unexpected error occurred. The application will try to "
+                        "keep running; details are below.")
                     )
                     box.setDetailedText(text)
                     box.exec()
@@ -171,6 +172,10 @@ def main(argv: Optional[Sequence[str]] = None, *, assistant: Optional[str] = Non
 
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("PyHydroGeophysX Professional Studio")
+    from PyHydroGeophysX.qt_apps import i18n
+
+    # Before any widget is built, so every text is created in the chosen language.
+    i18n.install_translator(app)
     _install_excepthook(show_dialog=not args.self_test)
     # Apply the brand theme before building widgets (also sets pyqtgraph colors).
     theme.apply_theme(app)

@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QCoreApplication, QRectF, Qt
 
 from PyHydroGeophysX.data_processing.gravmag import (
     extract_profile,
@@ -44,7 +44,7 @@ from PyHydroGeophysX.data_processing.gravmag import (
 )
 from PyHydroGeophysX.forward.gravmag import forward_bodies
 from PyHydroGeophysX.inversion.gravmag import backend_status
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -111,10 +111,10 @@ class GravMagProcessingModule(BaseModule):
         self._model_view = Model3DView(colormaps=cmaps.colormap_settings(self.state),
                                        colormap_key=cmaps.DENSITY)
         self._quality_view = InversionQualityView()
-        self._tabs.addTab(self._station_tab, "Station map")
-        self._tabs.addTab(self._qc_tab, "Data QC")
-        self._tabs.addTab(self._model_view, "Inversion model")
-        self._tabs.addTab(self._quality_view, "Inversion quality")
+        self._tabs.addTab(self._station_tab, QCoreApplication.translate("PHGX", "Station map"))
+        self._tabs.addTab(self._qc_tab, QCoreApplication.translate("PHGX", "Data QC"))
+        self._tabs.addTab(self._model_view, QCoreApplication.translate("PHGX", "Inversion model"))
+        self._tabs.addTab(self._quality_view, QCoreApplication.translate("PHGX", "Inversion quality"))
         self._reproduce = ReproduceBar()
         center = QWidget()
         center_layout = QVBoxLayout(center)
@@ -167,13 +167,13 @@ class GravMagProcessingModule(BaseModule):
         return scroll
 
     def _build_loader_group(self) -> QGroupBox:
-        box = QGroupBox("Load station data"); v = QVBoxLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Load station data")); v = QVBoxLayout(box)
         row = QHBoxLayout()
-        load_btn = QPushButton("Load stations…")
+        load_btn = QPushButton(QCoreApplication.translate("PHGX", "Load stations…"))
         load_btn.setProperty("primary", True)
         load_btn.setIcon(theme.icon("fa5s.folder-open", color="#ffffff"))
         load_btn.clicked.connect(self._load)
-        fmt_btn = QPushButton("Data format")
+        fmt_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         fmt_btn.setIcon(theme.icon("fa5s.file-alt"))
         fmt_btn.clicked.connect(self._show_format_help)
         row.addWidget(load_btn); row.addWidget(fmt_btn)
@@ -182,27 +182,27 @@ class GravMagProcessingModule(BaseModule):
         krow = QFormLayout()
         self._kind = QComboBox(); self._kind.addItems(["gravity", "magnetics"])
         self._kind.currentTextChanged.connect(self._on_kind_changed)
-        krow.addRow("Field type", self._kind)
+        krow.addRow(QCoreApplication.translate("PHGX", "Field type"), self._kind)
         v.addLayout(krow)
 
-        hint = QLabel("Upload x, y, value and optionally z_m (positive-up station elevation). "
-                       "Gravity is mGal; magnetics is nT. Use Data QC before inversion.")
+        hint = QLabel(QCoreApplication.translate("PHGX", "Upload x, y, value and optionally z_m (positive-up station elevation). "
+                       "Gravity is mGal; magnetics is nT. Use Data QC before inversion."))
         hint.setWordWrap(True); theme.set_tone(hint, "hint")
         v.addWidget(hint)
-        self._info = QLabel("No data loaded."); self._info.setWordWrap(True)
+        self._info = QLabel(QCoreApplication.translate("PHGX", "No data loaded.")); self._info.setWordWrap(True)
         v.addWidget(self._info)
         return box
 
     def _build_field_group(self) -> QGroupBox:
         # Ambient field for magnetics; hidden in gravity mode by _on_kind_changed.
-        self._field_box = QGroupBox("Ambient field (magnetics)")
+        self._field_box = QGroupBox(QCoreApplication.translate("PHGX", "Ambient field (magnetics)"))
         ff = QFormLayout(self._field_box)
         self._B0 = self._dspin(50000.0, 100.0, 100000.0, 100.0, 0)
         self._inc = self._dspin(60.0, -90.0, 90.0, 1.0, 1)
         self._dec = self._dspin(0.0, -180.0, 180.0, 1.0, 1)
-        ff.addRow("Strength (nT)", self._B0)
-        ff.addRow("Inclination (°)", self._inc)
-        ff.addRow("Declination (°)", self._dec)
+        ff.addRow(QCoreApplication.translate("PHGX", "Strength (nT)"), self._B0)
+        ff.addRow(QCoreApplication.translate("PHGX", "Inclination (°)"), self._inc)
+        ff.addRow(QCoreApplication.translate("PHGX", "Declination (°)"), self._dec)
         return self._field_box
 
     def _build_inversion_group(self) -> QGroupBox:
@@ -211,31 +211,31 @@ class GravMagProcessingModule(BaseModule):
         # one respect worth showing rather than hiding: the sensitivities do not
         # depend on the model, so the linear solver reaches the minimum in one
         # step and there is no iteration count to set.
-        box = QGroupBox("3D inversion"); form = QFormLayout(box)
-        hint = QLabel("Inverts the uploaded field for a subsurface model: gravity → density "
+        box = QGroupBox(QCoreApplication.translate("PHGX", "3D inversion")); form = QFormLayout(box)
+        hint = QLabel(QCoreApplication.translate("PHGX", "Inverts the uploaded field for a subsurface model: gravity → density "
                       "contrast (g/cc), magnetics → susceptibility (SI). Slice the result at "
-                      "different depths and positions in the Inversion model tab.")
+                      "different depths and positions in the Inversion model tab."))
         hint.setWordWrap(True); theme.set_tone(hint, "hint")
-        form.addRow(hint)
+        form.addRow(i18n.tr(hint))
 
         self._solver = QComboBox()
         for label, value in (("Linear (one solve per β)", "linear"),
                              ("SimPEG directives", "simpeg")):
-            self._solver.addItem(label, value)
+            self._solver.addItem(i18n.tr(label), value)
         self._solver.setToolTip(
-            "Gravity and magnetic sensitivities do not depend on the model, so the "
+            QCoreApplication.translate("PHGX", "Gravity and magnetic sensitivities do not depend on the model, so the "
             "objective is quadratic and one linear solve is the exact minimizer for "
             "a given β. That is the Linear solver: no Gauss-Newton loop, no line "
             "search, and a β sweep costs one solve per trial. SimPEG directives "
             "runs the iterative inverse problem with β cooling, kept as a "
-            "cross-check and for properly bound-constrained work.")
+            "cross-check and for properly bound-constrained work."))
         self._solver.currentIndexChanged.connect(self._sync_solver)
-        form.addRow("Solver", self._solver)
+        form.addRow(QCoreApplication.translate("PHGX", "Solver"), self._solver)
 
         self._detrend = self._ispin(1, 0, 3)
-        self._detrend.setToolTip("Remove a polynomial regional trend before inverting "
+        self._detrend.setToolTip(QCoreApplication.translate("PHGX", "Remove a polynomial regional trend before inverting "
                                  "(0 = none, 1 = linear, 2 = quadratic). Inversion works on "
-                                 "the residual anomaly.")
+                                 "the residual anomaly."))
         self._inv_nxy = self._ispin(22, 8, 40)
         self._inv_nz = self._ispin(12, 4, 30)
         # The mesh sets how many stations fit in memory, which the line
@@ -244,114 +244,114 @@ class GravMagProcessingModule(BaseModule):
             spin.valueChanged.connect(lambda _value: self._update_run_scope())
         self._inv_iter = self._ispin(20, 3, 60)
         self._inv_iter.setToolTip(
-            "Gauss-Newton iterations. Used by the SimPEG solver only; the linear "
-            "solver reaches the minimum in a single step.")
+            QCoreApplication.translate("PHGX", "Gauss-Newton iterations. Used by the SimPEG solver only; the linear "
+            "solver reaches the minimum in a single step."))
         self._sens_power = self._dspin(1.0, 0.0, 3.0, 0.25, 2)
         self._sens_power.setToolTip(
-            "Depth weighting exponent applied to the model term as "
+            QCoreApplication.translate("PHGX", "Depth weighting exponent applied to the model term as "
             "sqrt(diag(JᵀWᵀWJ)) raised to this power. Without it the recovered body "
             "plasters against the top of the mesh, because shallow cells buy misfit "
-            "reduction most cheaply. 0 turns the weighting off.")
+            "reduction most cheaply. 0 turns the weighting off."))
         self._station_z = self._dspin(1.0, -10000.0, 100000.0, 1.0, 1)
-        self._station_z.setToolTip("Used only when the loaded table has no fourth z_m column.")
+        self._station_z.setToolTip(QCoreApplication.translate("PHGX", "Used only when the loaded table has no fourth z_m column."))
         self._rel_error = self._dspin(0.03, 0.0, 1.0, 0.01, 3)
         self._noise_floor = self._dspin(0.5, 0.0, 1e6, 0.1, 3)
         # "all" by default: a default cap would invert only part of a large
         # survey with only a log line saying so. A number is for a quick test,
         # and the Run group says how many stations it leaves out.
         self._max_stations = self._ispin(0, 0, 1_000_000)
-        self._max_stations.setSpecialValueText("all")
+        self._max_stations.setSpecialValueText(QCoreApplication.translate("PHGX", "all"))
         self._max_stations.setToolTip(
-            "How many stations the inversion uses. \"all\" uses every station "
+            QCoreApplication.translate("PHGX", "How many stations the inversion uses. \"all\" uses every station "
             "with a value. A number thins a larger survey to an evenly spread "
             "subset, for a quicker test run; the Run group says how many it "
-            "leaves out.")
+            "leaves out."))
         self._max_stations.valueChanged.connect(lambda _value: self._update_run_scope())
-        self._elevation_source = QLabel("Using global station elevation.")
+        self._elevation_source = QLabel(QCoreApplication.translate("PHGX", "Using global station elevation."))
         self._elevation_source.setWordWrap(True)
         theme.set_tone(self._elevation_source, "hint")
-        form.addRow("Detrend degree", self._detrend)
-        form.addRow("Station elevation (m)", self._station_z)
-        form.addRow("Elevation source", self._elevation_source)
+        form.addRow(QCoreApplication.translate("PHGX", "Detrend degree"), self._detrend)
+        form.addRow(QCoreApplication.translate("PHGX", "Station elevation (m)"), self._station_z)
+        form.addRow(QCoreApplication.translate("PHGX", "Elevation source"), self._elevation_source)
         # Mesh size is two ends of one setting, so it reads as one row.
         self._mesh_row = merged_row(self._inv_nxy, "lateral ×", self._inv_nz, "deep")
-        form.addRow("Mesh cells", self._mesh_row)
-        form.addRow("Depth weighting", self._sens_power)
-        form.addRow("Max iterations", self._inv_iter)
+        form.addRow(QCoreApplication.translate("PHGX", "Mesh cells"), self._mesh_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Depth weighting"), self._sens_power)
+        form.addRow(QCoreApplication.translate("PHGX", "Max iterations"), self._inv_iter)
         self._detrend.valueChanged.connect(lambda _value: self._refresh_qc())
         return box
 
     def _build_errors_group(self) -> QGroupBox:
-        box = QGroupBox("Data errors"); form = QFormLayout(box)
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Data errors")); form = QFormLayout(box)
         self._rel_error.setToolTip(
-            "Assumed relative data error, applied to each station's own value.")
+            QCoreApplication.translate("PHGX", "Assumed relative data error, applied to each station's own value."))
         self._noise_floor.setToolTip(
-            "Absolute error added to every station. It sets the error bar where the "
-            "anomaly is near zero, which is where a flat percentage is meaningless.")
+            QCoreApplication.translate("PHGX", "Absolute error added to every station. It sets the error bar where the "
+            "anomaly is near zero, which is where a flat percentage is meaningless."))
         self._err_row = merged_row(self._rel_error, "× |value| +", self._noise_floor)
-        form.addRow("Estimate", self._err_row)
-        form.addRow("Max stations", self._max_stations)
+        form.addRow(QCoreApplication.translate("PHGX", "Estimate"), self._err_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Max stations"), self._max_stations)
         return box
 
     def _build_assist_group(self) -> QGroupBox:
-        box = QGroupBox("Fit assistance"); form = QFormLayout(box)
-        self._auto_beta = QCheckBox("Auto-β: re-solve to reach target χ²")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Fit assistance")); form = QFormLayout(box)
+        self._auto_beta = QCheckBox(QCoreApplication.translate("PHGX", "Auto-β: re-solve to reach target χ²"))
         self._auto_beta.setChecked(True)
         self._auto_beta.setToolTip(
-            "β is not λ: it carries the data units and the mesh scale, so a sensible "
+            QCoreApplication.translate("PHGX", "β is not λ: it carries the data units and the mesh scale, so a sensible "
             "value cannot be guessed and is estimated from the problem instead. The "
             "search brackets and bisects it. Each trial is one linear solve, which is "
-            "why this is affordable here in a way it is not for a nonlinear method.")
+            "why this is affordable here in a way it is not for a nonlinear method."))
         self._auto_beta.toggled.connect(self._sync_solver)
-        form.addRow(self._auto_beta)
+        form.addRow(i18n.tr(self._auto_beta))
 
         self._gm_target_chi2 = self._dspin(1.0, 0.1, 100.0, 0.1, 2)
         self._gm_target_chi2.setToolTip(
-            "χ² = 1 means the model explains the field to within the assumed error.")
+            QCoreApplication.translate("PHGX", "χ² = 1 means the model explains the field to within the assumed error."))
         self._gm_chi2_tol = self._dspin(0.2, 0.01, 10.0, 0.05, 2)
         self._gm_chi2_tol.setToolTip(
-            "Half-width of the accepted band. The search stops as soon as a trial "
-            "lands inside target ± tolerance.")
+            QCoreApplication.translate("PHGX", "Half-width of the accepted band. The search stops as soon as a trial "
+            "lands inside target ± tolerance."))
         self._gm_chi2_row = merged_row(self._gm_target_chi2, "±", self._gm_chi2_tol)
-        form.addRow("Target χ²", self._gm_chi2_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Target χ²"), self._gm_chi2_row)
 
         self._beta_trials = self._ispin(8, 1, 20)
         self._beta_trials.setToolTip(
-            "Upper bound on the extra solves the β search may run, on top of the "
-            "one at the estimated starting β.")
-        form.addRow("Max β trials", self._beta_trials)
+            QCoreApplication.translate("PHGX", "Upper bound on the extra solves the β search may run, on top of the "
+            "one at the estimated starting β."))
+        form.addRow(QCoreApplication.translate("PHGX", "Max β trials"), self._beta_trials)
         self._sync_solver()  # establish the interlock before the page shows
         return box
 
     def _build_run_group(self) -> QGroupBox:
-        box = QGroupBox("Run"); form = QFormLayout(box)
-        self._inv_btn = QPushButton("Run 3D inversion")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Run")); form = QFormLayout(box)
+        self._inv_btn = QPushButton(QCoreApplication.translate("PHGX", "Run 3D inversion"))
         self._inv_btn.setProperty("primary", True)
         self._inv_btn.setIcon(theme.icon("fa5s.cubes", color="#ffffff"))
         self._inv_btn.clicked.connect(self._run_inversion)
-        form.addRow(self._inv_btn)
+        form.addRow(i18n.tr(self._inv_btn))
         # How much of the survey the next run takes, said where Run is pressed.
         self._run_scope = QLabel("")
         self._run_scope.setWordWrap(True)
         self._run_scope.setVisible(False)
-        form.addRow(self._run_scope)
-        self._export_btn = QPushButton("Export model…")
+        form.addRow(i18n.tr(self._run_scope))
+        self._export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export model…"))
         self._export_btn.setIcon(theme.icon("fa5s.file-csv"))
         self._export_btn.setToolTip(
-            "Save the recovered 3D model as CSV (one row per voxel, with its "
-            "centre and extent) plus the raw .npz, to a folder you choose."
+            QCoreApplication.translate("PHGX", "Save the recovered 3D model as CSV (one row per voxel, with its "
+            "centre and extent) plus the raw .npz, to a folder you choose.")
         )
         self._export_btn.setEnabled(False)
         self._export_btn.clicked.connect(self._export_model)
-        form.addRow(self._export_btn)
-        form.addRow(self.map_export_button())
+        form.addRow(i18n.tr(self._export_btn))
+        form.addRow(i18n.tr(self.map_export_button()))
         self._backend_label = QLabel()
         self._backend_label.setWordWrap(True)
         self._backend_label.setStyleSheet("font-size:8pt;")
-        form.addRow("Backend", self._backend_label)
+        form.addRow(QCoreApplication.translate("PHGX", "Backend"), self._backend_label)
         self._inv_progress = QProgressBar(); self._inv_progress.setVisible(False)
         self._inv_stop = self.stop_button("The 3D inversion")
-        form.addRow(progress_with_stop(self._inv_progress, self._inv_stop))
+        form.addRow(i18n.tr(progress_with_stop(self._inv_progress, self._inv_stop)))
         return box
 
     def _export_model(self) -> None:
@@ -365,7 +365,7 @@ class GravMagProcessingModule(BaseModule):
             self.log("Run the 3D inversion first.", "warn")
             return
         folder = select_directory(
-            self, "Export 3D model to folder", self.state.output_dir or Path.cwd()
+            self, QCoreApplication.translate("PHGX", "Export 3D model to folder"), self.state.output_dir or Path.cwd()
         )
         if not folder:
             return
@@ -426,7 +426,7 @@ class GravMagProcessingModule(BaseModule):
         if hasattr(self, "_noise_floor"):
             self._noise_floor.setValue(2.0 if self._kind.currentText() == "magnetics" else 0.5)
         # mGal and nT are not one scale: typed colour limits go with the field.
-        self._station_range_label.setText(f"Colour scale ({self._field_unit()})")
+        self._station_range_label.setText(QCoreApplication.translate("PHGX", "Colour scale ({0})").format(self._field_unit()))
         for limits in (self._station_range, self._qc_range):
             limits.unlock()
         if hasattr(self, "_qc_field"):
@@ -447,7 +447,7 @@ class GravMagProcessingModule(BaseModule):
         page = QWidget(); layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._plot_widget, stretch=1)
-        self._station_range_label = QLabel("Colour scale (mGal)")
+        self._station_range_label = QLabel(QCoreApplication.translate("PHGX", "Colour scale (mGal)"))
         self._station_range = ColorRange(what="the station colours")
         self._station_range.changed.connect(lambda: self._refresh_scatter(show=False))
         row = QHBoxLayout()
@@ -463,15 +463,15 @@ class GravMagProcessingModule(BaseModule):
         """Build the gridded observed/regional/residual map and profile picker."""
         page = QWidget(); layout = QVBoxLayout(page)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Map field:"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Map field:")))
         self._qc_field = QComboBox(); self._qc_field.addItems(["Observed", "Regional", "Residual"])
         self._qc_field.currentTextChanged.connect(lambda _name: self._draw_qc())
         row.addWidget(self._qc_field)
-        self._profile_pick = QCheckBox("Pick profile endpoints")
-        self._profile_pick.setToolTip("Click two points on the map to extract a profile.")
+        self._profile_pick = QCheckBox(QCoreApplication.translate("PHGX", "Pick profile endpoints"))
+        self._profile_pick.setToolTip(QCoreApplication.translate("PHGX", "Click two points on the map to extract a profile."))
         self._profile_pick.toggled.connect(lambda checked: self._clear_qc_profile() if not checked else None)
         row.addWidget(self._profile_pick)
-        reset = QPushButton("Reset profile")
+        reset = QPushButton(QCoreApplication.translate("PHGX", "Reset profile"))
         reset.clicked.connect(self._clear_qc_profile)
         row.addWidget(reset); row.addStretch(1)
         layout.addLayout(row)
@@ -510,12 +510,12 @@ class GravMagProcessingModule(BaseModule):
         colour_row.addWidget(self._qc_colormap)
         colour_row.addWidget(self._qc_range)
         layout.addLayout(colour_row)
-        self._qc_stats = QLabel("Load station data to calculate QC maps.")
+        self._qc_stats = QLabel(QCoreApplication.translate("PHGX", "Load station data to calculate QC maps."))
         self._qc_stats.setWordWrap(True)
         layout.addWidget(self._qc_stats)
         self._profile_plot = pg.PlotWidget(); self._profile_plot.setBackground("w")
         self._profile_plot.showGrid(x=True, y=True, alpha=0.3)
-        self._profile_plot.setLabel("left", "Anomaly")
+        self._profile_plot.setLabel("left", QCoreApplication.translate("PHGX", "Anomaly"))
         self._profile_plot.setMinimumHeight(180)
         layout.addWidget(self._profile_plot, stretch=1)
         self._qc_plot.scene().sigMouseClicked.connect(self._on_qc_map_click)
@@ -529,7 +529,7 @@ class GravMagProcessingModule(BaseModule):
             self._qc = qc_products(self._x, self._y, vals, detrend=self._detrend.value())
         except Exception as exc:  # noqa: BLE001
             self._qc = None
-            self._qc_stats.setText(f"QC unavailable: {exc}")
+            self._qc_stats.setText(QCoreApplication.translate("PHGX", "QC unavailable: {0}").format(exc))
             return
         self._clear_qc_profile()
         self._draw_qc(auto_range=True)
@@ -605,12 +605,10 @@ class GravMagProcessingModule(BaseModule):
         self._qc_stations.setData(self._qc["x"], self._qc["y"])
         stats = self._qc["stats"][field_name]
         unit = "mGal" if self._kind.currentText() == "gravity" else "nT"
-        self._qc_plot.setTitle(f"{field_name} anomaly ({unit})")
-        self._profile_plot.setLabel("left", f"Anomaly ({unit})")
+        self._qc_plot.setTitle(QCoreApplication.translate("PHGX", "{0} anomaly ({1})").format(field_name, unit))
+        self._profile_plot.setLabel("left", QCoreApplication.translate("PHGX", "Anomaly ({0})").format(unit))
         self._qc_stats.setText(
-            f"Degree-{self._qc['detrend']} detrend · {field_name}: "
-            f"min {stats['min']:.4g}, max {stats['max']:.4g}, mean {stats['mean']:.4g}, "
-            f"std {stats['std']:.4g} {unit}.")
+            QCoreApplication.translate("PHGX", "Degree-{0} detrend · {1}: min {2:.4g}, max {3:.4g}, mean {4:.4g}, std {5:.4g} {6}.").format(self._qc['detrend'], field_name, stats['min'], stats['max'], stats['mean'], stats['std'], unit))
         if auto_range:
             self._qc_plot.autoRange()
 
@@ -676,12 +674,11 @@ class GravMagProcessingModule(BaseModule):
         status = backend_status()
         available = bool(status["available"])
         if available:
-            self._backend_label.setText("Ready: SimPEG potential-field backend available.")
+            self._backend_label.setText(QCoreApplication.translate("PHGX", "Ready: SimPEG potential-field backend available."))
             theme.set_tone(self._backend_label, "ok")
         else:
             self._backend_label.setText(
-                "Unavailable: install the geophysics extra (SimPEG + pymatsolver). "
-                f"{status['error']}")
+                QCoreApplication.translate("PHGX", "Unavailable: install the geophysics extra (SimPEG + pymatsolver). {0}").format(status['error']))
             self._backend_label.setStyleSheet("color:#9b5a00; font-size:8pt;")
         if not self._inv_progress.isVisible():
             self._inv_btn.setEnabled(available)
@@ -718,14 +715,14 @@ class GravMagProcessingModule(BaseModule):
         from PyHydroGeophysX.qt_apps.widgets.project_dialogs import confirm_project_for_data
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Load station file", "", _FILE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load station file"), "", _FILE_FILTER)
         if not path:
             return
         try:
             table = io_utils.load_xyz_table(path, min_cols=3)
         except Exception as exc:  # noqa: BLE001
             self.log(f"Could not load data: {exc}", "error")
-            self._info.setText(f"Load failed: {exc}")
+            self._info.setText(QCoreApplication.translate("PHGX", "Load failed: {0}").format(exc))
             return
         self._set_station_data(table, Path(path))
 
@@ -766,8 +763,8 @@ class GravMagProcessingModule(BaseModule):
         self._fields = {"Observed": np.asarray(table[:, 2], dtype=float)}
         self._source_path = Path(path)
         elevation = "per-station z_m" if self._z is not None else "global elevation fallback"
-        self._elevation_source.setText(f"Using {elevation}.")
-        self._info.setText(f"{self._source_path.name}<br>{self._x.size} stations · {elevation}")
+        self._elevation_source.setText(QCoreApplication.translate("PHGX", "Using {0}.").format(elevation))
+        self._info.setText(QCoreApplication.translate("PHGX", "{0}<br>{1} stations · {2}").format(self._source_path.name, self._x.size, elevation))
         self.log(f"Loaded {self._x.size} stations from {self._source_path.name}", "success")
         loaded, usable, _used = self._station_counts()
         if usable < loaded:
@@ -849,7 +846,7 @@ class GravMagProcessingModule(BaseModule):
             self._run_scope.setVisible(False)
             return
         loaded, usable, used = counts
-        self._run_scope.setText(self._scope_text())
+        self._run_scope.setText(i18n.tr(self._scope_text()))
         theme.set_tone(self._run_scope,
                        "hint" if used >= usable and usable == loaded else "warn")
         self._run_scope.setVisible(True)
@@ -918,7 +915,7 @@ class GravMagProcessingModule(BaseModule):
         self._gravmag_recipe_path = str(recipe_path)
         self._inv_busy = BusyStateController([self._inv_btn])
         self._inv_busy.start()
-        self._inv_btn.setText("Inverting…")
+        self._inv_btn.setText(QCoreApplication.translate("PHGX", "Inverting…"))
         self._inv_progress.setVisible(True); self._inv_progress.setRange(0, 0)
         self.log(f"Running SimPEG 3D {kind} inversion (detrend "
                  f"{self._detrend.value()})… {self._scope_text()}", "info")
@@ -1041,7 +1038,7 @@ class GravMagProcessingModule(BaseModule):
         if self._inv_busy is not None:
             self._inv_busy.finish()
             self._inv_busy = None
-        self._inv_btn.setText("Run 3D inversion")
+        self._inv_btn.setText(QCoreApplication.translate("PHGX", "Run 3D inversion"))
         self._inv_progress.setVisible(False)
         self._refresh_backend_state()
 
@@ -1243,7 +1240,7 @@ class GravMagProcessingModule(BaseModule):
         except Exception:  # noqa: BLE001
             _logger.debug("GravMagProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "Station file: three columns x, y, value (gravity mGal / magnetics nT)."
-        dlg = QDialog(self); dlg.setWindowTitle("Gravity / Magnetics input format")
+        dlg = QDialog(self); dlg.setWindowTitle(QCoreApplication.translate("PHGX", "Gravity / Magnetics input format"))
         dlg.resize(720, 600); lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
         try:
@@ -1252,7 +1249,7 @@ class GravMagProcessingModule(BaseModule):
             _logger.debug("GravMagProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)
+        close = QPushButton(QCoreApplication.translate("PHGX", "Close")); close.clicked.connect(dlg.accept); lay.addWidget(close)
         dlg.exec()
 
 

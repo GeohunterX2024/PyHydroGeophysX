@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 from typing import Optional, Tuple
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QCoreApplication, Signal
 from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QWidget
 
 from PyHydroGeophysX.qt_apps.qt_utils import PlainDoubleSpinBox
@@ -42,12 +42,9 @@ class ColorRange(QWidget):
         super().__init__(parent)
         self._positive = bool(positive)
         self._decimals = int(decimals)
-        self._lock = QCheckBox("Lock range")
+        self._lock = QCheckBox(QCoreApplication.translate("PHGX", "Lock range"))
         self._lock.setToolTip(
-            f"Keep {what} on the limits typed beside this instead of rescaling to "
-            "each plot. Two surveys, time steps or lines can only be compared on "
-            "one scale. Unticked, the boxes show the limits in use, so ticking it "
-            "keeps what is on screen.")
+            QCoreApplication.translate("PHGX", "Keep {0} on the limits typed beside this instead of rescaling to each plot. Two surveys, time steps or lines can only be compared on one scale. Unticked, the boxes show the limits in use, so ticking it keeps what is on screen.").format(what))
         self._lock.toggled.connect(self._on_locked)
         self._lower = PlainDoubleSpinBox()
         self._upper = PlainDoubleSpinBox()
@@ -58,7 +55,7 @@ class ColorRange(QWidget):
             box.setMaximumWidth(96)
             box.setKeyboardTracking(False)      # redraw on commit, not per keystroke
             box.setEnabled(False)
-            box.setToolTip(f"{name} colour limit, used while “Lock range” is ticked.")
+            box.setToolTip(QCoreApplication.translate("PHGX", "{0} colour limit, used while “Lock range” is ticked.").format(name))
             box.valueChanged.connect(self._on_limit_changed)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

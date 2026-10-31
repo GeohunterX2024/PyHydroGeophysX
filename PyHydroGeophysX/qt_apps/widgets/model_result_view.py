@@ -10,12 +10,14 @@ result.
 from __future__ import annotations
 
 import logging
+from PySide6.QtCore import QCoreApplication
 from typing import Any
 
 import numpy as np
 from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QSpinBox, QVBoxLayout, QWidget
 
 from PyHydroGeophysX.results.protocol import GridGeometry, LayeredGeometry, MeshGeometry, ModelResultV2
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -35,12 +37,12 @@ class ModelResultView(QWidget):
         self._result: ModelResultV2 | None = None
         self._parameter = QComboBox()
         self._parameter.currentIndexChanged.connect(self._redraw)
-        self._mask = QCheckBox("Mask")
+        self._mask = QCheckBox(QCoreApplication.translate("PHGX", "Mask"))
         self._mask.setChecked(True)
-        self._mask.setToolTip("Blank what the data do not constrain; the caption says by what.")
+        self._mask.setToolTip(QCoreApplication.translate("PHGX", "Blank what the data do not constrain; the caption says by what."))
         self._mask.toggled.connect(self._redraw)
         self._slice = QSpinBox()
-        self._slice.setPrefix("z slice ")
+        self._slice.setPrefix(QCoreApplication.translate("PHGX", "z slice "))
         self._slice.valueChanged.connect(self._redraw)
         self._slice.setVisible(False)
         self._figure = Figure(figsize=(7, 4), layout="constrained")
@@ -48,7 +50,7 @@ class ModelResultView(QWidget):
         self._caption = QLabel()
         self._caption.setWordWrap(True)
         bar = QHBoxLayout()
-        bar.addWidget(QLabel("Parameter"))
+        bar.addWidget(QLabel(QCoreApplication.translate("PHGX", "Parameter")))
         bar.addWidget(self._parameter)
         bar.addWidget(self._mask)
         bar.addWidget(self._slice)
@@ -64,7 +66,7 @@ class ModelResultView(QWidget):
         self._parameter.clear()
         for name, parameter in result.parameters.items():
             label = f"{name} [{parameter.unit}]" + (f" - {parameter.description}" if parameter.description else "")
-            self._parameter.addItem(label, name)
+            self._parameter.addItem(i18n.tr(label), name)
         self._parameter.blockSignals(False)
         geometry = result.geometry
         three_d_grid = isinstance(geometry, GridGeometry) and len(geometry.edges) == 3
@@ -86,11 +88,11 @@ class ModelResultView(QWidget):
         mask, basis = self._result.display_mask()
         if mask is not None and self._mask.isChecked():
             values[~mask] = np.nan
-            self._caption.setText(f"Masked: {basis}.")
+            self._caption.setText(QCoreApplication.translate("PHGX", "Masked: {0}.").format(basis))
         elif mask is not None:
-            self._caption.setText(f"Unmasked; the default mask would apply: {basis}.")
+            self._caption.setText(QCoreApplication.translate("PHGX", "Unmasked; the default mask would apply: {0}.").format(basis))
         else:
-            self._caption.setText("No coverage, DOI or resolution with this result: every cell is shown.")
+            self._caption.setText(QCoreApplication.translate("PHGX", "No coverage, DOI or resolution with this result: every cell is shown."))
         return values, parameter
 
     def _redraw(self, *_args: Any) -> None:
@@ -145,7 +147,7 @@ class ModelResultView(QWidget):
             cells = cells[:, :, k]
             axes.set_ylabel("y [m]")
             axes.set_aspect("equal")
-            axes.set_title(f"slice {k + 1} of {geometry.shape[2]}", loc="right", fontsize=8)
+            axes.set_title(QCoreApplication.translate("PHGX", "slice {0} of {1}").format(k + 1, geometry.shape[2]), loc="right", fontsize=8)
         else:
             axes.set_ylabel(f"{geometry.axes[1]} [m]")
         axes.set_xlabel(f"{geometry.axes[0]} [m]")
@@ -160,8 +162,8 @@ class ModelResultView(QWidget):
             edges = np.r_[tops[0], bottom]
             axes.step(np.r_[cells[0], cells[0][-1]], edges, where="post")
             axes.invert_yaxis()
-            axes.set_ylabel("depth [m]")
-            axes.set_xlabel("log10 value" if log_scale else "value")
+            axes.set_ylabel(QCoreApplication.translate("PHGX", "depth [m]"))
+            axes.set_xlabel(QCoreApplication.translate("PHGX", "log10 value") if log_scale else QCoreApplication.translate("PHGX", "value"))
             return None
         positions = (
             np.arange(geometry.n_soundings, dtype=float) if geometry.positions is None else geometry.positions
@@ -177,8 +179,8 @@ class ModelResultView(QWidget):
             grid[:, s] = cells[s, layer]
         mesh = axes.pcolormesh(x_edges, depth_edges, np.ma.masked_invalid(grid), cmap=cmap)
         axes.invert_yaxis()
-        axes.set_xlabel("distance [m]")
-        axes.set_ylabel("depth [m]")
+        axes.set_xlabel(QCoreApplication.translate("PHGX", "distance [m]"))
+        axes.set_ylabel(QCoreApplication.translate("PHGX", "depth [m]"))
         return mesh
 
 

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QCoreApplication, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -46,7 +46,7 @@ from PyHydroGeophysX.data_processing.joint_io import save_joint_observations
 from PyHydroGeophysX.data_processing import em1d as em_data
 from PyHydroGeophysX.inversion import em1d_line as em_line
 from PyHydroGeophysX.inversion import gravmag as gravmag_inversion
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -189,9 +189,9 @@ class JointInversionModule(BaseModule):
 
     def _build_nav(self) -> QHBoxLayout:
         layout = QHBoxLayout()
-        self._back = QPushButton("Back")
+        self._back = QPushButton(QCoreApplication.translate("PHGX", "Back"))
         self._back.setIcon(theme.icon("fa5s.arrow-left"))
-        self._next = QPushButton("Next")
+        self._next = QPushButton(QCoreApplication.translate("PHGX", "Next"))
         self._next.setIcon(theme.icon("fa5s.arrow-right"))
         layout.addWidget(self._back)
         layout.addStretch(1)
@@ -216,18 +216,18 @@ class JointInversionModule(BaseModule):
     def _build_methods_step(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.addWidget(QLabel("<h3>Step 1 · Select two geophysical methods</h3>"))
+        layout.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 1 · Select two geophysical methods</h3>")))
         layout.addWidget(QLabel(
-            "The compatibility registry distinguishes simultaneous joint inversion from "
-            "cooperative/sequential constraints. Planned combinations are visible but cannot run."))
+            QCoreApplication.translate("PHGX", "The compatibility registry distinguishes simultaneous joint inversion from "
+            "cooperative/sequential constraints. Planned combinations are visible but cannot run.")))
         form = QFormLayout()
         self._method_a = QComboBox(); self._method_a.addItems(METHODS)
         self._method_b = QComboBox(); self._method_b.addItems(METHODS)
         self._method_b.setCurrentText("SRT")
         self._strategy = QComboBox()
-        form.addRow("Method A", self._method_a)
-        form.addRow("Method B", self._method_b)
-        form.addRow("Joint strategy", self._strategy)
+        form.addRow(QCoreApplication.translate("PHGX", "Method A"), self._method_a)
+        form.addRow(QCoreApplication.translate("PHGX", "Method B"), self._method_b)
+        form.addRow(QCoreApplication.translate("PHGX", "Joint strategy"), self._strategy)
         layout.addLayout(form)
         self._capability = QLabel(); self._capability.setWordWrap(True)
         layout.addWidget(self._capability)
@@ -248,30 +248,26 @@ class JointInversionModule(BaseModule):
         try:
             capability = get_joint_capability(self._method_a.currentText(), self._method_b.currentText())
         except ValueError as exc:
-            self._capability.setText(f"<span style='color:{theme.color('red')}'><b>Unavailable:</b> {html.escape(str(exc))}</span>")
+            self._capability.setText(QCoreApplication.translate("PHGX", "<span style='color:{0}'><b>Unavailable:</b> {1}</span>").format(theme.color('red'), html.escape(str(exc))))
             self._strategy.blockSignals(True); self._strategy.clear(); self._strategy.blockSignals(False)
             self._update_strip()
             return
         self._strategy.blockSignals(True)
         self._strategy.clear()
         for strategy_id, label in capability.strategies.items():
-            self._strategy.addItem(label, strategy_id)
+            self._strategy.addItem(i18n.tr(label), strategy_id)
         self._strategy.blockSignals(False)
         backend_error = self._backend_error(capability)
         if capability.implemented and not backend_error:
             backend_text = ", ".join(capability.backends) or "registered runner"
             self._capability.setText(
-                f"<span style='color:{_P['green']}'><b>Available</b></span> · "
-                f"{capability.dimension} · {capability.model_parameter} · "
-                f"backend: {html.escape(backend_text)}<br>{capability.description}")
+                QCoreApplication.translate("PHGX", "<span style='color:{0}'><b>Available</b></span> · {1} · {2} · backend: {3}<br>{4}").format(_P['green'], capability.dimension, capability.model_parameter, html.escape(backend_text), capability.description))
         elif backend_error:
             self._capability.setText(
-                f"<span style='color:{theme.color('red')}'><b>Backend unavailable:</b> "
-                f"{html.escape(backend_error)}</span>")
+                QCoreApplication.translate("PHGX", "<span style='color:{0}'><b>Backend unavailable:</b> {1}</span>").format(theme.color('red'), html.escape(backend_error)))
         else:
             self._capability.setText(
-                f"<span style='color:{theme.color('red')}'><b>Planned:</b> no scientifically validated "
-                "joint runner is registered for this pair.</span>")
+                QCoreApplication.translate("PHGX", "<span style='color:{0}'><b>Planned:</b> no scientifically validated joint runner is registered for this pair.</span>").format(theme.color('red')))
         self._validated = False
         self._result = None
         self._update_data_labels()
@@ -313,10 +309,10 @@ class JointInversionModule(BaseModule):
     def _build_data_step(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.addWidget(QLabel("<h3>Step 2 · Load or reuse observed data</h3>"))
+        layout.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 2 · Load or reuse observed data</h3>")))
         layout.addWidget(QLabel(
-            "Joint inversion always requires observations. Existing recovered models may be "
-            "used later as starting/reference models, but never replace observed data."))
+            QCoreApplication.translate("PHGX", "Joint inversion always requires observations. Existing recovered models may be "
+            "used later as starting/reference models, but never replace observed data.")))
         self._data_groups: List[QGroupBox] = []
         self._resource_combos: List[QComboBox] = []
         for slot in range(2):
@@ -324,13 +320,13 @@ class JointInversionModule(BaseModule):
             row = QHBoxLayout(group)
             combo = QComboBox()
             combo.currentIndexChanged.connect(lambda _index, target=slot: self._resource_selected(target))
-            browse = QPushButton("Upload file…")
+            browse = QPushButton(QCoreApplication.translate("PHGX", "Upload file…"))
             browse.setIcon(theme.icon("fa5s.folder-open"))
             browse.clicked.connect(lambda _checked=False, target=slot: self._browse_data(target))
             row.addWidget(combo, stretch=1); row.addWidget(browse)
             self._data_groups.append(group); self._resource_combos.append(combo)
             layout.addWidget(group)
-        example = QPushButton("Use bundled example for selected pair")
+        example = QPushButton(QCoreApplication.translate("PHGX", "Use bundled example for selected pair"))
         example.setIcon(theme.icon("fa5s.flask"))
         example.clicked.connect(self._use_example)
         layout.addWidget(example)
@@ -350,7 +346,7 @@ class JointInversionModule(BaseModule):
         except ValueError:
             methods = (self._method_a.currentText(), self._method_b.currentText())
         for slot, method in enumerate(methods):
-            self._data_groups[slot].setTitle(f"{method} observations")
+            self._data_groups[slot].setTitle(QCoreApplication.translate("PHGX", "{0} observations").format(method))
         self._refresh_resource_choices()
 
     def _refresh_resource_choices(self) -> None:
@@ -364,10 +360,10 @@ class JointInversionModule(BaseModule):
             combo = self._resource_combos[slot]
             selected = combo.currentData()
             combo.blockSignals(True); combo.clear()
-            combo.addItem("Choose a project resource or upload a file", None)
+            combo.addItem(QCoreApplication.translate("PHGX", "Choose a project resource or upload a file"), None)
             if hasattr(self.state, "list_geophysical_resources"):
                 for resource in self.state.list_geophysical_resources(method, "observed_data"):
-                    combo.addItem(resource["label"], resource["id"])
+                    combo.addItem(i18n.tr(resource["label"]), resource["id"])
             if selected:
                 index = combo.findData(selected)
                 if index >= 0:
@@ -418,7 +414,7 @@ class JointInversionModule(BaseModule):
             filters = "Station data (*.csv *.txt *.dat);;All files (*)"
         else:
             return
-        path, _ = QFileDialog.getOpenFileName(self, f"Load {method} observations", "", filters)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load {0} observations").format(method), "", filters)
         if not path:
             return
         try:
@@ -548,23 +544,23 @@ class JointInversionModule(BaseModule):
     # -- Step 3 -------------------------------------------------------------
     def _build_compatibility_step(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page)
-        layout.addWidget(QLabel("<h3>Step 3 · Check geometry and model compatibility</h3>"))
+        layout.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 3 · Check geometry and model compatibility</h3>")))
         self._alignment_note = QLabel(); self._alignment_note.setWordWrap(True)
         layout.addWidget(self._alignment_note)
-        offsets = QGroupBox("Explicit profile-coordinate offsets (ERT + SRT only)")
+        offsets = QGroupBox(QCoreApplication.translate("PHGX", "Explicit profile-coordinate offsets (ERT + SRT only)"))
         form = QFormLayout(offsets)
         self._ert_x = self._dspin(0, -1e6, 1e6, 1, 2)
         self._ert_z = self._dspin(0, -1e6, 1e6, 1, 2)
         self._srt_x = self._dspin(0, -1e6, 1e6, 1, 2)
         self._srt_z = self._dspin(0, -1e6, 1e6, 1, 2)
-        form.addRow("ERT x offset (m)", self._ert_x); form.addRow("ERT z offset (m)", self._ert_z)
-        form.addRow("SRT x offset (m)", self._srt_x); form.addRow("SRT z offset (m)", self._srt_z)
+        form.addRow(QCoreApplication.translate("PHGX", "ERT x offset (m)"), self._ert_x); form.addRow(QCoreApplication.translate("PHGX", "ERT z offset (m)"), self._ert_z)
+        form.addRow(QCoreApplication.translate("PHGX", "SRT x offset (m)"), self._srt_x); form.addRow(QCoreApplication.translate("PHGX", "SRT z offset (m)"), self._srt_z)
         self._offset_group = offsets; layout.addWidget(offsets)
-        pairing_group = QGroupBox("Explicit EM sounding pairing")
+        pairing_group = QGroupBox(QCoreApplication.translate("PHGX", "Explicit EM sounding pairing"))
         pairing_row = QHBoxLayout(pairing_group)
-        pairing_button = QPushButton("Load pairing CSV…")
+        pairing_button = QPushButton(QCoreApplication.translate("PHGX", "Load pairing CSV…"))
         pairing_button.clicked.connect(self._load_pairing_table)
-        self._pairing_label = QLabel("No pairing table loaded.")
+        self._pairing_label = QLabel(QCoreApplication.translate("PHGX", "No pairing table loaded."))
         pairing_row.addWidget(pairing_button); pairing_row.addWidget(self._pairing_label, stretch=1)
         self._pairing_group = pairing_group; layout.addWidget(pairing_group)
         self._alignment_figure = Figure(figsize=(7, 3), tight_layout=True)
@@ -573,7 +569,7 @@ class JointInversionModule(BaseModule):
         bar, self._alignment_toolbar = toolbar_row(self._alignment_canvas, page)
         layout.addWidget(bar)
         layout.addWidget(self._alignment_canvas, stretch=1)
-        validate = QPushButton("Validate compatibility")
+        validate = QPushButton(QCoreApplication.translate("PHGX", "Validate compatibility"))
         validate.setProperty("primary", True); validate.clicked.connect(self._validate)
         layout.addWidget(validate)
         return page
@@ -598,17 +594,17 @@ class JointInversionModule(BaseModule):
                              elevation_name="Elevation / z")
             axis.legend(); axis.grid(alpha=0.25)
             self._alignment_note.setText(
-                "Offsets are never inferred or applied automatically. Confirm that both sensor arrays "
-                "belong to the same profile before validation.")
+                QCoreApplication.translate("PHGX", "Offsets are never inferred or applied automatically. Confirm that both sensor arrays "
+                "belong to the same profile before validation."))
         elif pair == ("FDEM", "TDEM"):
             counts = []
             for method in pair:
                 value = self._data.get(method, {})
                 counts.append(len(value.get("soundings", [])) or (1 if value else 0))
-            axis.bar(pair, counts, color=("#007aff", "#ff9500")); axis.set_ylabel("Soundings")
+            axis.bar(pair, counts, color=("#007aff", "#ff9500")); axis.set_ylabel(QCoreApplication.translate("PHGX", "Soundings"))
             self._alignment_note.setText(
-                "With coordinates, soundings are matched one-to-one by distance. Without coordinates, "
-                "equal-sized lines are paired by index; unequal counts require a pairing table.")
+                QCoreApplication.translate("PHGX", "With coordinates, soundings are matched one-to-one by distance. Without coordinates, "
+                "equal-sized lines are paired by index; unequal counts require a pairing table."))
         elif pair == ("Gravity", "Magnetics") and all(method in self._data for method in pair):
             for method, color, marker in (
                 ("Gravity", "#007aff", "o"), ("Magnetics", "#ff3b30", "+")
@@ -623,8 +619,8 @@ class JointInversionModule(BaseModule):
             set_length_axis(axis, "y", "Northing / y")
             axis.legend(); axis.grid(alpha=0.25); axis.set_aspect("equal", adjustable="datalim")
             self._alignment_note.setText(
-                "Both surveys must use the same projected coordinate system and overlap in x and y. "
-                "The workflow does not infer a reprojection or coordinate offset."
+                QCoreApplication.translate("PHGX", "Both surveys must use the same projected coordinate system and overlap in x and y. "
+                "The workflow does not infer a reprojection or coordinate offset.")
             )
         else:
             axis.text(0.5, 0.5, "Load both observations first.", ha="center", va="center")
@@ -633,7 +629,7 @@ class JointInversionModule(BaseModule):
 
     def _load_pairing_table(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load FDEM/TDEM pairing table", "", "CSV (*.csv);;All files (*)"
+            self, QCoreApplication.translate("PHGX", "Load FDEM/TDEM pairing table"), "", "CSV (*.csv);;All files (*)"
         )
         if not path:
             return
@@ -653,7 +649,7 @@ class JointInversionModule(BaseModule):
             )
             return
         self._pairing_table = pairing
-        self._pairing_label.setText(f"{Path(path).name} · {len(pairing)} pair(s)")
+        self._pairing_label.setText(QCoreApplication.translate("PHGX", "{0} · {1} pair(s)").format(Path(path).name, len(pairing)))
         self._validated = False; self._update_strip()
 
     def _validate(self) -> None:
@@ -716,16 +712,16 @@ class JointInversionModule(BaseModule):
     # -- Step 4 -------------------------------------------------------------
     def _build_parameters_step(self) -> QWidget:
         page = QWidget(); outer = QVBoxLayout(page)
-        outer.addWidget(QLabel("<h3>Step 4 · Choose a preset and tune joint parameters</h3>"))
+        outer.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 4 · Choose a preset and tune joint parameters</h3>")))
         form = QFormLayout()
         self._preset = QComboBox(); self._preset.currentIndexChanged.connect(self._apply_preset)
-        self._baseline = QCheckBox("Run independent single-method inversions for comparison")
+        self._baseline = QCheckBox(QCoreApplication.translate("PHGX", "Run independent single-method inversions for comparison"))
         self._baseline.setChecked(True)
         self._max_iter = self._ispin(20, 1, 200)
-        form.addRow("Preset", self._preset); form.addRow("Maximum iterations", self._max_iter)
-        form.addRow("Baseline comparison", self._baseline)
+        form.addRow(QCoreApplication.translate("PHGX", "Preset"), self._preset); form.addRow(QCoreApplication.translate("PHGX", "Maximum iterations"), self._max_iter)
+        form.addRow(QCoreApplication.translate("PHGX", "Baseline comparison"), self._baseline)
         outer.addLayout(form)
-        advanced = QGroupBox("Advanced")
+        advanced = QGroupBox(QCoreApplication.translate("PHGX", "Advanced"))
         advanced.setCheckable(True); advanced.setChecked(False)
         advanced_inner = QWidget()
         advanced_form = QFormLayout(advanced_inner)
@@ -740,16 +736,16 @@ class JointInversionModule(BaseModule):
         self._lambda_cg_b = self._dspin(80, 0, 1e7, 10)
         self._relative_error = self._dspin(0.05, 0.001, 1.0, 0.01, 3)
         self._velocity_threshold = self._dspin(1000, 50, 20000, 50, 0)
-        self._use_interface = QCheckBox("Use current project seismic interface when available")
+        self._use_interface = QCheckBox(QCoreApplication.translate("PHGX", "Use current project seismic interface when available"))
         self._use_interface.setChecked(True)
         self._n_layers = self._ispin(15, 2, 100)
         self._smoothness = self._dspin(0.3, 0, 1000, 0.1)
         self._backend = QComboBox()
-        self._backend.addItem("Auto (SimPEG native, SciPy fallback)", "auto")
-        self._backend.addItem("SimPEG native", "simpeg")
-        self._backend.addItem("SciPy fallback", "scipy")
+        self._backend.addItem(QCoreApplication.translate("PHGX", "Auto (SimPEG native, SciPy fallback)"), "auto")
+        self._backend.addItem(QCoreApplication.translate("PHGX", "SimPEG native"), "simpeg")
+        self._backend.addItem(QCoreApplication.translate("PHGX", "SciPy fallback"), "scipy")
         self._backend.setToolTip(
-            "Auto uses native SimPEG joint inversion when SimPEG >= 0.25.2 is available."
+            QCoreApplication.translate("PHGX", "Auto uses native SimPEG joint inversion when SimPEG >= 0.25.2 is available.")
         )
         self._weight_a = self._dspin(1, 0.001, 1000, 0.1)
         self._weight_b = self._dspin(1, 0.001, 1000, 0.1)
@@ -785,7 +781,7 @@ class JointInversionModule(BaseModule):
             "pf_declination": ("Inducing field declination (°)", self._pf_declination),
         }
         for label, widget in self._advanced_rows.values():
-            advanced_form.addRow(label, widget)
+            advanced_form.addRow(i18n.tr(label), widget)
         outer.addWidget(advanced)
         outer.addStretch(1)
         return page
@@ -806,7 +802,7 @@ class JointInversionModule(BaseModule):
         current = self._preset.currentData()
         self._preset.blockSignals(True); self._preset.clear()
         for label, value in presets:
-            self._preset.addItem(label, value)
+            self._preset.addItem(i18n.tr(label), value)
         index = self._preset.findData(current)
         self._preset.setCurrentIndex(max(index, 0)); self._preset.blockSignals(False)
         ert_joint = pair == ("ERT", "SRT") and strategy != "sequential_structure"
@@ -834,7 +830,7 @@ class JointInversionModule(BaseModule):
         for widget, label in ((self._weight_a, weight_labels[0]), (self._weight_b, weight_labels[1])):
             label_widget = widget.parentWidget().layout().labelForField(widget)
             if label_widget is not None:
-                label_widget.setText(label)
+                label_widget.setText(i18n.tr(label))
             widget.setVisible(em or potential_field)
             if label_widget is not None:
                 label_widget.setVisible(em or potential_field)
@@ -929,16 +925,16 @@ class JointInversionModule(BaseModule):
     # -- Step 5 -------------------------------------------------------------
     def _build_run_step(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page)
-        layout.addWidget(QLabel("<h3>Step 5 · Review and run</h3>"))
+        layout.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 5 · Review and run</h3>")))
         self._review = QTextBrowser(); layout.addWidget(self._review, stretch=1)
-        self._run_status = QLabel("Ready."); self._run_status.setWordWrap(True)
+        self._run_status = QLabel(QCoreApplication.translate("PHGX", "Ready.")); self._run_status.setWordWrap(True)
         layout.addWidget(self._run_status)
         self._progress = QProgressBar(); self._progress.setVisible(False)
         self._stop = self.stop_button("The joint inversion")
-        self._stop.clicked.connect(lambda: self._run_status.setText("Stopped by user."))
+        self._stop.clicked.connect(lambda: self._run_status.setText(QCoreApplication.translate("PHGX", "Stopped by user.")))
         layout.addWidget(progress_with_stop(self._progress, self._stop))
         row = QHBoxLayout()
-        self._run_button = QPushButton("Run joint inversion")
+        self._run_button = QPushButton(QCoreApplication.translate("PHGX", "Run joint inversion"))
         self._run_button.setProperty("primary", True); self._run_button.clicked.connect(self._run)
         row.addWidget(self._run_button); row.addStretch(1)
         layout.addLayout(row)
@@ -1023,7 +1019,7 @@ class JointInversionModule(BaseModule):
         self._run_busy = BusyStateController([self._run_button])
         self._run_busy.start()
         self._progress.setVisible(True); self._progress.setRange(0, 0)
-        self._run_status.setText("Starting joint inversion…")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Starting joint inversion…"))
         # In a process of its own, so the window keeps painting through both
         # methods' solves; the result object comes back through files.
         worker = ProcessWorkflowWorker(recipe_path, run.run_dir, run.outputs_dir,
@@ -1039,7 +1035,7 @@ class JointInversionModule(BaseModule):
         try:
             record = json.loads(message)
         except (TypeError, ValueError):
-            self._run_status.setText(str(message))
+            self._run_status.setText(i18n.tr(str(message)))
         else:
             self._on_progress(record if isinstance(record, dict) else {"message": message})
 
@@ -1090,7 +1086,7 @@ class JointInversionModule(BaseModule):
 
     def _on_failure(self, message: str) -> None:
         self.fail_persisted_run(message)
-        self._run_status.setText(f"Failed: {message}"); self.log(f"Joint inversion failed: {message}", "error")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Failed: {0}").format(message)); self.log(f"Joint inversion failed: {message}", "error")
 
     def _on_finished(self) -> None:
         self._worker = None; self._progress.setVisible(False)
@@ -1102,32 +1098,32 @@ class JointInversionModule(BaseModule):
     # -- Step 6 -------------------------------------------------------------
     def _build_results_step(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page)
-        header = QHBoxLayout(); header.addWidget(QLabel("<h3>Step 6 · Joint inversion results</h3>"))
+        header = QHBoxLayout(); header.addWidget(QLabel(QCoreApplication.translate("PHGX", "<h3>Step 6 · Joint inversion results</h3>")))
         header.addStretch(1)
-        self._export_button = QPushButton("Export models as CSV…")
+        self._export_button = QPushButton(QCoreApplication.translate("PHGX", "Export models as CSV…"))
         self._export_button.setIcon(theme.icon("fa5s.file-csv"))
         self._export_button.setToolTip(
-            "Write one table per method that carries its own coordinates, so the "
-            "models can be replotted without PyGIMLi or SimPEG."
+            QCoreApplication.translate("PHGX", "Write one table per method that carries its own coordinates, so the "
+            "models can be replotted without PyGIMLi or SimPEG.")
         )
         self._export_button.setEnabled(False)
         self._export_button.clicked.connect(self._export_models_csv)
         header.addWidget(self._export_button)
         header.addWidget(self.map_export_button())
-        open_button = QPushButton("Open output folder"); open_button.clicked.connect(self._open_output)
+        open_button = QPushButton(QCoreApplication.translate("PHGX", "Open output folder")); open_button.clicked.connect(self._open_output)
         header.addWidget(open_button); layout.addLayout(header)
         self._result_tabs = QTabWidget(); layout.addWidget(self._result_tabs, stretch=1)
-        self._overview = QTextBrowser(); self._result_tabs.addTab(self._overview, "Overview")
+        self._overview = QTextBrowser(); self._result_tabs.addTab(self._overview, QCoreApplication.translate("PHGX", "Overview"))
         self._models_figure = Figure(figsize=(8, 4), tight_layout=True)
         self._models_canvas = FigureCanvas(self._models_figure)
-        self._result_tabs.addTab(self._build_models_page(), "Models")
+        self._result_tabs.addTab(self._build_models_page(), QCoreApplication.translate("PHGX", "Models"))
         self._fit_figure = Figure(figsize=(8, 4), tight_layout=True)
         self._fit_canvas = FigureCanvas(self._fit_figure)
         fit_page = QWidget(); fit_layout = QVBoxLayout(fit_page)
         fit_layout.setContentsMargins(0, 0, 0, 0)
         bar, self._fit_toolbar = toolbar_row(self._fit_canvas, fit_page)
         fit_layout.addWidget(bar); fit_layout.addWidget(self._fit_canvas, stretch=1)
-        self._result_tabs.addTab(fit_page, "Data Fit")
+        self._result_tabs.addTab(fit_page, QCoreApplication.translate("PHGX", "Data Fit"))
         baseline_page = QWidget(); baseline_layout = QVBoxLayout(baseline_page)
         self._baseline_view = QTextBrowser(); baseline_layout.addWidget(self._baseline_view)
         self._baseline_figure = Figure(figsize=(8, 3), tight_layout=True)
@@ -1135,8 +1131,8 @@ class JointInversionModule(BaseModule):
         bar, self._baseline_toolbar = toolbar_row(self._baseline_canvas, baseline_page)
         baseline_layout.addWidget(bar)
         baseline_layout.addWidget(self._baseline_canvas, stretch=1)
-        self._result_tabs.addTab(baseline_page, "Baseline Comparison")
-        self._files = QTextBrowser(); self._result_tabs.addTab(self._files, "Files")
+        self._result_tabs.addTab(baseline_page, QCoreApplication.translate("PHGX", "Baseline Comparison"))
+        self._files = QTextBrowser(); self._result_tabs.addTab(self._files, QCoreApplication.translate("PHGX", "Files"))
         return page
 
     def _populate_results(self, result: JointInversionResult) -> None:
@@ -1238,7 +1234,7 @@ class JointInversionModule(BaseModule):
     def _panel_colormap(self, panel: int, name: str, used: set) -> Any:
         """Point panel ``panel``'s chooser at model ``name``; return its map."""
         key, default = self._MODEL_COLOURS[name]
-        self._model_colour_labels[panel].setText(name)
+        self._model_colour_labels[panel].setText(i18n.tr(name))
         used.add(panel)
         return cmaps.to_matplotlib(self._model_colours[panel].set_target(key, default))
 
@@ -1279,7 +1275,7 @@ class JointInversionModule(BaseModule):
                     axis.plot(interface_x, interface_z, "k-", lw=2, label="SRT-derived interface")
                     set_section_axes(axis, mesh=mesh, xlabel="Profile distance",
                                      elevation_name="Elevation / z")
-                    axis.legend(); axis.set_title("Sequential structural constraint")
+                    axis.legend(); axis.set_title(QCoreApplication.translate("PHGX", "Sequential structural constraint"))
                     continue
                 try:
                     import pygimli as pg
@@ -1293,8 +1289,8 @@ class JointInversionModule(BaseModule):
                                      elevation_name="Elevation / z")
                 except Exception:
                     _logger.debug("JointInversionModule._plot_models: ignored error", exc_info=True)
-                    axis.plot(values); axis.set_xlabel("Cell index")
-                axis.set_title(f"{method} joint model")
+                    axis.plot(values); axis.set_xlabel(QCoreApplication.translate("PHGX", "Cell index"))
+                axis.set_title(QCoreApplication.translate("PHGX", "{0} joint model").format(method))
         elif result.methods == ("Gravity", "Magnetics"):
             edges = tuple(np.asarray(item, dtype=float) for item in result.meta.get("edges", ()))
             shape = tuple(int(value) for value in result.meta.get("model_shape", ()))
@@ -1317,10 +1313,10 @@ class JointInversionModule(BaseModule):
                     )
                     set_section_axes(axis, z=edges[2], xlabel="x",
                                      elevation_name="Elevation / z")
-                    axis.set_title(f"{method} · middle-y slice")
+                    axis.set_title(QCoreApplication.translate("PHGX", "{0} · middle-y slice").format(method))
                 else:
-                    axis.plot(values.ravel()); axis.set_xlabel("Cell index")
-                    axis.set_title(f"{method} joint model")
+                    axis.plot(values.ravel()); axis.set_xlabel(QCoreApplication.translate("PHGX", "Cell index"))
+                    axis.set_title(QCoreApplication.translate("PHGX", "{0} joint model").format(method))
         else:
             axis = self._models_figure.add_subplot(111)
             model = np.asarray(result.models["resistivity"], dtype=float)
@@ -1328,7 +1324,7 @@ class JointInversionModule(BaseModule):
             if model.ndim == 1:
                 depths = np.r_[0.0, np.cumsum(thickness)]
                 axis.step(model, depths, where="post"); axis.invert_yaxis()
-                axis.set_xscale("log"); axis.set_xlabel("Resistivity (Ω m)")
+                axis.set_xscale("log"); axis.set_xlabel(QCoreApplication.translate("PHGX", "Resistivity (Ω m)"))
                 set_length_axis(axis, "y", "Depth")
             else:
                 low, high = self._panel_limits(0, "FDEM–TDEM", model)
@@ -1336,8 +1332,8 @@ class JointInversionModule(BaseModule):
                                     cmap=self._panel_colormap(0, "FDEM–TDEM", coloured),
                                     vmin=low, vmax=high)
                 self._models_figure.colorbar(image, ax=axis, label="Resistivity (Ω m)")
-                axis.set_xlabel("Matched sounding"); axis.set_ylabel("Layer")
-            axis.set_title("Shared FDEM–TDEM resistivity model")
+                axis.set_xlabel(QCoreApplication.translate("PHGX", "Matched sounding")); axis.set_ylabel(QCoreApplication.translate("PHGX", "Layer"))
+            axis.set_title(QCoreApplication.translate("PHGX", "Shared FDEM–TDEM resistivity model"))
         # A colour map and colour limits for each panel drawn in colour, and none
         # for a line plot.
         for panel, controls in enumerate(self._model_panel_controls):
@@ -1381,7 +1377,7 @@ class JointInversionModule(BaseModule):
             count = min(observed.size, predicted.size)
             axis.plot(observed[:count], "o", ms=3, label="Observed")
             axis.plot(predicted[:count], "-", lw=1.3, label="Predicted")
-            axis.set_title(f"{method} data fit"); axis.set_xlabel("Datum"); axis.legend(); axis.grid(alpha=0.2)
+            axis.set_title(QCoreApplication.translate("PHGX", "{0} data fit").format(method)); axis.set_xlabel(QCoreApplication.translate("PHGX", "Datum")); axis.legend(); axis.grid(alpha=0.2)
         self._fit_canvas.draw_idle()
         self._fit_toolbar.update()          # Home and Back go to the new axes
 
@@ -1435,7 +1431,7 @@ class JointInversionModule(BaseModule):
             axis.plot(cells, baseline_model[:count], label="Independent", lw=1.2)
             axis.plot(cells, joint_model[:count] - baseline_model[:count],
                       label="Difference", lw=1.0, alpha=0.8)
-            axis.set_title(method); axis.set_xlabel("Layer / cell")
+            axis.set_title(i18n.tr(method)); axis.set_xlabel(QCoreApplication.translate("PHGX", "Layer / cell"))
             axis.grid(alpha=0.2); axis.legend(fontsize=8)
         self._baseline_canvas.draw_idle()
         self._baseline_toolbar.update()
@@ -1467,7 +1463,7 @@ class JointInversionModule(BaseModule):
             self.log("Run the joint inversion first.", "warn")
             return
         folder = select_directory(
-            self, "Export joint models to folder", self.state.output_dir or Path.cwd()
+            self, QCoreApplication.translate("PHGX", "Export joint models to folder"), self.state.output_dir or Path.cwd()
         )
         if not folder:
             return

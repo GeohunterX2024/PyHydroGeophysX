@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from PySide6.QtCore import QEvent, Qt, QUrl
+from PySide6.QtCore import QCoreApplication, QEvent, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -54,6 +54,7 @@ from PyHydroGeophysX.qt_apps.widgets import temperature_panel
 from PyHydroGeophysX.qt_apps.widgets.quality_view import InversionQualityView
 from PyHydroGeophysX.qt_apps.workers import TaskWorker
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -251,13 +252,13 @@ class _RunNameDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):  # noqa: N802 - Qt override
         editor = QLineEdit(parent)
-        editor.setPlaceholderText("Name this run")
+        editor.setPlaceholderText(QCoreApplication.translate("PHGX", "Name this run"))
         return editor
 
     def setEditorData(self, editor, index) -> None:  # noqa: N802 - Qt override
         record = self._page._records.get(str(index.data(_RUN_ROLE)))
         named = record is not None and not is_placeholder_label(record)
-        editor.setText(str(record.label).strip() if named else "")
+        editor.setText(i18n.tr(str(record.label).strip()) if named else "")
         editor.selectAll()
 
     def setModelData(self, editor, model, index) -> None:  # noqa: N802 - Qt override
@@ -327,7 +328,7 @@ class ModelViewerModule(BaseModule):
 
         root = QVBoxLayout(self)
         top = QHBoxLayout()
-        self._path = QLabel("Project: (not available)")
+        self._path = QLabel(QCoreApplication.translate("PHGX", "Project: (not available)"))
         self._path.setTextInteractionFlags(Qt.TextSelectableByMouse)
         top.addWidget(self._path, stretch=1)
         self._project_buttons = []
@@ -340,12 +341,12 @@ class ModelViewerModule(BaseModule):
              "Open this Project folder in the system file manager."),
             ("Refresh", self.refresh, "Re-read the run history from disk."),
         ):
-            button = QPushButton(text)
-            button.setToolTip(tip)
+            button = QPushButton(i18n.tr(text))
+            button.setToolTip(i18n.tr(tip))
             button.clicked.connect(slot)
             top.addWidget(button)
             self._project_buttons.append(button)
-        self._details_button = QPushButton('Details')
+        self._details_button = QPushButton(QCoreApplication.translate("PHGX", 'Details'))
         self._details_button.setCheckable(True)
         self._details_button.toggled.connect(self._toggle_details)
         top.addWidget(self._details_button)
@@ -356,7 +357,7 @@ class ModelViewerModule(BaseModule):
         left_layout = QVBoxLayout(left)
         filters = QHBoxLayout()
         self._search = QLineEdit()
-        self._search.setPlaceholderText("Search runs…")
+        self._search.setPlaceholderText(QCoreApplication.translate("PHGX", "Search runs…"))
         self._search.textChanged.connect(self._apply_filter)
         self._status = QComboBox()
         self._status.addItems([
@@ -368,7 +369,7 @@ class ModelViewerModule(BaseModule):
         filters.addWidget(self._status)
         left_layout.addLayout(filters)
         self._tree = QTreeWidget()
-        self._tree.setHeaderLabels(["Run", "Status", "When", "Took"])
+        self._tree.setHeaderLabels([QCoreApplication.translate("PHGX", "Run"), QCoreApplication.translate("PHGX", "Status"), QCoreApplication.translate("PHGX", "When"), QCoreApplication.translate("PHGX", "Took")])
         self._tree.setSelectionMode(QTreeWidget.ExtendedSelection)
         self._tree.itemSelectionChanged.connect(self._selection_changed)
         self._tree.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -399,28 +400,28 @@ class ModelViewerModule(BaseModule):
         # The name is kept as soon as it is typed (Enter, or moving on). A
         # separate save button for it went unnoticed, and the name with it.
         self._label = QLineEdit()
-        self._label.setPlaceholderText("Name this run")
-        self._label.setToolTip("The name this run is listed under. It is kept when you "
-                               "press Enter or move on; F2 renames a run in the list too.")
+        self._label.setPlaceholderText(QCoreApplication.translate("PHGX", "Name this run"))
+        self._label.setToolTip(QCoreApplication.translate("PHGX", "The name this run is listed under. It is kept when you "
+                               "press Enter or move on; F2 renames a run in the list too."))
         self._label_run_id: Optional[str] = None
         self._label.textEdited.connect(self._label_edited)
         self._label.editingFinished.connect(self._commit_label)
-        self._size = QLabel("Size: —")
-        self._save_notes_button = QPushButton("Save Notes")
-        self._save_notes_button.setToolTip("Keep these notes with the run.")
+        self._size = QLabel(QCoreApplication.translate("PHGX", "Size: —"))
+        self._save_notes_button = QPushButton(QCoreApplication.translate("PHGX", "Save Notes"))
+        self._save_notes_button.setToolTip(QCoreApplication.translate("PHGX", "Keep these notes with the run."))
         self._save_notes_button.clicked.connect(self._save_notes)
         self._save_notes_button.setVisible(False)
-        self._save_run = QPushButton("Save to Project")
+        self._save_run = QPushButton(QCoreApplication.translate("PHGX", "Save to Project"))
         self._save_run.setToolTip(
-            "Add this run to the Project's history. Until then it exists only as "
-            "a folder this session wrote, and closing the studio will ask."
+            QCoreApplication.translate("PHGX", "Add this run to the Project's history. Until then it exists only as "
+            "a folder this session wrote, and closing the studio will ask.")
         )
         self._save_run.setVisible(False)
         self._save_run.clicked.connect(self._save_current_run_named)
-        self._open_run = QPushButton("Open Folder")
-        self._open_run.setToolTip("Open this run's folder in the system file manager.")
+        self._open_run = QPushButton(QCoreApplication.translate("PHGX", "Open Folder"))
+        self._open_run.setToolTip(QCoreApplication.translate("PHGX", "Open this run's folder in the system file manager."))
         self._open_run.clicked.connect(self.open_run_folder)
-        self._delete = QPushButton("Delete Run…")
+        self._delete = QPushButton(QCoreApplication.translate("PHGX", "Delete Run…"))
         self._delete.clicked.connect(self._delete_run)
         edit_row.addWidget(self._label, stretch=1)
         edit_row.addWidget(self._size)
@@ -429,9 +430,9 @@ class ModelViewerModule(BaseModule):
         edit_row.addWidget(self._delete)
         metadata_layout.addLayout(edit_row)
         self._notes = QTextEdit()
-        self._notes.setPlaceholderText("Notes")
+        self._notes.setPlaceholderText(QCoreApplication.translate("PHGX", "Notes"))
         self._notes.setMaximumHeight(75)
-        self._notes_toggle = QCheckBox('Notes')
+        self._notes_toggle = QCheckBox(QCoreApplication.translate("PHGX", 'Notes'))
         self._notes_toggle.toggled.connect(self._notes.setVisible)
         self._notes_toggle.toggled.connect(self._save_notes_button.setVisible)
         self._notes.hide()
@@ -450,7 +451,7 @@ class ModelViewerModule(BaseModule):
         self._metrics_page = QWidget()
         metrics_layout = QVBoxLayout(self._metrics_page)
         self._metrics = QTableWidget(0, 4)
-        self._metrics.setHorizontalHeaderLabels(["Metric", "Run A", "Run B", "Difference"])
+        self._metrics.setHorizontalHeaderLabels([QCoreApplication.translate("PHGX", "Metric"), QCoreApplication.translate("PHGX", "Run A"), QCoreApplication.translate("PHGX", "Run B"), QCoreApplication.translate("PHGX", "Difference")])
         self._quality = self._build_quality_view()
         metrics_layout.addWidget(self._metrics)
         metrics_layout.addWidget(self._quality, stretch=1)
@@ -459,10 +460,10 @@ class ModelViewerModule(BaseModule):
         visual_bar = QHBoxLayout()
         self._artifact = QComboBox()
         self._artifact.currentIndexChanged.connect(self._render_selected_artifact)
-        visual_bar.addWidget(QLabel("Artifact:"))
+        visual_bar.addWidget(QLabel(QCoreApplication.translate("PHGX", "Artifact:")))
         visual_bar.addWidget(self._artifact, stretch=1)
-        self._compare_models = QPushButton('Compare two models')
-        self._compare_models.setToolTip('Select two runs with Ctrl-click, then compare aligned model grids.')
+        self._compare_models = QPushButton(QCoreApplication.translate("PHGX", 'Compare two models'))
+        self._compare_models.setToolTip(QCoreApplication.translate("PHGX", 'Select two runs with Ctrl-click, then compare aligned model grids.'))
         self._compare_models.setEnabled(False)
         self._compare_models.clicked.connect(self._compare_selected_models)
         visual_bar.addWidget(self._compare_models)
@@ -472,15 +473,15 @@ class ModelViewerModule(BaseModule):
         self._visual_layout.setContentsMargins(0, 0, 0, 0)
         visual_layout.addWidget(self._visual_host, stretch=1)
         self._files = QTableWidget(0, 5)
-        self._files.setHorizontalHeaderLabels(["Kind", "Format", "Path", "Exists", "Size"])
+        self._files.setHorizontalHeaderLabels([QCoreApplication.translate("PHGX", "Kind"), QCoreApplication.translate("PHGX", "Format"), QCoreApplication.translate("PHGX", "Path"), QCoreApplication.translate("PHGX", "Exists"), QCoreApplication.translate("PHGX", "Size")])
         self._files.setEditTriggers(QTableWidget.NoEditTriggers)
         # A listed file is one to open: the run log, a survey's QC log.
         self._files.cellDoubleClicked.connect(self._open_listed_file)
-        self._tabs.addTab(self._overview, "Overview")
-        self._tabs.addTab(self._metrics_page, "Metrics")
-        self._tabs.addTab(self._visual_page, "Visualization")
-        self._tabs.addTab(self._files, "Files")
-        self._tabs.addTab(self._report, "Report")
+        self._tabs.addTab(self._overview, QCoreApplication.translate("PHGX", "Overview"))
+        self._tabs.addTab(self._metrics_page, QCoreApplication.translate("PHGX", "Metrics"))
+        self._tabs.addTab(self._visual_page, QCoreApplication.translate("PHGX", "Visualization"))
+        self._tabs.addTab(self._files, QCoreApplication.translate("PHGX", "Files"))
+        self._tabs.addTab(self._report, QCoreApplication.translate("PHGX", "Report"))
         self._tabs.setTabVisible(self._tabs.indexOf(self._report), False)
         right_layout.addWidget(self._tabs, stretch=1)
         splitter.addWidget(right)
@@ -507,7 +508,7 @@ class ModelViewerModule(BaseModule):
         self._artifact.clear()
         for row, artifact in enumerate(self._current_artifacts):
             if _in_chooser(artifact, detailed):
-                self._artifact.addItem(_artifact_label(artifact), row)
+                self._artifact.addItem(i18n.tr(_artifact_label(artifact)), row)
         restored = self._artifact.findData(selected_artifact)
         if restored >= 0:
             self._artifact.setCurrentIndex(restored)
@@ -517,7 +518,7 @@ class ModelViewerModule(BaseModule):
         self._metadata_panel.setVisible(detailed)
         self._status.setVisible(detailed)
         for button in self._project_buttons:
-            button.setVisible(detailed or button.text() == 'Refresh')
+            button.setVisible(detailed or button.text() == i18n.tr('Refresh'))
         for widget in (self._metrics_page, self._files):
             self._tabs.setTabVisible(self._tabs.indexOf(widget), detailed)
         for index in range(self._visual_layout.count()):
@@ -552,8 +553,8 @@ class ModelViewerModule(BaseModule):
             self.log(f"Convergence chart unavailable: {exc}", "warn")
             self._quality_ok = False
             fallback = QLabel(
-                "The convergence chart is unavailable in this environment.\n"
-                "Metric values are still listed above."
+                QCoreApplication.translate("PHGX", "The convergence chart is unavailable in this environment.\n"
+                "Metric values are still listed above.")
             )
             fallback.setWordWrap(True)
             fallback.setAlignment(Qt.AlignCenter)
@@ -580,14 +581,14 @@ class ModelViewerModule(BaseModule):
 
     def browse_store(self) -> None:
         chosen = QFileDialog.getExistingDirectory(
-            self, "Browse Result Store", str(self.state.results_store_root or Path.cwd())
+            self, QCoreApplication.translate("PHGX", "Browse Result Store"), str(self.state.results_store_root or Path.cwd())
         )
         if not chosen:
             return
         try:
             self._store = ResultsStore.open_or_create(chosen, read_only=True)
         except Exception as exc:
-            QMessageBox.warning(self, "Open Project", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Open Project"), i18n.tr(str(exc)))
             return
         self.refresh()
 
@@ -597,7 +598,7 @@ class ModelViewerModule(BaseModule):
         name = (self.state.project_name if self._store is self.state.results_store
                 else self._store.root.name or str(self._store.root))
         read_only = " — read-only" if self._store.read_only else ""
-        self._path.setText(f"Project: {name}{read_only}")
+        self._path.setText(QCoreApplication.translate("PHGX", "Project: {0}{1}").format(name, read_only))
         self._path.setToolTip(
             f"{self._store.root}\n\n" + (
             "Runs are browsed read-only; new computations still go to the active Project."
@@ -705,7 +706,7 @@ class ModelViewerModule(BaseModule):
         self._label_run_id = None
         self._label.clear()
         self._notes.clear()
-        self._size.setText("Size: —")
+        self._size.setText(QCoreApplication.translate("PHGX", "Size: —"))
         self._delete.setEnabled(False)
         self._save_run.setVisible(False)
         self._open_run.setEnabled(False)
@@ -737,7 +738,7 @@ class ModelViewerModule(BaseModule):
                     'This folder contains GeoSAGE models. To view them, choose View results in Data & reports. '
                     'Use a separate Project to save your work.'
                 )
-            self._hint.setText(message)
+            self._hint.setText(i18n.tr(message))
             self._overview.setHtml('<h3>No saved Studio runs</h3><p>' + escape(message) + '</p>')
             self._hint.setVisible(True)
             return
@@ -749,8 +750,7 @@ class ModelViewerModule(BaseModule):
         )
         self._hint.setText(
             "" if visible else
-            f"None of the {len(self._records)} recorded runs match the current "
-            "search and status filter."
+            QCoreApplication.translate("PHGX", "None of the {0} recorded runs match the current search and status filter.").format(len(self._records))
         )
         self._hint.setVisible(not visible)
 
@@ -762,10 +762,10 @@ class ModelViewerModule(BaseModule):
         result is often the file manager rather than another viewer tab.
         """
         if not Path(path).exists():
-            QMessageBox.warning(self, "Open folder", f"{what} no longer exists:\n{path}")
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Open folder"), QCoreApplication.translate("PHGX", "{0} no longer exists:\n{1}").format(what, path))
             return
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))):
-            QMessageBox.warning(self, "Open folder", f"Could not open {path}")
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Open folder"), QCoreApplication.translate("PHGX", "Could not open {0}").format(path))
 
     def open_project_folder(self) -> None:
         if self._store is not None:
@@ -783,35 +783,35 @@ class ModelViewerModule(BaseModule):
             self._open_path(Path(str(target)), "This file")
 
     def _copy_to_clipboard(self, text: str, what: str) -> None:
-        QApplication.clipboard().setText(str(text))
+        QApplication.clipboard().setText(i18n.tr(str(text)))
         self.log(f"{what} copied to clipboard: {text}", "info")
 
     def _show_tree_menu(self, point) -> None:
         item = self._tree.itemAt(point)
         run_id = item.data(0, _RUN_ROLE) if item is not None else None
         record = self._records.get(str(run_id)) if run_id else None
-        menu = QMenu(self)
+        menu = QMenu(i18n.tr(self))
         if record is not None:
             # Right-click acts on what was right-clicked, so move the selection
             # first; the detail pane and the Delete guard both follow from it.
             self._tree.setCurrentItem(item)
-            rename = menu.addAction("Rename…\tF2", lambda: self._rename_item(item))
+            rename = menu.addAction(QCoreApplication.translate("PHGX", "Rename…\tF2"), lambda: self._rename_item(item))
             rename.setEnabled(self._editable())
             menu.addSeparator()
-            menu.addAction("Open Run Folder", self.open_run_folder)
+            menu.addAction(QCoreApplication.translate("PHGX", "Open Run Folder"), self.open_run_folder)
             menu.addAction(
-                "Copy Folder Path",
+                QCoreApplication.translate("PHGX", "Copy Folder Path"),
                 lambda: self._copy_to_clipboard(record.run_dir, "Run folder"),
             )
             menu.addAction(
-                "Copy Run ID", lambda: self._copy_to_clipboard(record.run_id, "Run ID")
+                QCoreApplication.translate("PHGX", "Copy Run ID"), lambda: self._copy_to_clipboard(record.run_id, "Run ID")
             )
             menu.addSeparator()
-            delete = menu.addAction("Delete Run…", self._delete_run)
+            delete = menu.addAction(QCoreApplication.translate("PHGX", "Delete Run…"), self._delete_run)
             delete.setEnabled(self._delete.isEnabled())
             menu.addSeparator()
-        menu.addAction("Open Project Folder", self.open_project_folder)
-        menu.addAction("Refresh", self.refresh)
+        menu.addAction(QCoreApplication.translate("PHGX", "Open Project Folder"), self.open_project_folder)
+        menu.addAction(QCoreApplication.translate("PHGX", "Refresh"), self.refresh)
         menu.exec(self._tree.viewport().mapToGlobal(point))
 
     # -- naming runs -----------------------------------------------------------
@@ -877,7 +877,7 @@ class ModelViewerModule(BaseModule):
         self._retitle_runs()
         if self._current is not None and self._current.run_id == record.run_id:
             self._current = record
-            self._label.setText(record.label)
+            self._label.setText(i18n.tr(record.label))
         # The window lists unsaved runs by name in its status bar.
         if callable(getattr(self.state, "on_runs_changed", None)):
             self.state.on_runs_changed()
@@ -902,7 +902,7 @@ class ModelViewerModule(BaseModule):
             self._current = self._store.update_run(
                 self._current.run_id, notes=self._notes.toPlainText())
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.warning(self, "Save notes", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save notes"), i18n.tr(str(exc)))
             return
         self.log("Notes kept with the run"
                  + ("; they go into the Project when the run is saved."
@@ -954,7 +954,7 @@ class ModelViewerModule(BaseModule):
         record = self._current
         # A run nobody named shows an empty name field, not the store's stand-in.
         self._label_run_id = None
-        self._label.setText("" if is_placeholder_label(record) else record.label)
+        self._label.setText("" if is_placeholder_label(record) else i18n.tr(record.label))
         self._notes.setPlainText(record.notes)
         self._notes_toggle.setChecked(bool(record.notes))
         editable = self._editable()
@@ -966,20 +966,20 @@ class ModelViewerModule(BaseModule):
         self._delete.setEnabled(editable and record.managed and not record.imported and record.status != "running")
         # Discarding an unsaved run and deleting a saved one remove the same
         # folder, but only one of them loses something the Project was keeping.
-        self._delete.setText("Discard…" if pending else "Delete Run…")
+        self._delete.setText(QCoreApplication.translate("PHGX", "Discard…") if pending else QCoreApplication.translate("PHGX", "Delete Run…"))
         self._delete.setToolTip(
-            "This run was never added to the Project. Discarding deletes its folder."
+            QCoreApplication.translate("PHGX", "This run was never added to the Project. Discarding deletes its folder.")
             if pending else
-            "Imported runs point at files this Project does not own."
+            QCoreApplication.translate("PHGX", "Imported runs point at files this Project does not own.")
             if record.imported else
-            "A running computation cannot be deleted." if record.status == "running"
-            else "Permanently delete this run's folder."
+            QCoreApplication.translate("PHGX", "A running computation cannot be deleted.") if record.status == "running"
+            else QCoreApplication.translate("PHGX", "Permanently delete this run's folder.")
         )
         self._open_run.setEnabled(record.run_dir.exists())
         cached_size = self._size_cache.get(record.run_id)
         self._size.setText(
-            f"Size: {_human_size(cached_size)}" if cached_size is not None
-            else "Size: calculating…"
+            QCoreApplication.translate("PHGX", "Size: {0}").format(_human_size(cached_size)) if cached_size is not None
+            else QCoreApplication.translate("PHGX", "Size: calculating…")
         )
         if cached_size is None:
             worker = TaskWorker(self._store.run_size, record)
@@ -1001,7 +1001,7 @@ class ModelViewerModule(BaseModule):
             self._size_cache[run_id] = int(size)
         if self._current is not None and self._current.run_id == run_id:
             self._size.setText(
-                f"Size: {_human_size(int(size))}" if size is not None else "Size: unavailable"
+                QCoreApplication.translate("PHGX", "Size: {0}").format(_human_size(int(size))) if size is not None else QCoreApplication.translate("PHGX", "Size: unavailable")
             )
 
     def _show_overview(self, record: RunRecord) -> None:
@@ -1214,7 +1214,7 @@ class ModelViewerModule(BaseModule):
                     pass
             missing = bool(path_value) and not (path and path.exists())
             if _in_chooser(artifact, not self._compact or self._details_button.isChecked()):
-                self._artifact.addItem(_artifact_label(artifact, missing=missing), row)
+                self._artifact.addItem(i18n.tr(_artifact_label(artifact, missing=missing)), row)
             values = [
                 _pretty_kind(artifact.get("kind", "")),
                 str(artifact.get("format", "")),
@@ -1228,7 +1228,7 @@ class ModelViewerModule(BaseModule):
                     cell.setForeground(QColor(_STATUS_DISPLAY["failed"][1]))
                 if path is not None and not missing:
                     cell.setData(Qt.UserRole, str(path))
-                    cell.setToolTip(f"{path}\nDouble-click to open it.")
+                    cell.setToolTip(QCoreApplication.translate("PHGX", "{0}\nDouble-click to open it.").format(path))
                 self._files.setItem(row, col, cell)
         self._files.resizeColumnsToContents()
         self._artifact.blockSignals(False)
@@ -1276,7 +1276,7 @@ class ModelViewerModule(BaseModule):
             close_array_resource(resource)
         self._visual_resources.clear()
         if message:
-            label = QLabel(message)
+            label = QLabel(i18n.tr(message))
             label.setWordWrap(True)
             label.setAlignment(Qt.AlignCenter)
             self._visual_layout.addWidget(label)
@@ -1664,7 +1664,7 @@ class ModelViewerModule(BaseModule):
             )
             record = self._store.save_run(self._current.run_id)
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.warning(self, "Save run", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save run"), i18n.tr(str(exc)))
             return
         self.log(f"Saved '{_run_title(record)}' to {self._store.root}", "success")
         self.refresh()
@@ -1683,7 +1683,7 @@ class ModelViewerModule(BaseModule):
             return
         name = dialog.names().get(self._current.run_id)
         if name:
-            self._label.setText(name)
+            self._label.setText(i18n.tr(name))
         self._save_current_run()
 
     def _save_metadata(self) -> None:
@@ -1695,7 +1695,7 @@ class ModelViewerModule(BaseModule):
             )
             self.refresh()
         except Exception as exc:
-            QMessageBox.warning(self, "Save metadata", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save metadata"), i18n.tr(str(exc)))
 
     def _delete_run(self) -> None:
         if self._current is None or self._store is None:
@@ -1709,7 +1709,7 @@ class ModelViewerModule(BaseModule):
         size = _human_size(size_value)
         answer = QMessageBox.question(
             self,
-            "Discard unsaved run" if pending else "Delete run permanently",
+            QCoreApplication.translate("PHGX", "Discard unsaved run") if pending else QCoreApplication.translate("PHGX", "Delete run permanently"),
             f"Permanently delete '{_run_title(self._current)}' and {size} of files?\n\n"
             + ("This run was never saved to the Project. This cannot be undone."
                if pending else "This cannot be undone."),
@@ -1730,7 +1730,7 @@ class ModelViewerModule(BaseModule):
         try:
             self._store.delete_run(self._current.run_id)
         except Exception as exc:
-            QMessageBox.warning(self, "Delete run", str(exc)); return
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Delete run"), i18n.tr(str(exc))); return
         self._current = None
         self._size_cache.pop(record_id, None)
         self.refresh()
@@ -1908,7 +1908,7 @@ class ModelViewerModule(BaseModule):
                         "statuses": [self._status.itemText(i) for i in range(self._status.count())]}
             self._status.setCurrentIndex(index)
         if "search" in args:
-            self._search.setText(str(args["search"] or ""))
+            self._search.setText(i18n.tr(str(args["search"] or "")))
         return self._agent_status()
 
     def _agent_show_tab(self, tab) -> Dict[str, Any]:
@@ -1944,7 +1944,7 @@ class ModelViewerModule(BaseModule):
         if "label" not in args and "notes" not in args:
             return {"status": "failed", "error": "Give 'label' and/or 'notes'."}
         if "label" in args:
-            self._label.setText(str(args["label"] or ""))
+            self._label.setText(i18n.tr(str(args["label"] or "")))
         if "notes" in args:
             self._notes.setPlainText(str(args["notes"] or ""))
         run_id = self._current.run_id

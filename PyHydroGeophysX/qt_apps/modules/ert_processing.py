@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import uuid
 
 import numpy as np
-from PySide6.QtCore import QEventLoop, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QEventLoop, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QAbstractSpinBox,
@@ -52,7 +52,7 @@ from PyHydroGeophysX.data_processing import run_inputs
 from PyHydroGeophysX.data_processing import ert_io as ert_load
 from PyHydroGeophysX.data_processing import survey_timing
 from PyHydroGeophysX.data_processing import table_io
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -342,7 +342,7 @@ class ERTProcessingModule(BaseModule):
         # beside a separate stretch is given no width at all.
         legend_title = QHBoxLayout()
         legend_title.setContentsMargins(0, 0, 0, 0)
-        legend_title.addWidget(QLabel("Apparent resistivity (Ω·m)"), 1)
+        legend_title.addWidget(QLabel(QCoreApplication.translate("PHGX", "Apparent resistivity (Ω·m)")), 1)
         # Locked, every survey of a series previews on one scale.
         self._pseudo_range = ColorRange(positive=True, what="the apparent resistivity")
         self._pseudo_range.changed.connect(self._draw_pseudosection)
@@ -391,29 +391,29 @@ class ERTProcessingModule(BaseModule):
         self._tl_step_row = QWidget()
         step_bar = QHBoxLayout(self._tl_step_row)
         step_bar.setContentsMargins(6, 2, 6, 2)
-        step_bar.addWidget(QLabel("Time step:"))
+        step_bar.addWidget(QLabel(QCoreApplication.translate("PHGX", "Time step:")))
         self._tl_step_combo = QComboBox()
-        self._tl_step_combo.setToolTip("Which time-lapse inversion result is displayed.")
+        self._tl_step_combo.setToolTip(QCoreApplication.translate("PHGX", "Which time-lapse inversion result is displayed."))
         self._tl_step_combo.currentIndexChanged.connect(self._show_tl_step)
         step_bar.addWidget(self._tl_step_combo, stretch=1)
         self._tl_prev_btn = QPushButton("◀"); self._tl_prev_btn.setMaximumWidth(34)
-        self._tl_prev_btn.setToolTip("Previous time step")
+        self._tl_prev_btn.setToolTip(QCoreApplication.translate("PHGX", "Previous time step"))
         self._tl_prev_btn.clicked.connect(lambda: self._step_tl(-1))
         self._tl_next_btn = QPushButton("▶"); self._tl_next_btn.setMaximumWidth(34)
-        self._tl_next_btn.setToolTip("Next time step")
+        self._tl_next_btn.setToolTip(QCoreApplication.translate("PHGX", "Next time step"))
         self._tl_next_btn.clicked.connect(lambda: self._step_tl(1))
         step_bar.addWidget(self._tl_prev_btn); step_bar.addWidget(self._tl_next_btn)
         # Absolute resistivity is dominated by the static structure, which is the
         # same in every step; the change against the first survey is what the
         # repeat measurement was made to see.
-        step_bar.addWidget(QLabel("Show:"))
+        step_bar.addWidget(QLabel(QCoreApplication.translate("PHGX", "Show:")))
         self._tl_view_mode = QComboBox()
-        self._tl_view_mode.addItem("Resistivity", "model")
+        self._tl_view_mode.addItem(QCoreApplication.translate("PHGX", "Resistivity"), "model")
         self._tl_view_mode.addItem("% change from baseline", "change")
         self._tl_view_mode.setToolTip(
-            "Resistivity shows the inverted model. “% change from baseline” shows "
+            QCoreApplication.translate("PHGX", "Resistivity shows the inverted model. “% change from baseline” shows "
             "100 × (ρ − ρ₀) / ρ₀ against the first time step, on a diverging scale "
-            "centred on zero.")
+            "centred on zero."))
         self._tl_view_mode.currentIndexChanged.connect(self._on_tl_view_mode_changed)
         step_bar.addWidget(self._tl_view_mode)
         self._tl_step_row.setVisible(False)
@@ -423,11 +423,11 @@ class ERTProcessingModule(BaseModule):
         self._lam_pick_row = QWidget()
         pick_bar = QHBoxLayout(self._lam_pick_row)
         pick_bar.setContentsMargins(6, 2, 6, 2)
-        pick_bar.addWidget(QLabel("Model:"))
+        pick_bar.addWidget(QLabel(QCoreApplication.translate("PHGX", "Model:")))
         self._lam_pick = QComboBox()
         self._lam_pick.setToolTip(
-            "The auto-λ search re-inverted at a different λ. Selects between that "
-            "model and the one at the λ set above.")
+            QCoreApplication.translate("PHGX", "The auto-λ search re-inverted at a different λ. Selects between that "
+            "model and the one at the λ set above."))
         self._lam_pick.currentIndexChanged.connect(self._show_lambda_choice)
         pick_bar.addWidget(self._lam_pick, stretch=1)
         self._lam_pick_row.setVisible(False)
@@ -435,11 +435,11 @@ class ERTProcessingModule(BaseModule):
         # A profile inverted on a 3D mesh: the section is drawn here, and the
         # whole volume opens in the 3D viewer.
         self._model_3d_path = ""
-        self._model_3d_btn = QPushButton("Open 3D model")
+        self._model_3d_btn = QPushButton(QCoreApplication.translate("PHGX", "Open 3D model"))
         self._model_3d_btn.setIcon(theme.icon("fa5s.cube"))
         self._model_3d_btn.setToolTip(
-            "The inversion ran on a 3D mesh; this section is the model along the "
-            "line. Open the whole 3D model in the 3D viewer.")
+            QCoreApplication.translate("PHGX", "The inversion ran on a 3D mesh; this section is the model along the "
+            "line. Open the whole 3D model in the 3D viewer."))
         self._model_3d_btn.clicked.connect(
             lambda: self._model_3d_path and self.viewMeshRequested.emit(self._model_3d_path))
         self._model_3d_row = QWidget()
@@ -499,11 +499,11 @@ class ERTProcessingModule(BaseModule):
         # is clicked through without switching tabs for every survey. The
         # electrodes are drawn along the top of the pseudosection and on the
         # Mesh tab, and summed up in the data panel.
-        self._tabs.addTab(self._pseudo_widget, "Data")
-        self._tabs.addTab(self._recip_view, "Reciprocal errors")
-        self._tabs.addTab(self._mesh_tab, "Mesh")
-        self._tabs.addTab(model_tab, "Resistivity model")
-        self._tabs.addTab(self._quality_view, "Inversion quality")
+        self._tabs.addTab(self._pseudo_widget, QCoreApplication.translate("PHGX", "Data"))
+        self._tabs.addTab(self._recip_view, QCoreApplication.translate("PHGX", "Reciprocal errors"))
+        self._tabs.addTab(self._mesh_tab, QCoreApplication.translate("PHGX", "Mesh"))
+        self._tabs.addTab(model_tab, QCoreApplication.translate("PHGX", "Resistivity model"))
+        self._tabs.addTab(self._quality_view, QCoreApplication.translate("PHGX", "Inversion quality"))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         self._reproduce = ReproduceBar()
         center = QWidget()
@@ -529,7 +529,7 @@ class ERTProcessingModule(BaseModule):
         scroll.setWidget(panel)
         layout = QVBoxLayout(panel)
 
-        loader = QGroupBox("Load resistivity data")
+        loader = QGroupBox(QCoreApplication.translate("PHGX", "Load resistivity data"))
         self._load_group = loader
         lform = QFormLayout(loader)
 
@@ -538,16 +538,16 @@ class ERTProcessingModule(BaseModule):
         # it sits above that list, not in the Run group at the bottom.
         # Two joined buttons, the chosen one filled (theme: QPushButton[segment]);
         # as radio buttons the choice shows as a lone dot, easy to misread.
-        self._single_mode = QPushButton("One survey")
+        self._single_mode = QPushButton(QCoreApplication.translate("PHGX", "One survey"))
         self._single_mode.setIcon(theme.icon("fa5s.file-alt"))
         self._single_mode.setToolTip(
-            "Invert the survey selected in the list - the one on the Data tab.")
-        self._tl_mode = QPushButton("Time-lapse series")
+            QCoreApplication.translate("PHGX", "Invert the survey selected in the list - the one on the Data tab."))
+        self._tl_mode = QPushButton(QCoreApplication.translate("PHGX", "Time-lapse series"))
         self._tl_mode.setIcon(theme.icon("fa5s.layer-group"))
         self._tl_mode.setToolTip(
-            "Invert every survey in the list together, in list order: the first is "
+            QCoreApplication.translate("PHGX", "Invert every survey in the list together, in list order: the first is "
             "the baseline, and each later one is compared with the one before it. "
-            "The time-lapse options appear below the inversion settings.")
+            "The time-lapse options appear below the inversion settings."))
         self._run_kind = QButtonGroup(self)      # exclusive: one is always chosen
         for place, button in (("first", self._single_mode), ("last", self._tl_mode)):
             button.setCheckable(True)
@@ -562,11 +562,11 @@ class ERTProcessingModule(BaseModule):
         kind_row.addWidget(self._single_mode)
         kind_row.addWidget(self._tl_mode)
         kind_row.addStretch(1)
-        lform.addRow("Invert as", kind_row)
+        lform.addRow(QCoreApplication.translate("PHGX", "Invert as"), kind_row)
 
         self._instrument = QComboBox()
         for label, value in _INSTRUMENTS:
-            self._instrument.addItem(label, value)
+            self._instrument.addItem(i18n.tr(label), value)
         # Don't let the longest item ("BERT / Unified (.ohm/.dat)") force the whole
         # control panel wide; elide in the closed box (full text in the dropdown).
         self._instrument.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
@@ -582,7 +582,7 @@ class ERTProcessingModule(BaseModule):
         instrument_row.setSpacing(8)
         instrument_row.addWidget(self._instrument, stretch=1)
         instrument_row.addWidget(self._resipy_ready)
-        lform.addRow("Instrument / format", instrument_row)
+        lform.addRow(QCoreApplication.translate("PHGX", "Instrument / format"), instrument_row)
 
         # Which reader handled the file is not visible in the result, and the two
         # do not always agree on how many measurements a file holds, so it is
@@ -610,76 +610,76 @@ class ERTProcessingModule(BaseModule):
         hint_row.addWidget(self._format_hint_text, 1)
         hint_row.addWidget(self._format_hint_btn)
         self._format_hint.setVisible(False)
-        lform.addRow(self._format_hint)
+        lform.addRow(i18n.tr(self._format_hint))
         # Changing the format by hand reads the survey on screen again with it.
         self._instrument.activated.connect(self._reload_with_format)
 
         self._tl_list = QListWidget()
         self._tl_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self._tl_list.setMaximumHeight(150)
-        self._tl_list.setToolTip("Click a row to preview it. Each file is one time step; "
+        self._tl_list.setToolTip(QCoreApplication.translate("PHGX", "Click a row to preview it. Each file is one time step; "
                                  "the list runs from earliest at the top to latest at the bottom. "
-                                 "Use Sort by time to order the sequence.")
+                                 "Use Sort by time to order the sequence."))
         self._tl_list.itemSelectionChanged.connect(self._on_tl_selection_changed)
         self._tl_list.itemClicked.connect(self._preview_tl_item)
-        lform.addRow(self._tl_list)
+        lform.addRow(i18n.tr(self._tl_list))
 
         tl_btns = QHBoxLayout()
-        add_btn = QPushButton("Add files…")
-        add_btn.setToolTip("Add one or more ERT files, one per survey for time-lapse. "
-                           "Choose the instrument / format first.")
+        add_btn = QPushButton(QCoreApplication.translate("PHGX", "Add files…"))
+        add_btn.setToolTip(QCoreApplication.translate("PHGX", "Add one or more ERT files, one per survey for time-lapse. "
+                           "Choose the instrument / format first."))
         add_btn.setProperty("primary", True)
         add_btn.setIcon(theme.icon("fa5s.file-import", color="#ffffff"))
         add_btn.clicked.connect(self._add_tl_files)
-        rm_btn = QPushButton("Remove"); rm_btn.setIcon(theme.icon("fa5s.minus"))
+        rm_btn = QPushButton(QCoreApplication.translate("PHGX", "Remove")); rm_btn.setIcon(theme.icon("fa5s.minus"))
         rm_btn.clicked.connect(self._remove_tl_files)
-        up_btn = QPushButton("↑"); up_btn.setToolTip("Move selected up"); up_btn.setMaximumWidth(34)
+        up_btn = QPushButton("↑"); up_btn.setToolTip(QCoreApplication.translate("PHGX", "Move selected up")); up_btn.setMaximumWidth(34)
         up_btn.clicked.connect(lambda: self._move_tl_files(-1))
-        down_btn = QPushButton("↓"); down_btn.setToolTip("Move selected down"); down_btn.setMaximumWidth(34)
+        down_btn = QPushButton("↓"); down_btn.setToolTip(QCoreApplication.translate("PHGX", "Move selected down")); down_btn.setMaximumWidth(34)
         down_btn.clicked.connect(lambda: self._move_tl_files(1))
-        sort_btn = QPushButton("Sort by time"); sort_btn.setIcon(theme.icon("fa5s.clock"))
+        sort_btn = QPushButton(QCoreApplication.translate("PHGX", "Sort by time")); sort_btn.setIcon(theme.icon("fa5s.clock"))
         sort_btn.setToolTip(
-            "Put the files in acquisition order, using the times read from their "
+            QCoreApplication.translate("PHGX", "Put the files in acquisition order, using the times read from their "
             "names or headers. A time-lapse inversion compares each survey with "
-            "the one before it, so the order is part of the result.")
+            "the one before it, so the order is part of the result."))
         sort_btn.clicked.connect(self._sort_tl_files_by_time)
-        clr_btn = QPushButton("Clear"); clr_btn.setIcon(theme.icon("fa5s.trash"))
+        clr_btn = QPushButton(QCoreApplication.translate("PHGX", "Clear")); clr_btn.setIcon(theme.icon("fa5s.trash"))
         clr_btn.clicked.connect(self._clear_tl_files)
         # Two rows rather than one: all six in a row would be the widest thing in
         # the column. Adding and removing files on top, ordering them below.
         for b in (add_btn, rm_btn, clr_btn):
             tl_btns.addWidget(b)
-        lform.addRow(tl_btns)
+        lform.addRow(i18n.tr(tl_btns))
         order_btns = QHBoxLayout()
         for b in (up_btn, down_btn, sort_btn):
             order_btns.addWidget(b)
         order_btns.addStretch(1)
-        lform.addRow(order_btns)
+        lform.addRow(i18n.tr(order_btns))
 
-        self._tl_info = QLabel("No files added."); self._tl_info.setWordWrap(True)
+        self._tl_info = QLabel(QCoreApplication.translate("PHGX", "No files added.")); self._tl_info.setWordWrap(True)
         # The accepted time formats on hover, so the line itself stays short.
-        self._tl_info.setToolTip(_TIME_FORMATS_TIP)
-        lform.addRow(self._tl_info)
+        self._tl_info.setToolTip(i18n.tr(_TIME_FORMATS_TIP))
+        lform.addRow(i18n.tr(self._tl_info))
 
         # The escape hatch for files whose names and headers carry no time, under
         # the line that says which files those are, and only while there are
         # some.
-        self._tl_use_mtime = QCheckBox("Date undated files by when they were last saved")
+        self._tl_use_mtime = QCheckBox(QCoreApplication.translate("PHGX", "Date undated files by when they were last saved"))
         self._tl_use_mtime.setToolTip(
-            "Use each file's last-modified time as its acquisition time when neither "
+            QCoreApplication.translate("PHGX", "Use each file's last-modified time as its acquisition time when neither "
             "its name nor its header gives one. Off by default: a file that was copied "
-            "or re-exported carries the time of the copy, not of the survey.")
+            "or re-exported carries the time of the copy, not of the survey."))
         self._tl_use_mtime.toggled.connect(self._on_tl_time_source_changed)
         self._tl_use_mtime.setVisible(False)
-        lform.addRow(self._tl_use_mtime)
+        lform.addRow(i18n.tr(self._tl_use_mtime))
 
         # Shown only when names in the list look like forward/reciprocal halves,
         # and on then: the detection goes by name and time, so it can be wrong,
         # and unticking it puts every file back as a survey of its own.
-        self._tl_pair_box = QCheckBox("Pair reciprocal files with their forward file")
+        self._tl_pair_box = QCheckBox(QCoreApplication.translate("PHGX", "Pair reciprocal files with their forward file"))
         self._tl_pair_box.setChecked(True)
         self._tl_pair_box.setToolTip(
-            "Some instruments write each survey as two files: the forward readings, "
+            QCoreApplication.translate("PHGX", "Some instruments write each survey as two files: the forward readings, "
             "and a few minutes later the reciprocal readings (“recip” in the name). "
             "Ticked, each reciprocal file is joined to the forward file measured just "
             "before it with the same name, and the two are one survey: one row in "
@@ -690,52 +690,52 @@ class ERTProcessingModule(BaseModule):
             "reciprocal file with no forward file is left out, and the line above "
             "names it.\n\n"
             "Untick it if a file was joined to the wrong partner: every file is "
-            "then a survey of its own again.")
+            "then a survey of its own again."))
         self._tl_pair_box.toggled.connect(self._on_tl_pairing_changed)
         self._tl_pair_box.setVisible(False)
-        lform.addRow(self._tl_pair_box)
+        lform.addRow(i18n.tr(self._tl_pair_box))
 
-        load_e = QPushButton("Electrode file (optional)…")
+        load_e = QPushButton(QCoreApplication.translate("PHGX", "Electrode file (optional)…"))
         load_e.setIcon(theme.icon("fa5s.folder-open"))
         load_e.clicked.connect(self._load_electrodes)
-        fmt_btn = QPushButton("Data format")
+        fmt_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         fmt_btn.setIcon(theme.icon("fa5s.file-alt"))
-        fmt_btn.setToolTip("The file formats this page reads, the electrode file, and "
-                           "how to give each survey its time.")
+        fmt_btn.setToolTip(QCoreApplication.translate("PHGX", "The file formats this page reads, the electrode file, and "
+                           "how to give each survey its time."))
         fmt_btn.clicked.connect(self._show_format_help)
         elec_row = QHBoxLayout()
         elec_row.addWidget(load_e)
         elec_row.addWidget(fmt_btn)
-        lform.addRow(elec_row)
+        lform.addRow(i18n.tr(elec_row))
         layout.addWidget(loader)
 
-        self._info = QLabel("No data loaded.")
+        self._info = QLabel(QCoreApplication.translate("PHGX", "No data loaded."))
         self._info.setWordWrap(True)
         layout.addWidget(self._info)
 
-        qc = QGroupBox("Data QC / filter")
+        qc = QGroupBox(QCoreApplication.translate("PHGX", "Data QC / filter"))
         self._qc_group = qc
         qform = QFormLayout(qc)
         # Check 0, before every other check.
         # Off by default: kept apart, the two readings of a pair let the fit see
         # how far they disagree, and an averaged pair hides that.
-        self._qc_average = QCheckBox("Average each reading with its reciprocal")
+        self._qc_average = QCheckBox(QCoreApplication.translate("PHGX", "Average each reading with its reciprocal"))
         self._qc_average.setChecked(False)
         self._qc_average.setEnabled(False)
-        self._qc_average.setToolTip("Load ERT data first.")
+        self._qc_average.setToolTip(QCoreApplication.translate("PHGX", "Load ERT data first."))
         self._qc_average.toggled.connect(self._sync_error_rows)
-        qform.addRow(self._qc_average)
+        qform.addRow(i18n.tr(self._qc_average))
         self._rmin = PlainDoubleSpinBox(); self._rmin.setRange(0.0, 1e6); self._rmin.setValue(0.0); self._rmin.setSuffix(" Ω·m")
         self._rmax = PlainDoubleSpinBox(); self._rmax.setRange(1.0, 1e7); self._rmax.setValue(100000.0); self._rmax.setSuffix(" Ω·m")
         self._max_err = PlainDoubleSpinBox(); self._max_err.setRange(0.0, 100.0)
         self._max_err.setValue(_QC_DEFAULTS["max_error"]); self._max_err.setSuffix(" %")
         self._max_err.setToolTip(
-            "Drop measurements with relative error above this (0 = off). 20 % drops "
+            QCoreApplication.translate("PHGX", "Drop measurements with relative error above this (0 = off). 20 % drops "
             "the readings a file's own error column calls noisy; a file with none of "
-            "its own carries the 5 % assumed for every reading, and loses nothing.")
-        qform.addRow("Min ρa", self._rmin)
-        qform.addRow("Max ρa", self._rmax)
-        qform.addRow("Max error", self._max_err)
+            "its own carries the 5 % assumed for every reading, and loses nothing."))
+        qform.addRow(QCoreApplication.translate("PHGX", "Min ρa"), self._rmin)
+        qform.addRow(QCoreApplication.translate("PHGX", "Max ρa"), self._rmax)
+        qform.addRow(QCoreApplication.translate("PHGX", "Max error"), self._max_err)
 
         # The rest of the criteria are folded away, because which of them a file
         # can even support varies by instrument: voltage and current come with
@@ -743,38 +743,38 @@ class ERTProcessingModule(BaseModule):
         # contain reciprocal pairs at all. Each row is enabled against the loaded
         # data in _refresh_qc_availability, so an unusable one says why rather
         # than filtering on a field that is not there.
-        self._qc_more = QGroupBox("More checks")
+        self._qc_more = QGroupBox(QCoreApplication.translate("PHGX", "More checks"))
         self._qc_more.setCheckable(True)
         self._qc_more.setChecked(False)
         self._qc_more.setToolTip(
-            "Extra QC criteria. They stay folded because most surveys need none of "
+            QCoreApplication.translate("PHGX", "Extra QC criteria. They stay folded because most surveys need none of "
             "them, and the ones a given file cannot support are disabled with the "
-            "reason in their tooltip.")
+            "reason in their tooltip."))
         more_outer = QVBoxLayout(self._qc_more)
         more_outer.setContentsMargins(0, 0, 0, 0)
         self._qc_more_body = QWidget()
         mform = QFormLayout(self._qc_more_body)
         mform.setContentsMargins(0, 6, 0, 0)
 
-        self._qc_drop_neg = QCheckBox("Drop ρa ≤ 0")
+        self._qc_drop_neg = QCheckBox(QCoreApplication.translate("PHGX", "Drop ρa ≤ 0"))
         self._qc_drop_neg.setChecked(_QC_DEFAULTS["drop_nonpositive"])
         self._qc_drop_neg.setToolTip(
-            "A non-positive apparent resistivity is a polarity or geometry error "
+            QCoreApplication.translate("PHGX", "A non-positive apparent resistivity is a polarity or geometry error "
             "rather than a measurement, and the inversion cannot use it. On with "
             "More checks. Min ρa above already removes negatives once it is set "
-            "above zero.")
-        mform.addRow(self._qc_drop_neg)
+            "above zero."))
+        mform.addRow(i18n.tr(self._qc_drop_neg))
 
         # Six decimals, because files that report volts and amperes need floors
         # of a tenth of a millivolt or milliampere; three decimals would silently
         # turn 0.0001 into 0, which switches the check off.
         self._qc_min_v = PlainDoubleSpinBox(); self._qc_min_v.setRange(0.0, 1e6)
         self._qc_min_v.setDecimals(6); self._qc_min_v.setValue(_QC_DEFAULTS["min_voltage"])
-        mform.addRow("Min |V|", self._qc_min_v)
+        mform.addRow(QCoreApplication.translate("PHGX", "Min |V|"), self._qc_min_v)
 
         self._qc_min_i = PlainDoubleSpinBox(); self._qc_min_i.setRange(0.0, 1e6)
         self._qc_min_i.setDecimals(6); self._qc_min_i.setValue(_QC_DEFAULTS["min_current"])
-        mform.addRow("Min |I|", self._qc_min_i)
+        mform.addRow(QCoreApplication.translate("PHGX", "Min |I|"), self._qc_min_i)
 
         # |k| scales with the electrode spacing - from a few hundred m on a short
         # surface line to tens of thousands of m on a large survey - so no one
@@ -784,17 +784,17 @@ class ERTProcessingModule(BaseModule):
         self._qc_max_k = PlainDoubleSpinBox(); self._qc_max_k.setRange(0.0, 1e9)
         self._qc_max_k.setDecimals(0); self._qc_max_k.setValue(0.0)
         self._qc_max_k.setToolTip(
-            "Drop configurations whose geometric factor exceeds this (0 = off). A large "
+            QCoreApplication.translate("PHGX", "Drop configurations whose geometric factor exceeds this (0 = off). A large "
             "|k| multiplies the measured resistance, and its noise with it, which is how "
             "a clean-looking rhoa outlier is produced by geometry rather than by ground. "
-            "Set from the file once one is loaded.")
+            "Set from the file once one is loaded."))
         self._qc_max_k.valueChanged.connect(self._max_k_set_by_hand)
-        mform.addRow("Max |k|", self._qc_max_k)
+        mform.addRow(QCoreApplication.translate("PHGX", "Max |k|"), self._qc_max_k)
 
         self._qc_max_rc = PlainDoubleSpinBox(); self._qc_max_rc.setRange(0.0, 1e9)
         self._qc_max_rc.setDecimals(0); self._qc_max_rc.setValue(_QC_DEFAULTS["max_contact_r"])
         self._qc_max_rc.setSuffix(" Ω")
-        mform.addRow("Max contact R", self._qc_max_rc)
+        mform.addRow(QCoreApplication.translate("PHGX", "Max contact R"), self._qc_max_rc)
 
         # Percent, like the reciprocal error below it, though the spread can run
         # to thousands of percent on a failing electrode.
@@ -802,36 +802,36 @@ class ERTProcessingModule(BaseModule):
         self._qc_max_stack.setDecimals(1); self._qc_max_stack.setValue(_QC_DEFAULTS["max_stack"])
         self._qc_max_stack.setSuffix(" %")
         self._qc_max_stack.setToolTip(
-            "Drop readings whose potential scattered by more than this across its own "
+            QCoreApplication.translate("PHGX", "Drop readings whose potential scattered by more than this across its own "
             "samples, as a percentage of the potential (0 = off). Subsurface Insights "
             "records it. A few percent is normal; hundreds of percent is an electrode "
-            "or a contact failing.")
-        mform.addRow("Max stacking spread", self._qc_max_stack)
+            "or a contact failing."))
+        mform.addRow(QCoreApplication.translate("PHGX", "Max stacking spread"), self._qc_max_stack)
 
         self._qc_max_recip = PlainDoubleSpinBox(); self._qc_max_recip.setRange(0.0, 100.0)
         self._qc_max_recip.setDecimals(2); self._qc_max_recip.setValue(_QC_DEFAULTS["max_reciprocal"])
         self._qc_max_recip.setSuffix(" %")
-        mform.addRow("Max recip. error", self._qc_max_recip)
+        mform.addRow(QCoreApplication.translate("PHGX", "Max recip. error"), self._qc_max_recip)
 
-        self._qc_support_note = QLabel("Load data to see which checks are available.")
+        self._qc_support_note = QLabel(QCoreApplication.translate("PHGX", "Load data to see which checks are available."))
         self._qc_support_note.setWordWrap(True)
         theme.set_tone(self._qc_support_note, "hint")
-        mform.addRow(self._qc_support_note)
+        mform.addRow(i18n.tr(self._qc_support_note))
 
         more_outer.addWidget(self._qc_more_body)
         self._qc_more_body.setVisible(False)
         self._qc_more.toggled.connect(self._qc_more_body.setVisible)
-        qform.addRow(self._qc_more)
+        qform.addRow(i18n.tr(self._qc_more))
 
         qrow = QHBoxLayout()
-        apply_btn = QPushButton("Apply filter")
+        apply_btn = QPushButton(QCoreApplication.translate("PHGX", "Apply filter"))
         apply_btn.setIcon(theme.icon("fa5s.filter"))
         apply_btn.clicked.connect(self._apply_filter)
-        reset_btn = QPushButton("Reset")
+        reset_btn = QPushButton(QCoreApplication.translate("PHGX", "Reset"))
         reset_btn.setIcon(theme.icon("fa5s.undo"))
         reset_btn.clicked.connect(self._reset_filter)
         qrow.addWidget(apply_btn); qrow.addWidget(reset_btn)
-        qform.addRow(qrow)
+        qform.addRow(i18n.tr(qrow))
         layout.addWidget(qc)
 
         # The inversion controls are split three ways: what defines the run, how
@@ -840,7 +840,7 @@ class ERTProcessingModule(BaseModule):
         # λ / iterations / errors / mesh quality are shared by single and
         # time-lapse inversion; choosing "Time-lapse series" reveals the
         # time-lapse-only options and swaps the Run button.
-        inv = QGroupBox("Inversion")
+        inv = QGroupBox(QCoreApplication.translate("PHGX", "Inversion"))
         self._inversion_group = inv
         iform = QFormLayout(inv)
         self._inv_form = iform
@@ -852,9 +852,9 @@ class ERTProcessingModule(BaseModule):
         # Named for what each does, so the label says which checks Thorough adds.
         for label, value in (("Quick: invert only", "quick"),
                              ("Thorough: check k, search λ", "full")):
-            self._inv_mode.addItem(label, value)
+            self._inv_mode.addItem(i18n.tr(label), value)
         self._inv_mode.setToolTip(
-            "Quick runs the inversion and nothing else, which is the shorter run "
+            QCoreApplication.translate("PHGX", "Quick runs the inversion and nothing else, which is the shorter run "
             "while λ and the mesh are still being settled.\n\n"
             "Thorough adds the two stages Quick drops. It checks the geometric factors "
             "(k) against the mesh, repairing them when they disagree, and it searches "
@@ -862,9 +862,9 @@ class ERTProcessingModule(BaseModule):
             "The k check is the one with the most evidence behind it: a wrong k scales "
             "the whole section by a constant and χ² never notices, so a Quick result "
             "that looks perfect can still be uniformly wrong. Re-run Thorough whenever "
-            "the resistivities themselves look off, not only when the fit looks bad.")
+            "the resistivities themselves look off, not only when the fit looks bad."))
         self._inv_mode.currentIndexChanged.connect(self._on_inv_mode_changed)
-        iform.addRow("Mode", self._inv_mode)
+        iform.addRow(QCoreApplication.translate("PHGX", "Mode"), self._inv_mode)
 
         self._engine = QComboBox()
         for label, value in (("In-house Gauss-Newton", "pyhydro"),
@@ -873,9 +873,9 @@ class ERTProcessingModule(BaseModule):
                              ("E4D 3D (PNNL, external)", "e4d"),
                              ("R2 2D (Binley, external)", "r2"),
                              ("R3t 3D (Binley, external)", "r3t")):
-            self._engine.addItem(label, value)
+            self._engine.addItem(i18n.tr(label), value)
         self._engine.setToolTip(
-            "Solver. The in-house Gauss-Newton inversion exposes its own stopping rule "
+            QCoreApplication.translate("PHGX", "Solver. The in-house Gauss-Newton inversion exposes its own stopping rule "
             "and line search, so the fit assistance below drives it directly. The "
             "PyGIMLi manager runs its own loop and is available as a cross-check.\n\n"
             "ADTLERT uses a CUDA-accelerated cuDSS forward solve and GPU CGLS: 2.5D "
@@ -897,10 +897,10 @@ class ERTProcessingModule(BaseModule):
             "native on Windows, through Wine on Linux and macOS, free for "
             "non-commercial use. Both choose their own smoothing weight at every "
             "iteration, so λ and auto-λ do not apply; they hold fixed zones fixed. A "
-            "time-lapse series is their difference inversion against the first survey.")
+            "time-lapse series is their difference inversion against the first survey."))
         self._engine.currentIndexChanged.connect(self._on_engine_changed)
         self._engine.currentIndexChanged.connect(self._sync_mesh_engine)
-        iform.addRow("Engine", self._engine)
+        iform.addRow(QCoreApplication.translate("PHGX", "Engine"), self._engine)
         self._adtlert_status = QLabel()
         self._adtlert_status.setWordWrap(True)
         self._adtlert_status.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -914,13 +914,8 @@ class ERTProcessingModule(BaseModule):
         self._lam.setRange(*_LAMBDA_BOUNDS); self._lam.setValue(50.0)
         self._lam.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         self._lam.setToolTip(
-            "Spatial regularization strength (smoothness). Lower fits the data harder, "
-            "higher gives a smoother model. Start on the smooth side: the auto-λ search "
-            "relaxes downward, continuing each λ from the previous solution, and that "
-            "direction is the stable one. Values below 1 are allowed; the range is "
-            f"{_LAMBDA_BOUNDS[0]:g} to {_LAMBDA_BOUNDS[1]:g} and the arrows step by "
-            "one significant digit.")
-        iform.addRow("Lambda", self._lam)
+            QCoreApplication.translate("PHGX", "Spatial regularization strength (smoothness). Lower fits the data harder, higher gives a smoother model. Start on the smooth side: the auto-λ search relaxes downward, continuing each λ from the previous solution, and that direction is the stable one. Values below 1 are allowed; the range is {0:g} to {1:g} and the arrows step by one significant digit.").format(_LAMBDA_BOUNDS[0], _LAMBDA_BOUNDS[1]))
+        iform.addRow(QCoreApplication.translate("PHGX", "Lambda"), self._lam)
 
         # How long an inversion may run, and when it counts as done. Each mode and
         # engine shows only the limits it obeys (_sync_iteration_rows): the three
@@ -929,28 +924,28 @@ class ERTProcessingModule(BaseModule):
         self._iter_ceiling = QSpinBox(); self._iter_ceiling.setRange(5, 400)
         self._iter_ceiling.setValue(60)
         self._iter_ceiling.setToolTip(
-            "The most iterations the inversion may take (for each λ when Auto-λ is "
+            QCoreApplication.translate("PHGX", "The most iterations the inversion may take (for each λ when Auto-λ is "
             "on). It normally stops sooner, once χ² stops improving (next row). "
             "Reaching this limit means the fit could still improve, and the log "
-            "says so.")
-        iform.addRow("Max iterations", self._iter_ceiling)
+            "says so."))
+        iform.addRow(QCoreApplication.translate("PHGX", "Max iterations"), self._iter_ceiling)
         # A single run checks its progress after this many iterations and goes on
         # from its own model while still improving, so λ is never judged on an
         # unfinished descent. That checkpoint is an internal detail there; a
         # time-lapse run has no continuation, and this is its whole limit.
         self._iter = QSpinBox(); self._iter.setRange(2, 60); self._iter.setValue(15)
         self._iter.setToolTip(
-            "The most iterations of the time-lapse inversion; with Windowed on, of "
-            "each window.")
-        iform.addRow("Max iterations", self._iter)
+            QCoreApplication.translate("PHGX", "The most iterations of the time-lapse inversion; with Windowed on, of "
+            "each window."))
+        iform.addRow(QCoreApplication.translate("PHGX", "Max iterations"), self._iter)
 
         self._plateau = PlainDoubleSpinBox()
         self._plateau.setRange(0.01, 10.0); self._plateau.setDecimals(2)
         self._plateau.setSingleStep(0.1); self._plateau.setValue(0.5)
         self._plateau.setPrefix("< ")
         self._plateau.setSuffix(" % per iteration")
-        self._plateau.setToolTip(_PLATEAU_TIP)
-        iform.addRow("Stop when χ² improves", self._plateau)
+        self._plateau.setToolTip(i18n.tr(_PLATEAU_TIP))
+        iform.addRow(QCoreApplication.translate("PHGX", "Stop when χ² improves"), self._plateau)
 
         # The mesh settings live on the Mesh tab, next to the mesh they build;
         # this row says what is set and leads there.
@@ -960,16 +955,16 @@ class ERTProcessingModule(BaseModule):
         self._mesh_link.setTextFormat(Qt.RichText)
         theme.set_tone(self._mesh_link, "hint")
         self._mesh_link.setToolTip(
-            "The mesh, its sizing and what the a-priori zones do to it are set on "
-            "the Mesh tab, which draws the mesh the run will invert on.")
+            QCoreApplication.translate("PHGX", "The mesh, its sizing and what the a-priori zones do to it are set on "
+            "the Mesh tab, which draws the mesh the run will invert on."))
         self._mesh_link.linkActivated.connect(
             lambda _link: self._tabs.setCurrentWidget(self._mesh_tab))
-        iform.addRow("Mesh", self._mesh_link)
+        iform.addRow(QCoreApplication.translate("PHGX", "Mesh"), self._mesh_link)
         self._update_mesh_link()
         layout.addWidget(inv)
 
         # -- data errors -----------------------------------------------------
-        errs = QGroupBox("Data errors")
+        errs = QGroupBox(QCoreApplication.translate("PHGX", "Data errors"))
         self._errors_group = errs
         eform = QFormLayout(errs)
         self._err_source = QComboBox()
@@ -978,31 +973,31 @@ class ERTProcessingModule(BaseModule):
                              ("Larger of the two", "max"),
                              ("Stacking spread with the estimate", "stack"),
                              ("From the reciprocal error model", "reciprocal")):
-            self._err_source.addItem(label, value)
+            self._err_source.addItem(i18n.tr(label), value)
         self._err_source.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self._err_source.setMinimumContentsLength(16)
         self._err_source.setToolTip(
-            "Where the per-measurement error comes from. Most instruments write an err "
+            QCoreApplication.translate("PHGX", "Where the per-measurement error comes from. Most instruments write an err "
             "column; replacing it with an assumed percentage makes χ² report on an error "
             "model the data never had. The stacking spread is offered for data that "
-            "record it, the reciprocal error model for data measured both ways.")
+            "record it, the reciprocal error model for data measured both ways."))
         self._err_source.currentIndexChanged.connect(self._sync_error_rows)
         # The Reciprocal errors tab says whether the next run uses its model.
         self._err_source.currentIndexChanged.connect(self._sync_recip_use)
-        eform.addRow("Taken from", self._err_source)
+        eform.addRow(QCoreApplication.translate("PHGX", "Taken from"), self._err_source)
 
         self._relerr = PlainDoubleSpinBox(); self._relerr.setRange(0.005, 1.0)
         self._relerr.setDecimals(3); self._relerr.setSingleStep(0.01); self._relerr.setValue(0.05)
         self._relerr.setToolTip(
-            "Assumed relative data error, used when estimating and as the fallback where "
-            "the file has no usable value.")
+            QCoreApplication.translate("PHGX", "Assumed relative data error, used when estimating and as the fallback where "
+            "the file has no usable value."))
         self._abserr = PlainDoubleSpinBox(); self._abserr.setRange(0.0, 100.0)
         self._abserr.setDecimals(4); self._abserr.setSingleStep(0.001); self._abserr.setValue(0.0)
         self._abserr.setSuffix(" Ω")
         self._abserr.setToolTip(
-            "Absolute resistance error, added as absolute/|R|. It raises the error bar on "
+            QCoreApplication.translate("PHGX", "Absolute resistance error, added as absolute/|R|. It raises the error bar on "
             "weak readings, which is where a flat percentage is most optimistic. Leave at "
-            "0 when the survey spans a narrow signal range.")
+            "0 when the survey spans a narrow signal range."))
         # Laid out as the formula it is, so the two numbers read as one model
         # rather than as two unrelated settings.
         err_row = QHBoxLayout()
@@ -1013,7 +1008,7 @@ class ERTProcessingModule(BaseModule):
         err_row.addWidget(QLabel("/ |R|"))
         err_row.addStretch(1)
         self._errmodel_row = QWidget(); self._errmodel_row.setLayout(err_row)
-        eform.addRow("Estimate", self._errmodel_row)
+        eform.addRow(QCoreApplication.translate("PHGX", "Estimate"), self._errmodel_row)
 
         # The smallest error a reciprocal can give a reading. 1 %: what the
         # in-house and ADTLERT time-lapse engines take as their own minimum, so
@@ -1025,105 +1020,105 @@ class ERTProcessingModule(BaseModule):
         self._recip_floor.setSingleStep(0.5); self._recip_floor.setValue(1.0)
         self._recip_floor.setSuffix(" %")
         self._recip_floor.setToolTip(
-            "No reading is given a smaller error than this when its error comes from "
+            QCoreApplication.translate("PHGX", "No reading is given a smaller error than this when its error comes from "
             "reciprocals: the error model, or an averaged pair's own difference. Two "
             "directions that agree closely still share the errors that cannot differ "
             "between them - the electrode positions, the 2-D assumption - so a "
             "near-perfect pair is not an error-free reading. 1 % is also the smallest "
             "error the in-house and ADTLERT time-lapse inversions accept. Averaged pairs "
             "take it when Apply filter averages them; the model takes it when the "
-            "inversion runs.")
-        eform.addRow("Minimum", self._recip_floor)
+            "inversion runs."))
+        eform.addRow(QCoreApplication.translate("PHGX", "Minimum"), self._recip_floor)
         self._refresh_error_sources(None)
         # Data errors are settled before the inversion is, so the group sits
         # between the QC and the inversion settings: load, QC, errors, invert.
         layout.insertWidget(layout.indexOf(inv), errs)
 
         # -- fit assistance --------------------------------------------------
-        assist = QGroupBox("Fit assistance")
+        assist = QGroupBox(QCoreApplication.translate("PHGX", "Fit assistance"))
         self._fit_group = assist
         aform = QFormLayout(assist)
 
         # Kept short enough to fit the panel; the tooltip carries the detail.
-        self._auto_lam = QCheckBox("Auto-λ: re-invert to reach target χ²")
+        self._auto_lam = QCheckBox(QCoreApplication.translate("PHGX", "Auto-λ: re-invert to reach target χ²"))
         # Off in Quick, which is the default mode; Full turns it back on.
         self._auto_lam.setChecked(False)
         self._auto_lam.setToolTip(
-            "The inversion at the λ above always runs first and is always kept. If its χ² "
+            QCoreApplication.translate("PHGX", "The inversion at the λ above always runs first and is always kept. If its χ² "
             "misses the target band, the same mesh is re-inverted at other λ values "
             "(bracket, then bisect in log λ) and the closest one becomes the displayed "
             "model. Each trial continues from the nearest λ already solved rather than "
             "restarting, so the later ones are cheap, but every trial is still a full "
-            "inversion.")
+            "inversion."))
         self._auto_lam.toggled.connect(self._on_auto_lambda)
-        aform.addRow(self._auto_lam)
+        aform.addRow(i18n.tr(self._auto_lam))
 
         self._target_chi2 = PlainDoubleSpinBox()
         self._target_chi2.setRange(0.1, 100.0); self._target_chi2.setDecimals(2)
         self._target_chi2.setSingleStep(0.1); self._target_chi2.setValue(1.0)
         self._target_chi2.setToolTip(
-            "χ² = 1 means the model explains the data to within the assumed relative "
+            QCoreApplication.translate("PHGX", "χ² = 1 means the model explains the data to within the assumed relative "
             "error. A larger target accepts a looser fit, matching data noisier than "
-            "the error estimate describes.")
+            "the error estimate describes."))
         self._chi2_tol = PlainDoubleSpinBox()
         self._chi2_tol.setRange(0.01, 10.0); self._chi2_tol.setDecimals(2)
         self._chi2_tol.setSingleStep(0.05); self._chi2_tol.setValue(0.2)
         self._chi2_tol.setToolTip(
-            "Half-width of the accepted band. The search stops as soon as a trial lands "
-            "inside target ± tolerance.")
+            QCoreApplication.translate("PHGX", "Half-width of the accepted band. The search stops as soon as a trial lands "
+            "inside target ± tolerance."))
         chi_row = QHBoxLayout()
         chi_row.addWidget(self._target_chi2)
         chi_row.addWidget(QLabel("±")); chi_row.addWidget(self._chi2_tol)
         chi_row.addStretch(1)
         self._chi2_row = QWidget(); self._chi2_row.setLayout(chi_row)
         chi_row.setContentsMargins(0, 0, 0, 0)
-        aform.addRow("Target χ²", self._chi2_row)
+        aform.addRow(QCoreApplication.translate("PHGX", "Target χ²"), self._chi2_row)
 
         self._lam_trials = QSpinBox(); self._lam_trials.setRange(1, 20); self._lam_trials.setValue(6)
         self._lam_trials.setToolTip(
-            "Upper bound on the extra inversions the λ search may run, on top of the "
+            QCoreApplication.translate("PHGX", "Upper bound on the extra inversions the λ search may run, on top of the "
             "first one at the λ set above. Reached only when the target stays out of "
-            "range.")
-        aform.addRow("Max λ trials", self._lam_trials)
+            "range."))
+        aform.addRow(QCoreApplication.translate("PHGX", "Max λ trials"), self._lam_trials)
 
-        self._reject = QCheckBox("Reject outliers: drop data the model cannot explain")
+        self._reject = QCheckBox(QCoreApplication.translate("PHGX", "Reject outliers: drop data the model cannot explain"))
         self._reject.setChecked(False)
         self._reject.setToolTip(
-            "After the inversion converges, the measurements whose residual exceeds "
+            QCoreApplication.translate("PHGX", "After the inversion converges, the measurements whose residual exceeds "
             "the threshold below are dropped and the inversion runs again. This "
             "addresses a high χ² caused by individual bad readings rather than by the "
             "model.\n\n"
             "It also shrinks the dataset; the floor below bounds how much can be "
-            "removed.")
+            "removed."))
         self._reject.toggled.connect(self._on_reject_outliers)
-        aform.addRow(self._reject)
+        aform.addRow(i18n.tr(self._reject))
 
         self._reject_sigma = PlainDoubleSpinBox()
         self._reject_sigma.setRange(1.5, 20.0); self._reject_sigma.setDecimals(1)
         self._reject_sigma.setSingleStep(0.5); self._reject_sigma.setValue(3.0)
         self._reject_sigma.setToolTip(
-            "Rejection cut in units of the assumed error. A datum at 3 means the model "
-            "misses it by three times its own error bar.")
+            QCoreApplication.translate("PHGX", "Rejection cut in units of the assumed error. A datum at 3 means the model "
+            "misses it by three times its own error bar."))
         self._reject_passes = QSpinBox(); self._reject_passes.setRange(1, 5)
         self._reject_passes.setValue(2)
         self._reject_passes.setToolTip(
-            "How many reject-and-re-invert cycles to run. Each pass is a full inversion.")
+            QCoreApplication.translate("PHGX", "How many reject-and-re-invert cycles to run. Each pass is a full inversion."))
         rej_row = QHBoxLayout()
         rej_row.setContentsMargins(0, 0, 0, 0)
         rej_row.addWidget(self._reject_sigma)
-        rej_row.addWidget(QLabel("σ, passes")); rej_row.addWidget(self._reject_passes)
+        rej_row.addWidget(QLabel(QCoreApplication.translate("PHGX", "σ, passes"))); rej_row.addWidget(self._reject_passes)
         rej_row.addStretch(1)
         self._reject_row = QWidget(); self._reject_row.setLayout(rej_row)
-        aform.addRow("Cut beyond", self._reject_row)
+        aform.addRow(QCoreApplication.translate("PHGX", "Cut beyond"), self._reject_row)
 
         self._min_keep = PlainDoubleSpinBox()
         self._min_keep.setRange(10.0, 100.0); self._min_keep.setDecimals(0)
         self._min_keep.setSingleStep(5.0); self._min_keep.setValue(50.0)
         self._min_keep.setSuffix(" %")
         self._min_keep.setToolTip(
-            "Rejection stops before it would leave less than this share of the "
-            "measurements. A χ² bought by deleting most of the survey is not a fit.")
-        aform.addRow("Keep at least", self._min_keep)
+            QCoreApplication.translate("PHGX", "Rejection stops before it would leave less than this share of the "
+            "measurements. A χ² bought by deleting most of the survey is not a fit."))
+        aform.addRow(QCoreApplication.translate("PHGX", "Keep at least"), self._min_keep)
         layout.addWidget(assist)
 
         # The time-lapse options, after the settings they add to; shown in
@@ -1143,22 +1138,22 @@ class ERTProcessingModule(BaseModule):
         # Result exports belong beside the result, where model post-processing
         # remains available without retaining the entire preparation column -
         # the single model's or the series', whichever the tab shows.
-        self._model_export_btn = QPushButton("Export resistivity model…")
+        self._model_export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export resistivity model…"))
         self._model_export_btn.setIcon(theme.icon("fa5s.cube"))
-        self._model_export_btn.setToolTip("Export the inverted model as npy + pygimli mesh (.bms) + VTK.")
+        self._model_export_btn.setToolTip(QCoreApplication.translate("PHGX", "Export the inverted model as npy + pygimli mesh (.bms) + VTK."))
         self._model_export_btn.setEnabled(False)
         self._model_export_btn.clicked.connect(self._export_resistivity_model)
-        self._tl_export_btn = QPushButton("Export time-lapse results…")
+        self._tl_export_btn = QPushButton(QCoreApplication.translate("PHGX", "Export time-lapse results…"))
         self._tl_export_btn.setIcon(theme.icon("fa5s.cube"))
-        self._tl_export_btn.setToolTip("Saves the time-lapse models to a chosen folder: a combined VTK, "
-                                       "per-step VTKs, final_models.npy, the mesh (.bms), times CSV, and the figure.")
+        self._tl_export_btn.setToolTip(QCoreApplication.translate("PHGX", "Saves the time-lapse models to a chosen folder: a combined VTK, "
+                                       "per-step VTKs, final_models.npy, the mesh (.bms), times CSV, and the figure."))
         self._tl_export_btn.setEnabled(False)
         self._tl_export_btn.clicked.connect(self._export_tl_results)
-        self._tl_open = QPushButton("Open output folder")
+        self._tl_open = QPushButton(QCoreApplication.translate("PHGX", "Open output folder"))
         self._tl_open.setIcon(theme.icon("fa5s.folder-open"))
         self._tl_open.setEnabled(False)
         self._tl_open.clicked.connect(self._open_tl_output)
-        self._model_export_group = QGroupBox("Export model")
+        self._model_export_group = QGroupBox(QCoreApplication.translate("PHGX", "Export model"))
         model_exports = QVBoxLayout(self._model_export_group)
         model_exports.addWidget(self._model_export_btn)
         model_exports.addWidget(self._tl_export_btn)
@@ -1192,7 +1187,7 @@ class ERTProcessingModule(BaseModule):
         theme.set_tone(self._run_reason, "hint")
         flayout.addWidget(self._run_reason)
 
-        self._invert_btn = QPushButton("Run inversion")
+        self._invert_btn = QPushButton(QCoreApplication.translate("PHGX", "Run inversion"))
         self._invert_btn.setProperty("primary", True)
         self._invert_btn.setIcon(theme.icon("fa5s.play", color="#ffffff"))
         self._invert_btn.clicked.connect(self._run_inversion)
@@ -1203,7 +1198,7 @@ class ERTProcessingModule(BaseModule):
         self._inv_progress_row = progress_with_stop(self._inv_progress, self._inv_stop)
         flayout.addWidget(self._inv_progress_row)
 
-        self._tl_btn = QPushButton("Run time-lapse inversion")
+        self._tl_btn = QPushButton(QCoreApplication.translate("PHGX", "Run time-lapse inversion"))
         self._tl_btn.setProperty("primary", True)
         self._tl_btn.setIcon(theme.icon("fa5s.history", color="#ffffff"))
         self._tl_btn.clicked.connect(self._run_timelapse)
@@ -1229,39 +1224,39 @@ class ERTProcessingModule(BaseModule):
         the top; shared λ / iterations / relative error / mesh quality live in the
         Inversion group above; the Run button is pinned under the column. Only the
         temporal controls are here."""
-        panel = QGroupBox("Time-lapse")
+        panel = QGroupBox(QCoreApplication.translate("PHGX", "Time-lapse"))
         self._tl_panel = panel
         tlform = QFormLayout(panel)
         self._tl_alpha = PlainDoubleSpinBox(); self._tl_alpha.setRange(0.0, 1000.0); self._tl_alpha.setValue(10.0)
-        self._tl_alpha.setToolTip("Temporal regularization strength (couples consecutive time steps).")
-        tlform.addRow("Alpha (temporal)", self._tl_alpha)
+        self._tl_alpha.setToolTip(QCoreApplication.translate("PHGX", "Temporal regularization strength (couples consecutive time steps)."))
+        tlform.addRow(QCoreApplication.translate("PHGX", "Alpha (temporal)"), self._tl_alpha)
         self._tl_type = QComboBox(); self._tl_type.addItems(["L2", "L1", "L1L2"])
-        self._tl_type.setToolTip("Temporal norm: L2 smooth, L1 blocky, L1L2 hybrid.")
-        tlform.addRow("Norm", self._tl_type)
+        self._tl_type.setToolTip(QCoreApplication.translate("PHGX", "Temporal norm: L2 smooth, L1 blocky, L1L2 hybrid."))
+        tlform.addRow(QCoreApplication.translate("PHGX", "Norm"), self._tl_type)
 
-        self._tl_dt_weight = QCheckBox("Weight by the interval between surveys")
+        self._tl_dt_weight = QCheckBox(QCoreApplication.translate("PHGX", "Weight by the interval between surveys"))
         self._tl_dt_weight.setChecked(True)
         self._tl_dt_weight.setToolTip(
-            "Penalize the rate of change rather than the raw difference, so a "
+            QCoreApplication.translate("PHGX", "Penalize the rate of change rather than the raw difference, so a "
             "month-long gap is allowed proportionally more change than an hour-long "
             "one. Weights are normalized by the median interval, so an evenly "
             "sampled series is unchanged and Alpha keeps its meaning. Untick to "
-            "constrain every pair equally.")
-        tlform.addRow(self._tl_dt_weight)
+            "constrain every pair equally."))
+        tlform.addRow(i18n.tr(self._tl_dt_weight))
 
-        self._tl_windowed = QCheckBox("Windowed (sliding window)")
-        self._tl_windowed.setToolTip("Process consecutive time steps in overlapping windows: "
-                                     "cheaper and lower-memory for long monitoring sequences.")
+        self._tl_windowed = QCheckBox(QCoreApplication.translate("PHGX", "Windowed (sliding window)"))
+        self._tl_windowed.setToolTip(QCoreApplication.translate("PHGX", "Process consecutive time steps in overlapping windows: "
+                                     "cheaper and lower-memory for long monitoring sequences."))
         self._tl_window = QSpinBox(); self._tl_window.setRange(2, 50); self._tl_window.setValue(3)
         self._tl_window.setEnabled(False)
         self._tl_windowed.toggled.connect(self._tl_window.setEnabled)
-        tlform.addRow(self._tl_windowed)
-        tlform.addRow("Window size", self._tl_window)
-        self._tl_lowmem = QCheckBox("Low memory (sparse)")
-        self._tl_lowmem.setToolTip("Use single-precision sparse operators to cut RAM "
+        tlform.addRow(i18n.tr(self._tl_windowed))
+        tlform.addRow(QCoreApplication.translate("PHGX", "Window size"), self._tl_window)
+        self._tl_lowmem = QCheckBox(QCoreApplication.translate("PHGX", "Low memory (sparse)"))
+        self._tl_lowmem.setToolTip(QCoreApplication.translate("PHGX", "Use single-precision sparse operators to cut RAM "
                                    "(for many files / large meshes). Auto-enabled for "
-                                   "large problems; check to force it on.")
-        tlform.addRow(self._tl_lowmem)
+                                   "large problems; check to force it on."))
+        tlform.addRow(i18n.tr(self._tl_lowmem))
 
         panel.setVisible(False)
         return panel
@@ -1374,7 +1369,7 @@ class ERTProcessingModule(BaseModule):
             text = ("Pick the instrument / format, then add one file per survey. "
                     "Name each file with its time, year first: "
                     "site_2026-01-12_05-50-38.dat.")
-        dlg = QDialog(self); dlg.setWindowTitle("ERT input formats")
+        dlg = QDialog(self); dlg.setWindowTitle(QCoreApplication.translate("PHGX", "ERT input formats"))
         dlg.resize(760, 640); lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
         try:
@@ -1383,7 +1378,7 @@ class ERTProcessingModule(BaseModule):
             _logger.debug("ERTProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)
+        close = QPushButton(QCoreApplication.translate("PHGX", "Close")); close.clicked.connect(dlg.accept); lay.addWidget(close)
         dlg.exec()
 
     def _apply_single_temperature(self, spec: Optional[Dict[str, Any]]) -> Tuple[bool, str]:
@@ -1532,7 +1527,7 @@ class ERTProcessingModule(BaseModule):
         if not hasattr(self, "_run_reason"):
             return
         reason = self._run_blocker()
-        self._run_reason.setText(reason)
+        self._run_reason.setText(i18n.tr(reason))
         self._run_reason.setVisible(bool(reason))
         # A run in progress keeps its busy state; it is settled again after.
         if self._inv_busy is None:
@@ -1573,11 +1568,11 @@ class ERTProcessingModule(BaseModule):
         set_rows_enabled([self._iter], engine not in ("e4d", "r2", "r3t"))
         plateau_applies = not timelapse or engine in ("pyhydro", "e4d")
         set_rows_enabled([self._plateau], plateau_applies)
-        self._plateau.setToolTip(_PLATEAU_TIP if plateau_applies else (
-            "Not used by this engine's time-lapse inversion: ADTLERT stops when its "
-            "model step gets small, or at Max iterations."
+        self._plateau.setToolTip(i18n.tr(_PLATEAU_TIP) if plateau_applies else (
+            QCoreApplication.translate("PHGX", "Not used by this engine's time-lapse inversion: ADTLERT stops when its "
+            "model step gets small, or at Max iterations.")
             if engine == "adtlert" else
-            "Not used: R2 and R3t decide for themselves when the inversion is done."))
+            QCoreApplication.translate("PHGX", "Not used: R2 and R3t decide for themselves when the inversion is done.")))
 
     def _on_engine_changed(self, _index: int = -1) -> None:
         """Probe the selected CUDA backend without changing user parameters."""
@@ -1604,7 +1599,7 @@ class ERTProcessingModule(BaseModule):
         self._adtlert_single_ready = None
         self._adtlert_timelapse_ready = None
         self._adtlert_checks = {}
-        self._adtlert_status.setText("Checking CUDA, cuDSS, NVRTC and GPU CGLS…")
+        self._adtlert_status.setText(QCoreApplication.translate("PHGX", "Checking CUDA, cuDSS, NVRTC and GPU CGLS…"))
         theme.set_tone(self._adtlert_status, "hint")
         self._adtlert_status.setVisible(True)
         worker = ProcessProbeWorker(
@@ -1657,7 +1652,7 @@ class ERTProcessingModule(BaseModule):
         if stage == "single":
             self._start_adtlert_numerical_check(serial, "timelapse")
         else:
-            self._adtlert_status.setText(" · ".join(self._adtlert_checks.values()))
+            self._adtlert_status.setText(i18n.tr(" · ".join(self._adtlert_checks.values())))
             healthy = self._adtlert_single_ready and self._adtlert_timelapse_ready
             theme.set_tone(self._adtlert_status, "ok" if healthy else "error")
 
@@ -1670,7 +1665,7 @@ class ERTProcessingModule(BaseModule):
         self._adtlert_single_ready = False
         self._adtlert_timelapse_ready = False
         self._adtlert_status.setText(
-            f"CUDA check failed; GPU inversion is not verified. Select PyHydro CPU. {message}"
+            QCoreApplication.translate("PHGX", "CUDA check failed; GPU inversion is not verified. Select PyHydro CPU. {0}").format(message)
         )
         theme.set_tone(self._adtlert_status, "error")
 
@@ -1694,11 +1689,11 @@ class ERTProcessingModule(BaseModule):
                              ("This computer", "local"),
                              ("WSL (Windows)", "wsl"),
                              ("Write files only", "files")):
-            self._e4d_launcher.addItem(label, value)
+            self._e4d_launcher.addItem(i18n.tr(label), value)
         index = self._e4d_launcher.findData(str(saved.value(self._E4D_KEYS["launcher"], "auto")))
         self._e4d_launcher.setCurrentIndex(max(index, 0))
         self._e4d_launcher.setToolTip(
-            "Where E4D runs. E4D is built from source (github.com/pnnl/E4D) with "
+            QCoreApplication.translate("PHGX", "Where E4D runs. E4D is built from source (github.com/pnnl/E4D) with "
             "gfortran, PETSc and MPI, for Linux.\n\n"
             "This computer: Linux, or macOS with a source build; e4d and mpirun are "
             "found on PATH, through PYHYDRO_E4D / PYHYDRO_MPIRUN, or from the program "
@@ -1707,26 +1702,26 @@ class ERTProcessingModule(BaseModule):
             "program below is then a Linux path. E4D has no Windows build of its own.\n"
             "Write files only: the complete E4D run folder is written and the run "
             "stops, for a cluster or another machine: run mpirun -np N e4d in it, "
-            "then read it back with inversion.e4d.read_e4d_run.")
-        form.addRow("Run E4D", self._e4d_launcher)
+            "then read it back with inversion.e4d.read_e4d_run."))
+        form.addRow(QCoreApplication.translate("PHGX", "Run E4D"), self._e4d_launcher)
         self._e4d_program = QLineEdit(str(saved.value(self._E4D_KEYS["executable"], "")))
-        self._e4d_program.setPlaceholderText("e4d on PATH")
+        self._e4d_program.setPlaceholderText(QCoreApplication.translate("PHGX", "e4d on PATH"))
         self._e4d_program.setToolTip(
-            "The e4d program, when it is not on PATH: a path on this computer, or a "
-            "Linux path for WSL. Leave empty to use PATH or PYHYDRO_E4D.")
+            QCoreApplication.translate("PHGX", "The e4d program, when it is not on PATH: a path on this computer, or a "
+            "Linux path for WSL. Leave empty to use PATH or PYHYDRO_E4D."))
         browse = QPushButton("…")
         browse.setMaximumWidth(32)
-        browse.setToolTip("Choose the e4d program on this computer.")
+        browse.setToolTip(QCoreApplication.translate("PHGX", "Choose the e4d program on this computer."))
         browse.clicked.connect(self._browse_e4d)
         self._e4d_program_row = merged_row(self._e4d_program, browse)
-        form.addRow("E4D program", self._e4d_program_row)
+        form.addRow(QCoreApplication.translate("PHGX", "E4D program"), self._e4d_program_row)
         self._e4d_processes = QSpinBox()
         self._e4d_processes.setRange(2, 1024)
         self._e4d_processes.setValue(int(saved.value(self._E4D_KEYS["processes"], 4) or 4))
         self._e4d_processes.setToolTip(
-            "MPI processes for mpirun -np. E4D needs at least two - one master and "
-            "one or more workers - and no more workers than electrodes.")
-        form.addRow("MPI processes", self._e4d_processes)
+            QCoreApplication.translate("PHGX", "MPI processes for mpirun -np. E4D needs at least two - one master and "
+            "one or more workers - and no more workers than electrodes."))
+        form.addRow(QCoreApplication.translate("PHGX", "MPI processes"), self._e4d_processes)
         self._e4d_status = QLabel()
         self._e4d_status.setWordWrap(True)
         self._e4d_status.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -1750,9 +1745,9 @@ class ERTProcessingModule(BaseModule):
                 "processes": int(self._e4d_processes.value())}
 
     def _browse_e4d(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Choose the e4d program", "", "All files (*)")
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Choose the e4d program"), "", "All files (*)")
         if path:
-            self._e4d_program.setText(path)
+            self._e4d_program.setText(i18n.tr(path))
 
     def _e4d_settings_changed(self, *_args: Any) -> None:
         from PySide6.QtCore import QSettings
@@ -1773,7 +1768,7 @@ class ERTProcessingModule(BaseModule):
         serial = self._e4d_probe_serial
         settings = self._e4d_settings()
         self._e4d_found = None
-        self._e4d_status.setText("Looking for E4D…")
+        self._e4d_status.setText(QCoreApplication.translate("PHGX", "Looking for E4D…"))
         theme.set_tone(self._e4d_status, "hint")
         arguments = ["--json", "--launcher", settings["launcher"],
                      "--processes", str(settings["processes"])]
@@ -1798,7 +1793,7 @@ class ERTProcessingModule(BaseModule):
         text = str(result.get("message", ""))
         if kind == "missing":
             text += " Runs will write the E4D run folder and stop."
-        self._e4d_status.setText(text)
+        self._e4d_status.setText(i18n.tr(text))
         theme.set_tone(self._e4d_status, tone)
 
     # -- R2 / R3t ------------------------------------------------------------
@@ -1820,28 +1815,28 @@ class ERTProcessingModule(BaseModule):
         """
         self._r2_launcher = QComboBox()
         for label, value in (("Auto (this computer)", "auto"), ("Write files only", "files")):
-            self._r2_launcher.addItem(label, value)
+            self._r2_launcher.addItem(i18n.tr(label), value)
         self._r2_launcher.setToolTip(
-            "Whether R2/R3t is run here. They are Windows programs (R2.exe, R3t.exe) from "
+            QCoreApplication.translate("PHGX", "Whether R2/R3t is run here. They are Windows programs (R2.exe, R3t.exe) from "
             "Andrew Binley's web page or any ResIPy installation.\n\n"
             "Auto: run natively on Windows, through Wine on Linux and macOS. The program "
             "is the one given below, else PYHYDRO_R2 / PYHYDRO_R3T, else ResIPy's copy, "
             "else the first on PATH.\n"
             "Write files only: the complete run folder is written and the run stops; run "
             "R2.exe or R3t.exe in it elsewhere, then read it back with "
-            "inversion.r2.read_r2_run.")
-        form.addRow("Run R2/R3t", self._r2_launcher)
+            "inversion.r2.read_r2_run."))
+        form.addRow(QCoreApplication.translate("PHGX", "Run R2/R3t"), self._r2_launcher)
         self._r2_program = QLineEdit()
-        self._r2_program.setPlaceholderText("ResIPy's copy, or PATH")
+        self._r2_program.setPlaceholderText(QCoreApplication.translate("PHGX", "ResIPy's copy, or PATH"))
         self._r2_program.setToolTip(
-            "The R2.exe or R3t.exe to run, when another than ResIPy's or the one on "
-            "PATH. Leave empty to search for it.")
+            QCoreApplication.translate("PHGX", "The R2.exe or R3t.exe to run, when another than ResIPy's or the one on "
+            "PATH. Leave empty to search for it."))
         browse = QPushButton("…")
         browse.setMaximumWidth(32)
-        browse.setToolTip("Choose the R2 or R3t program.")
+        browse.setToolTip(QCoreApplication.translate("PHGX", "Choose the R2 or R3t program."))
         browse.clicked.connect(self._browse_r2)
         self._r2_program_row = merged_row(self._r2_program, browse)
-        form.addRow("Program", self._r2_program_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Program"), self._r2_program_row)
         self._r2_status = QLabel()
         self._r2_status.setWordWrap(True)
         self._r2_status.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -1864,9 +1859,9 @@ class ERTProcessingModule(BaseModule):
             widget.blockSignals(True)
         index = self._r2_launcher.findData(str(saved.value(self._R2_KEYS["launcher"], "auto")))
         self._r2_launcher.setCurrentIndex(max(index, 0))
-        self._r2_program.setText(str(saved.value(self._R2_KEYS[program], "") or ""))
+        self._r2_program.setText(i18n.tr(str(saved.value(self._R2_KEYS[program], "") or "")))
         self._r2_program.setPlaceholderText(
-            f"{'R2' if program == 'r2' else 'R3t'}.exe from ResIPy, or PATH")
+            QCoreApplication.translate("PHGX", "{0}.exe from ResIPy, or PATH").format('R2' if program == 'r2' else 'R3t'))
         for widget in (self._r2_launcher, self._r2_program):
             widget.blockSignals(False)
 
@@ -1877,10 +1872,10 @@ class ERTProcessingModule(BaseModule):
 
     def _browse_r2(self) -> None:
         name = "R2" if self._r2_program_name() == "r2" else "R3t"
-        path, _ = QFileDialog.getOpenFileName(self, f"Choose the {name} program", "",
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Choose the {0} program").format(name), "",
                                               "Programs (*.exe);;All files (*)")
         if path:
-            self._r2_program.setText(path)
+            self._r2_program.setText(i18n.tr(path))
 
     def _r2_settings_changed(self, *_args: Any) -> None:
         from PySide6.QtCore import QSettings
@@ -1906,7 +1901,7 @@ class ERTProcessingModule(BaseModule):
         serial = self._r2_probe_serial
         settings = self._r2_settings()
         self._r2_found = None
-        self._r2_status.setText("Looking for the program…")
+        self._r2_status.setText(QCoreApplication.translate("PHGX", "Looking for the program…"))
         theme.set_tone(self._r2_status, "hint")
         arguments = ["--json", "--program", program, "--launcher", settings["launcher"]]
         if settings["executable"]:
@@ -1933,7 +1928,7 @@ class ERTProcessingModule(BaseModule):
         # λ stays on the page for the other engines; say here that it is unused.
         text += (" It chooses its own smoothing weight at every iteration: λ and "
                  "auto-λ are not used.")
-        self._r2_status.setText(text)
+        self._r2_status.setText(i18n.tr(text))
         theme.set_tone(self._r2_status, tone)
 
     def _warn_external_not_running(self, what: str) -> None:
@@ -2113,29 +2108,29 @@ class ERTProcessingModule(BaseModule):
         """
         version = self._resipy_version()
         named = "ResIPy" if version == "yes" else f"ResIPy {version}"
-        self._resipy_ready.setText("ResIPy ready" if version else "ResIPy unavailable")
+        self._resipy_ready.setText(QCoreApplication.translate("PHGX", "ResIPy ready") if version else QCoreApplication.translate("PHGX", "ResIPy unavailable"))
         theme.set_tone(self._resipy_ready, "ok" if version else "warn")
         self._resipy_ready.setToolTip(
-            f"{named} available for loading data." if version else
-            "ResIPy is not installed; some formats require it. See Data format.")
+            QCoreApplication.translate("PHGX", "{0} available for loading data.").format(named) if version else
+            QCoreApplication.translate("PHGX", "ResIPy is not installed; some formats require it. See Data format."))
         if not reader:
             if version:
-                self._reader_status.setText(f"{named} available for loading data.")
+                self._reader_status.setText(QCoreApplication.translate("PHGX", "{0} available for loading data.").format(named))
                 self._instrument.setToolTip(self._reader_status.text())
                 self._reader_status.hide()
                 return
             from PyHydroGeophysX.data_processing.ert_data_agent import (
                 _EMBEDDED_PARSER_MAP, resipy_install_hint,
             )
-            self._reader_status.setText("ResIPy unavailable; some formats need it.")
+            self._reader_status.setText(QCoreApplication.translate("PHGX", "ResIPy unavailable; some formats need it."))
             details = ("Available readers: " + ", ".join(sorted(_EMBEDDED_PARSER_MAP))
                        + ".\n\n" + resipy_install_hint())
-            self._reader_status.setToolTip(details)
-            self._instrument.setToolTip(details)
+            self._reader_status.setToolTip(i18n.tr(details))
+            self._instrument.setToolTip(i18n.tr(details))
             self._reader_status.show()
             return
         note = f", {detail}" if detail else ""
-        self._reader_status.setText(f"Data loaded by {reader}{note}.")
+        self._reader_status.setText(QCoreApplication.translate("PHGX", "Data loaded by {0}{1}.").format(reader, note))
         self._reader_status.setToolTip("")
         self._reader_status.show()
 
@@ -2351,7 +2346,7 @@ class ERTProcessingModule(BaseModule):
     def _on_ert_load_failed(self, message: str, path: Optional[str] = None) -> None:
         message = self._name_electrode_file(message)
         self.log(f"Could not load ERT data: {message}", "error")
-        self._info.setText(f"Load failed: {message}")
+        self._info.setText(QCoreApplication.translate("PHGX", "Load failed: {0}").format(message))
         # Neither reader got there, so the line goes back to what is installed
         # rather than keeping the last file's answer.
         self._show_reader_status()
@@ -2371,9 +2366,8 @@ class ERTProcessingModule(BaseModule):
         name = self._instrument.itemText(index)
         self._format_guess = (str(guess), str(path), name)
         self._format_hint_text.setText(
-            f"{Path(str(path)).name} looks like a {name} file, but is read as "
-            f"{self._instrument.currentText()}.")
-        self._format_hint_btn.setText(f"Read as {name}")
+            QCoreApplication.translate("PHGX", "{0} looks like a {1} file, but is read as {2}.").format(Path(str(path)).name, name, self._instrument.currentText()))
+        self._format_hint_btn.setText(QCoreApplication.translate("PHGX", "Read as {0}").format(name))
         self._format_hint.setVisible(True)
 
     def _take_format_hint(self) -> None:
@@ -2609,7 +2603,7 @@ class ERTProcessingModule(BaseModule):
             label = self.row_label(widget)
             if label is not None:
                 label.setEnabled(bool(ok))
-            widget.setToolTip(message)
+            widget.setToolTip(i18n.tr(message))
 
         data = self._ert_data_full
         self._refresh_error_sources(data)
@@ -2618,7 +2612,7 @@ class ERTProcessingModule(BaseModule):
                       self._qc_max_stack, self._qc_max_recip, self._qc_average):
                 gate(w, False, "Load ERT data first.")
             self._qc_support_note.setText(
-                "Load data to see which checks are available."
+                QCoreApplication.translate("PHGX", "Load data to see which checks are available.")
             )
             return
 
@@ -2733,8 +2727,8 @@ class ERTProcessingModule(BaseModule):
             )
         else:
             self._qc_support_note.setText(
-                "All extra checks are supported by this file. A value of 0 turns "
-                "each numerical check off."
+                QCoreApplication.translate("PHGX", "All extra checks are supported by this file. A value of 0 turns "
+                "each numerical check off.")
             )
 
     def _max_k_set_by_hand(self, _value: float) -> None:
@@ -2754,7 +2748,7 @@ class ERTProcessingModule(BaseModule):
             available = bool(paired or self._tl_partner)
             item.setEnabled(available)
             item.setToolTip(
-                "Each reading's error from a line fitted to the reciprocal pairs: "
+                QCoreApplication.translate("PHGX", "Each reading's error from a line fitted to the reciprocal pairs: "
                 "log10(dR) = m·log10(R) + b, where R is a pair's mean resistance and dR "
                 "the difference between its two directions, so dR = 10^b·R^m and the "
                 "relative error is dR / R, never below the Minimum set below. A "
@@ -2763,11 +2757,11 @@ class ERTProcessingModule(BaseModule):
                 "all of them. The Reciprocal errors tab draws the pairs and the line, "
                 "and its “Fit to” chooser sets whether the line is fitted to all pairs "
                 "or only to those the filter kept. The Data QC report and the settings "
-                "file state the fit."
+                "file state the fit.")
                 if available else
-                "Needs readings measured both ways (each reading and its reciprocal). "
+                QCoreApplication.translate("PHGX", "Needs readings measured both ways (each reading and its reciprocal). "
                 "The loaded data have none; for a survey written as two files, add both "
-                "and keep “Pair reciprocal files” ticked.")
+                "and keep “Pair reciprocal files” ticked."))
             if not available and self._err_source.currentData() == "reciprocal":
                 self._err_source.setCurrentIndex(self._err_source.findData("file"))
                 if data is not None:
@@ -2780,13 +2774,13 @@ class ERTProcessingModule(BaseModule):
         available = data is not None and data.haveData("stack")
         item.setEnabled(available)
         item.setToolTip(
-            "√(spread² + estimate²) for each reading: the scatter of its potential's "
+            QCoreApplication.translate("PHGX", "√(spread² + estimate²) for each reading: the scatter of its potential's "
             "samples, as a fraction of the potential, added in quadrature to the estimate "
             "below. The scatter within one reading is not its uncertainty and usually "
-            "overstates it, so χ² tends to come out low; it is never the default."
+            "overstates it, so χ² tends to come out low; it is never the default.")
             if available else
-            "Needs the spread of each reading's potential samples, which the loaded data "
-            "do not record (Subsurface Insights exports do).")
+            QCoreApplication.translate("PHGX", "Needs the spread of each reading's potential samples, which the loaded data "
+            "do not record (Subsurface Insights exports do)."))
         if not available and self._err_source.currentData() == "stack":
             self._err_source.setCurrentIndex(self._err_source.findData("file"))
             if data is not None:
@@ -3448,7 +3442,7 @@ class ERTProcessingModule(BaseModule):
         return {"status": "pending"}
 
     def _load_electrodes(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Load electrode file", "", _ELEC_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load electrode file"), "", _ELEC_FILTER)
         if not path:
             return
         outcome = self._take_electrode_file(path)
@@ -3646,7 +3640,7 @@ class ERTProcessingModule(BaseModule):
         self._write_single_records(run, spec)
         self._inv_busy = BusyStateController([self._invert_btn])
         self._inv_busy.start()
-        self._invert_btn.setText("Inverting…")
+        self._invert_btn.setText(QCoreApplication.translate("PHGX", "Inverting…"))
         self._inv_progress.setVisible(True)
         self._inv_progress.setRange(0, 0)
         # Every ERT engine performs long native numerical work.  Run all of
@@ -4229,54 +4223,54 @@ class ERTProcessingModule(BaseModule):
         change, so the effect of each is seen at once, and a setting left at
         its default builds the mesh PyGIMLi builds by itself.
         """
-        box = QGroupBox("Mesh")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "Mesh"))
         form = QFormLayout(box)
 
         # An imported mesh. Building one from the electrode line is fine for a
         # 2D profile and hopeless for a 3D domain with topography, boreholes or
         # known structure, which is meshed externally (usually in Gmsh).
         self._mesh_path = ""
-        self._mesh_btn = QPushButton("Import mesh…")
+        self._mesh_btn = QPushButton(QCoreApplication.translate("PHGX", "Import mesh…"))
         self._mesh_btn.setIcon(theme.icon("fa5s.project-diagram"))
         self._mesh_btn.setToolTip(
-            "Inverts on an externally built mesh instead of one generated from "
+            QCoreApplication.translate("PHGX", "Inverts on an externally built mesh instead of one generated from "
             "the electrode positions. PyGIMLi .bms, Gmsh .msh, VTK, .poly, or an "
             "E4D mesh (.1.node / .1.ele, with its .trn). An E4D mesh configuration "
             "(.cfg) is meshed once, on import. "
             "The region to invert must carry marker 2 or above; marker 0 and 1 "
             "are treated as background and stay fixed - for an E4D mesh, zone 1 "
             "is the background. The file is checked against the survey before the "
-            "run starts.")
+            "run starts."))
         self._mesh_btn.clicked.connect(self._import_mesh)
         self._mesh_clear = QPushButton("✕")
         self._mesh_clear.setMaximumWidth(32)
-        self._mesh_clear.setToolTip("Go back to a mesh generated from the data.")
+        self._mesh_clear.setToolTip(QCoreApplication.translate("PHGX", "Go back to a mesh generated from the data."))
         self._mesh_clear.setEnabled(False)
         self._mesh_clear.clicked.connect(self._clear_mesh)
         self._mesh_row = merged_row(self._mesh_btn, self._mesh_clear)
-        form.addRow("Source", self._mesh_row)
-        self._mesh_note = QLabel("Built from the electrode positions.")
+        form.addRow(QCoreApplication.translate("PHGX", "Source"), self._mesh_row)
+        self._mesh_note = QLabel(QCoreApplication.translate("PHGX", "Built from the electrode positions."))
         self._mesh_note.setWordWrap(True)
         theme.set_tone(self._mesh_note, "hint")
         form.addRow("", self._mesh_note)
         # A 3D mesh is built in the 3D Mesh Builder around these electrodes and
         # comes back here as the imported mesh.
-        self._mesh3d_btn = QPushButton("Build a 3D mesh…")
+        self._mesh3d_btn = QPushButton(QCoreApplication.translate("PHGX", "Build a 3D mesh…"))
         self._mesh3d_btn.setIcon(theme.icon("fa5s.cubes"))
         self._mesh3d_btn.setToolTip(
-            "Open the 3D Mesh Builder with these electrodes - a profile as a line at "
+            QCoreApplication.translate("PHGX", "Open the 3D Mesh Builder with these electrodes - a profile as a line at "
             "y = 0 - to build a 3D mesh around them with PyGIMLi, Gmsh or the E4D "
             "mesher. Its Use for ERT inversion button brings the mesh back here as "
-            "the imported mesh, shown in 3D on this tab.")
+            "the imported mesh, shown in 3D on this tab."))
         self._mesh3d_btn.clicked.connect(self._build_3d_mesh)
         form.addRow("", self._mesh3d_btn)
 
         def section(title: str, text: str) -> None:
-            form.addRow(QLabel(f"<b>{title}</b>"))
-            hint = QLabel(text)
+            form.addRow(i18n.tr(QLabel(f"<b>{title}</b>")))
+            hint = QLabel(i18n.tr(text))
             hint.setWordWrap(True)
             theme.set_tone(hint, "hint")
-            form.addRow(hint)
+            form.addRow(i18n.tr(hint))
 
         section("Inverted region",
                 "The cells the inversion solves for, under the electrodes "
@@ -4285,56 +4279,56 @@ class ERTProcessingModule(BaseModule):
         self._para_depth.setRange(0.0, 10000.0); self._para_depth.setDecimals(1)
         self._para_depth.setSingleStep(5.0); self._para_depth.setValue(0.0)
         self._para_depth.setSuffix(" m")
-        self._para_depth.setSpecialValueText("auto")
+        self._para_depth.setSpecialValueText(QCoreApplication.translate("PHGX", "auto"))
         self._para_depth.setToolTip(
-            "How deep to invert. PyGIMLi sizes the parameter domain from the array "
+            QCoreApplication.translate("PHGX", "How deep to invert. PyGIMLi sizes the parameter domain from the array "
             "length, which for a long line reaches well below anything the data "
             "resolve; capping it removes unknowns the inversion cannot constrain and "
             "shortens every iteration. Leave at auto unless the sensitivity plot shows "
             "the bottom of the section is empty. Auto is 0.4 times the electrode "
-            "spread (PyGIMLi's paraDepth).")
-        form.addRow("Depth", self._para_depth)
+            "spread (PyGIMLi's paraDepth)."))
+        form.addRow(QCoreApplication.translate("PHGX", "Depth"), self._para_depth)
         self._para_boundary = PlainDoubleSpinBox()
         self._para_boundary.setRange(0.5, 20.0); self._para_boundary.setDecimals(1)
         self._para_boundary.setSingleStep(0.5); self._para_boundary.setValue(2.0)
-        self._para_boundary.setSuffix(" spacings")
+        self._para_boundary.setSuffix(QCoreApplication.translate("PHGX", " spacings"))
         self._para_boundary.setToolTip(
-            "How far the inverted region reaches past the first and the last "
+            QCoreApplication.translate("PHGX", "How far the inverted region reaches past the first and the last "
             "electrode, in electrode spacings. A wider margin lets the inversion "
             "put structure beside the line rather than forcing it under the end "
             "electrodes, at the cost of cells the data barely see. PyGIMLi's "
-            "paraBoundary, 2 by default; the padding of E4D's fine zone.")
-        form.addRow("Side margin", self._para_boundary)
+            "paraBoundary, 2 by default; the padding of E4D's fine zone."))
+        form.addRow(QCoreApplication.translate("PHGX", "Side margin"), self._para_boundary)
         self._surface_nodes = QSpinBox()
         self._surface_nodes.setRange(1, 8); self._surface_nodes.setValue(1)
-        self._surface_nodes.setSuffix(" between electrodes")
+        self._surface_nodes.setSuffix(QCoreApplication.translate("PHGX", " between electrodes"))
         self._surface_nodes.setToolTip(
-            "Mesh nodes placed on the surface between two neighbouring electrodes. "
+            QCoreApplication.translate("PHGX", "Mesh nodes placed on the surface between two neighbouring electrodes. "
             "More give smaller cells near the surface, where the data resolve the "
             "most, and more unknowns. PyGIMLi's addNodes; 1, a node halfway "
-            "between electrodes, by default.")
-        form.addRow("Surface nodes", self._surface_nodes)
+            "between electrodes, by default."))
+        form.addRow(QCoreApplication.translate("PHGX", "Surface nodes"), self._surface_nodes)
         self._para_max_cell = PlainDoubleSpinBox()
         self._para_max_cell.setRange(0.0, 1e6); self._para_max_cell.setDecimals(2)
         self._para_max_cell.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         self._para_max_cell.setSuffix(" m²")
-        self._para_max_cell.setSpecialValueText("no limit")
+        self._para_max_cell.setSpecialValueText(QCoreApplication.translate("PHGX", "no limit"))
         self._para_max_cell.setToolTip(
-            "Upper limit on the area of an inverted cell. Without one the cells "
+            QCoreApplication.translate("PHGX", "Upper limit on the area of an inverted cell. Without one the cells "
             "grow with depth; a limit keeps them small and even, with many more "
             "unknowns. The line under the plot gives the cell sizes of the mesh "
             "shown. PyGIMLi's paraMaxCellSize; the maximum volume of E4D's fine "
-            "zone.")
-        form.addRow("Largest cell", self._para_max_cell)
+            "zone."))
+        form.addRow(QCoreApplication.translate("PHGX", "Largest cell"), self._para_max_cell)
         self._quality = PlainDoubleSpinBox()
         self._quality.setRange(20.0, _MAX_MESH_QUALITY); self._quality.setDecimals(1)
         self._quality.setValue(34.0)
         self._quality.setSuffix("°")
         self._quality.setToolTip(
-            "The smallest angle a triangle may have. Higher gives better-shaped "
+            QCoreApplication.translate("PHGX", "The smallest angle a triangle may have. Higher gives better-shaped "
             "triangles and more of them; Triangle cannot finish much above 34°, "
-            "so that is the limit. PyGIMLi's quality; E4D sets the same for TetGen.")
-        form.addRow("Quality", self._quality)
+            "so that is the limit. PyGIMLi's quality; E4D sets the same for TetGen."))
+        form.addRow(QCoreApplication.translate("PHGX", "Quality"), self._quality)
 
         section("Outer region",
                 "Coarse cells that carry the boundary condition far from the "
@@ -4343,31 +4337,31 @@ class ERTProcessingModule(BaseModule):
         self._outer_width = PlainDoubleSpinBox()
         self._outer_width.setRange(0.0, 50.0); self._outer_width.setDecimals(1)
         self._outer_width.setSingleStep(0.5); self._outer_width.setValue(0.0)
-        self._outer_width.setSuffix(" × spread")
-        self._outer_width.setSpecialValueText("auto (4 × spread)")
+        self._outer_width.setSuffix(QCoreApplication.translate("PHGX", " × spread"))
+        self._outer_width.setSpecialValueText(QCoreApplication.translate("PHGX", "auto (4 × spread)"))
         self._outer_width.setToolTip(
-            "How far the outer region reaches beyond the inverted region, sideways "
+            QCoreApplication.translate("PHGX", "How far the outer region reaches beyond the inverted region, sideways "
             "and down, in lengths of the electrode spread. Too narrow and the "
             "boundary distorts the forward response; wider costs little, because "
             "its cells are large. PyGIMLi's boundary, 4 by default; E4D's outer "
-            "boundary distance.")
-        form.addRow("Width", self._outer_width)
+            "boundary distance."))
+        form.addRow(QCoreApplication.translate("PHGX", "Width"), self._outer_width)
         self._outer_max_cell = PlainDoubleSpinBox()
         self._outer_max_cell.setRange(0.0, 1e8); self._outer_max_cell.setDecimals(1)
         self._outer_max_cell.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         self._outer_max_cell.setSuffix(" m²")
-        self._outer_max_cell.setSpecialValueText("no limit")
+        self._outer_max_cell.setSpecialValueText(QCoreApplication.translate("PHGX", "no limit"))
         self._outer_max_cell.setToolTip(
-            "Upper limit on the cell area in the outer region. Leave it unlimited "
+            QCoreApplication.translate("PHGX", "Upper limit on the cell area in the outer region. Leave it unlimited "
             "unless the forward solution needs a finer outer mesh: these cells are "
             "never inverted. PyGIMLi's boundaryMaxCellSize; the maximum volume of "
-            "E4D's outer zone.")
-        form.addRow("Largest cell", self._outer_max_cell)
+            "E4D's outer zone."))
+        form.addRow(QCoreApplication.translate("PHGX", "Largest cell"), self._outer_max_cell)
 
-        self._mesh_defaults = QPushButton("Restore defaults")
+        self._mesh_defaults = QPushButton(QCoreApplication.translate("PHGX", "Restore defaults"))
         self._mesh_defaults.setToolTip(
-            "Put every setting above back to PyGIMLi's default mesh. The imported "
-            "mesh and the zones are left alone.")
+            QCoreApplication.translate("PHGX", "Put every setting above back to PyGIMLi's default mesh. The imported "
+            "mesh and the zones are left alone."))
         self._mesh_defaults.clicked.connect(self._restore_mesh_defaults)
         form.addRow("", self._mesh_defaults)
         # The Mesh tab shows what these build, so it follows them.
@@ -4433,7 +4427,7 @@ class ERTProcessingModule(BaseModule):
     # -- imported mesh --------------------------------------------------------
     def _import_mesh(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Import inversion mesh", "",
+            self, QCoreApplication.translate("PHGX", "Import inversion mesh"), "",
             "Meshes (*.bms *.msh *.vtk *.vtu *.poly *.node *.ele *.cfg);;"
             "E4D mesh (*.node *.ele);;E4D mesh configuration (*.cfg);;All files (*)")
         if not path:
@@ -4441,7 +4435,7 @@ class ERTProcessingModule(BaseModule):
         try:
             self._apply_mesh_file(path)
         except Exception as exc:  # noqa: BLE001 - said next to the button, not in a traceback
-            self._mesh_note.setText(f"<span style='color:{theme.color('red')}'>{Path(path).name}: {exc}</span>")
+            self._mesh_note.setText(QCoreApplication.translate("PHGX", "<span style='color:{0}'>{1}: {2}</span>").format(theme.color('red'), Path(path).name, exc))
             self.log(f"Could not import the mesh {Path(path).name}: {exc}", "error")
 
     def _mesh_from_e4d_config(self, path: str) -> str:
@@ -4466,7 +4460,7 @@ class ERTProcessingModule(BaseModule):
             result.summary["mesh_path"], result.summary["mesher"])), loop.quit()))
         worker.failed.connect(lambda message: (settled.update(error=message), loop.quit()))
         self.register_worker(worker, activity="Building the mesh")
-        self._mesh_note.setText(f"Building the mesh {Path(path).name} describes, as E4D would…")
+        self._mesh_note.setText(QCoreApplication.translate("PHGX", "Building the mesh {0} describes, as E4D would…").format(Path(path).name))
         worker.start()
         if not settled:
             loop.exec()
@@ -4501,7 +4495,7 @@ class ERTProcessingModule(BaseModule):
                    f"({invertible} inverted), {mesh.dim()}D.")
         if mesh.dim() == 3 and self._ert_data is not None:
             summary += " The profile is inverted along x at y = 0, and its section shown."
-        self._mesh_note.setText(summary)
+        self._mesh_note.setText(i18n.tr(summary))
         self._sync_mesh_source()
         self.log(f"Imported inversion mesh {Path(path).name}: "
                  f"{mesh.cellCount()} cells, {invertible} inverted.", "success")
@@ -4534,7 +4528,7 @@ class ERTProcessingModule(BaseModule):
     def _clear_mesh(self) -> None:
         self._mesh_path = ""
         self._mesh_clear.setEnabled(False)
-        self._mesh_note.setText("Built from the electrode positions.")
+        self._mesh_note.setText(QCoreApplication.translate("PHGX", "Built from the electrode positions."))
         self._sync_mesh_source()
 
     def _sync_mesh_source(self) -> None:
@@ -4805,7 +4799,7 @@ class ERTProcessingModule(BaseModule):
         if self._inv_busy is not None:
             self._inv_busy.finish()
             self._inv_busy = None
-        self._invert_btn.setText("Run inversion")
+        self._invert_btn.setText(QCoreApplication.translate("PHGX", "Run inversion"))
         self._inv_progress.setVisible(False)
         self._show_run_buttons(self._tl_mode.isChecked())
         self._sync_run_ready()
@@ -4935,19 +4929,19 @@ class ERTProcessingModule(BaseModule):
             tip = f"{path}\n{origin}" if origin else path
             if partner:
                 tip += (f"\n\nReciprocal file, merged with it into one survey:\n{partner}")
-            item.setToolTip(tip)
+            item.setToolTip(i18n.tr(tip))
             self._tl_list.addItem(item)
         self._tl_list.blockSignals(False)
         n = len(self._tl_files)
         if n == 0:
-            self._tl_info.setText("No files added.")
+            self._tl_info.setText(QCoreApplication.translate("PHGX", "No files added."))
         # The format is not repeated here: it is chosen two rows up, and a copy
         # of it would go stale as soon as the format is changed.
         elif n == 1:
             self._tl_info.setText("<b>1</b> survey; add more for a time-lapse series."
                                   + self._tl_pairs_text(timing))
         else:
-            self._tl_info.setText(self._tl_timing_text(timing))
+            self._tl_info.setText(i18n.tr(self._tl_timing_text(timing)))
         # Offered while some files of a series carry no time - one survey needs
         # none - and kept on screen once ticked.
         undated = bool(timing is not None and n >= 2 and timing.undated_files())
@@ -5034,7 +5028,7 @@ class ERTProcessingModule(BaseModule):
         if not confirm_project_for_data(self):   # name a Project before the first data
             return
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Add ERT data file(s)", "", _DATA_FILTER)
+            self, QCoreApplication.translate("PHGX", "Add ERT data file(s)"), "", _DATA_FILTER)
         if paths:
             self._add_files(paths)
 
@@ -5160,8 +5154,7 @@ class ERTProcessingModule(BaseModule):
     def _on_tl_selection_changed(self) -> None:
         rows = self._selected_tl_rows()
         if len(rows) > 1:
-            self._tl_info.setText(f"{len(rows)} surveys selected — Remove / Move ↑ ↓, "
-                                  f"or click one to preview.")
+            self._tl_info.setText(QCoreApplication.translate("PHGX", "{0} surveys selected — Remove / Move ↑ ↓, or click one to preview.").format(len(rows)))
 
     def _preview_tl_item(self, item: QListWidgetItem) -> None:
         path = item.data(Qt.UserRole)
@@ -5273,7 +5266,7 @@ class ERTProcessingModule(BaseModule):
                      f"{(self._electrode_path or Path(electrodes)).name}.", "info")
         self._tl_busy = BusyStateController([self._tl_btn])
         self._tl_busy.start()
-        self._tl_btn.setText("Inverting…")
+        self._tl_btn.setText(QCoreApplication.translate("PHGX", "Inverting…"))
         self._tl_progress.setVisible(True); self._tl_progress.setRange(0, 0)
         qc = self._qc_applied
         # Each survey's reciprocal file, as the list paired them when Run was
@@ -6083,13 +6076,13 @@ class ERTProcessingModule(BaseModule):
         self.log(text, "warn" if backend else "error")
         # On the panel too: a survey its reader refused is the usual cause, and
         # the reason belongs where the files are listed, not only in the log.
-        self._tl_info.setText(text)
+        self._tl_info.setText(i18n.tr(text))
 
     def _reset_tl_button(self) -> None:
         if self._tl_busy is not None:
             self._tl_busy.finish()
             self._tl_busy = None
-        self._tl_btn.setText("Run time-lapse inversion")
+        self._tl_btn.setText(QCoreApplication.translate("PHGX", "Run time-lapse inversion"))
         self._tl_progress.setVisible(False)
         self._show_run_buttons(self._tl_mode.isChecked())
         self._sync_run_ready()
@@ -6139,7 +6132,7 @@ class ERTProcessingModule(BaseModule):
         interactive = not folder
         if not folder:
             selected = select_directory(
-                self, "Export time-lapse results to folder",
+                self, QCoreApplication.translate("PHGX", "Export time-lapse results to folder"),
                 self.state.output_dir or Path.cwd(),
             )
             folder = str(selected) if selected else ""
@@ -6441,7 +6434,7 @@ class ERTProcessingModule(BaseModule):
         set_length_axis(ax, "x", "x")
         set_length_axis(ax, "y", "y")
         ax.grid(True, which="major", alpha=0.28)
-        ax.set_title(title)
+        ax.set_title(i18n.tr(title))
         self._pseudo_canvas.draw_idle()
         self._pseudo_toolbar.update()
 
@@ -6461,7 +6454,7 @@ class ERTProcessingModule(BaseModule):
         ax.set_ylim(1.0, 0.0)
         ax.set_yticks([])
         set_length_axis(ax, "x", "x")
-        ax.set_title(f"{self._electrode_summary()}. Add data files to see the pseudosection.")
+        ax.set_title(QCoreApplication.translate("PHGX", "{0}. Add data files to see the pseudosection.").format(self._electrode_summary()))
         self._pseudo_legend.setVisible(False)
         self._pseudo_canvas.draw_idle()
         self._pseudo_toolbar.update()
@@ -6543,7 +6536,7 @@ class ERTProcessingModule(BaseModule):
         self._pseudo_ax.grid(True, which="minor", alpha=0.10)
         self._pseudo_ax.set_title(
             # Short enough for a narrow plot; the scale below names the quantity.
-            f"{rhoa.size:,} readings, {rhoa.min():.3g}–{rhoa.max():.3g} Ω·m   ▼ electrodes"
+            QCoreApplication.translate("PHGX", "{0:,} readings, {1:.3g}–{2:.3g} Ω·m   ▼ electrodes").format(rhoa.size, rhoa.min(), rhoa.max())
         )
         self._pseudo_canvas.draw_idle()
         self._pseudo_toolbar.update()
@@ -6568,7 +6561,7 @@ class ERTProcessingModule(BaseModule):
     def _update_info(self) -> None:
         """The data panel: the electrodes, the readings, the file and its time."""
         if not self._x and self._data_path is None:
-            self._info.setText("No data loaded.")
+            self._info.setText(QCoreApplication.translate("PHGX", "No data loaded."))
             return
         rhoa_txt = ""
         if self._pseudo:
@@ -6592,9 +6585,7 @@ class ERTProcessingModule(BaseModule):
         partner_txt = (f"<br>+ reciprocal file: {self._data_partner.name}"
                        if self._data_partner is not None else "")
         self._info.setText(
-            f"{self._electrode_summary()}<br>Measurements: {int(self._n_meas or 0):,}"
-            f"<br>Data: {self._data_path.name if self._data_path else '—'}{partner_txt}"
-            f"{when_txt}{rhoa_txt}{note_txt}"
+            QCoreApplication.translate("PHGX", "{0}<br>Measurements: {1:,}<br>Data: {2}{3}{4}{5}{6}").format(self._electrode_summary(), int(self._n_meas or 0), self._data_path.name if self._data_path else '—', partner_txt, when_txt, rhoa_txt, note_txt)
         )
 
     def _refresh(self) -> None:
@@ -6616,7 +6607,7 @@ class ERTProcessingModule(BaseModule):
         if not self._x:
             self.log("No electrodes to export.", "warn")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export electrodes", "electrodes.csv", "CSV (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export electrodes"), "electrodes.csv", "CSV (*.csv)")
         if not path:
             return
         if self._survey_3d:
@@ -6634,7 +6625,7 @@ class ERTProcessingModule(BaseModule):
         if not self._x:
             self.log("No electrodes to export.", "warn")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export geometry", "ert_geometry.json", "JSON (*.json)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export geometry"), "ert_geometry.json", "JSON (*.json)")
         if not path:
             return
         geometry = {
@@ -6656,7 +6647,7 @@ class ERTProcessingModule(BaseModule):
             self.log("Run the ERT inversion first.", "warn")
             return
         folder = select_directory(
-            self, "Export resistivity model to folder",
+            self, QCoreApplication.translate("PHGX", "Export resistivity model to folder"),
             self.state.output_dir or Path.cwd(),
         )
         if not folder:
@@ -7549,7 +7540,7 @@ class ERTProcessingModule(BaseModule):
             summary = self._apply_mesh_file(str(p))
         except Exception as exc:  # noqa: BLE001 - said next to the button and returned
             self._mesh_note.setText(
-                f"<span style='color:{theme.color('red')}'>{p.name}: {exc}</span>")
+                QCoreApplication.translate("PHGX", "<span style='color:{0}'>{1}: {2}</span>").format(theme.color('red'), p.name, exc))
             self.log(f"Could not import the mesh {p.name}: {exc}", "error")
             return {"status": "failed", "error": str(exc)}
         self._tabs.setCurrentWidget(self._mesh_tab)

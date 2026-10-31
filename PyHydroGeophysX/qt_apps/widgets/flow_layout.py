@@ -18,6 +18,7 @@ from typing import List, Optional
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QLayout, QLayoutItem, QWidget
+from PyHydroGeophysX.qt_apps import i18n
 
 
 def group(*parts, spacing: int = 4) -> QWidget:
@@ -32,7 +33,7 @@ def group(*parts, spacing: int = 4) -> QWidget:
     row.setContentsMargins(0, 0, 0, 0)
     row.setSpacing(spacing)
     for part in parts:
-        row.addWidget(QLabel(part) if isinstance(part, str) else part)
+        row.addWidget(QLabel(i18n.tr(part)) if isinstance(part, str) else part)
     return holder
 
 

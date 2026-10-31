@@ -12,10 +12,11 @@ from collections import OrderedDict, deque
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from PySide6.QtCore import QEvent, QObject, Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QPlainTextEdit,
                                QVBoxLayout, QWidget)
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -166,8 +167,8 @@ class RunActivity(QFrame):
         head.addWidget(self._headline, 1)
         layout.addLayout(head)
         self._note = QLabel(
-            "The workflow runs in its own process and writes to the run folder; "
-            "this panel's own controls are untouched.")
+            QCoreApplication.translate("PHGX", "The workflow runs in its own process and writes to the run folder; "
+            "this panel's own controls are untouched."))
         self._note.setObjectName("runActivityNote")
         self._note.setWordWrap(True)
         layout.addWidget(self._note)
@@ -264,8 +265,8 @@ class RunActivity(QFrame):
             if widget is not None:
                 widget.deleteLater()
         for label, path in wanted:
-            button = QPushButton(label)
-            button.setToolTip(path)
+            button = QPushButton(i18n.tr(label))
+            button.setToolTip(i18n.tr(path))
             button.clicked.connect(
                 lambda _checked=False, p=path: QDesktopServices.openUrl(
                     QUrl.fromLocalFile(p)))
@@ -323,9 +324,9 @@ class RunActivity(QFrame):
             decision = str(option.get("id") or "")
             if not decision:
                 continue
-            button = QPushButton(str(option.get("label") or decision))
+            button = QPushButton(i18n.tr(str(option.get("label") or decision)))
             if option.get("detail"):
-                button.setToolTip(str(option["detail"]))
+                button.setToolTip(i18n.tr(str(option["detail"])))
             button.clicked.connect(
                 lambda _checked=False, d=decision: on_choice(d))
             self._choices.addWidget(button)
@@ -341,8 +342,7 @@ class RunActivity(QFrame):
         # would wrap it into prose or a button that would hide it.
         head, code = _split_code(prompt)
         self._orb.set_state("waiting")
-        self._headline.setText(f"<b>{_assistant_name()} is waiting for you</b><br>"
-                               f"{html.escape(head).replace(chr(10), '<br>')}")
+        self._headline.setText(QCoreApplication.translate("PHGX", "<b>{0} is waiting for you</b><br>{1}").format(_assistant_name(), html.escape(head).replace(chr(10), '<br>')))
         if code:
             self._code.setPlainText(code)
             self._code.setVisible(True)
@@ -421,13 +421,13 @@ class _Thumbnail(QLabel):
         pixmap = thumbnail_pixmap(path, 96)
         if pixmap is not None:
             self.setPixmap(pixmap)
-            self.setToolTip(f"{path}\nClick to open full size.")
+            self.setToolTip(QCoreApplication.translate("PHGX", "{0}\nClick to open full size.").format(path))
             self.setCursor(Qt.PointingHandCursor)
         else:
             # An SVG, or a file still being written. Name it rather than
             # showing a blank box.
             from pathlib import Path as _Path
-            self.setText(_Path(path).name)
+            self.setText(i18n.tr(_Path(path).name))
             self.setStyleSheet("font-size: 11px;")
 
     def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt event override
@@ -594,8 +594,8 @@ class BaseModule(QWidget):
 
     def map_export_button(self):
         from PySide6.QtWidgets import QPushButton
-        button = QPushButton("Add to Map…")
-        button.setToolTip("Save this recovered result as a survey in Project Map. Confirm its location before adding.")
+        button = QPushButton(QCoreApplication.translate("PHGX", "Add to Map…"))
+        button.setToolTip(QCoreApplication.translate("PHGX", "Save this recovered result as a survey in Project Map. Confirm its location before adding."))
         button.clicked.connect(self.add_to_map)
         return button
 
@@ -605,15 +605,15 @@ class BaseModule(QWidget):
         from PySide6.QtWidgets import QMessageBox
         def offer():
             dialog = QMessageBox(self)
-            dialog.setWindowTitle("Result ready")
+            dialog.setWindowTitle(QCoreApplication.translate("PHGX", "Result ready"))
             dialog.setIcon(QMessageBox.Information)
-            dialog.setText("Add this result to Project Map?")
+            dialog.setText(QCoreApplication.translate("PHGX", "Add this result to Project Map?"))
             dialog.setInformativeText(
                 "Keep surveys together and reopen their results from the map. "
                 "You can confirm the location before adding.\n\n"
                 "Not now keeps the result here; Add to Map remains available on this page.")
-            add = dialog.addButton("Add to Map…", QMessageBox.AcceptRole)
-            later = dialog.addButton("Not now", QMessageBox.RejectRole)
+            add = dialog.addButton(QCoreApplication.translate("PHGX", "Add to Map…"), QMessageBox.AcceptRole)
+            later = dialog.addButton(QCoreApplication.translate("PHGX", "Not now"), QMessageBox.RejectRole)
             dialog.setDefaultButton(later)
             dialog.setEscapeButton(later)
             def closed(_result: int) -> None:
@@ -1008,7 +1008,7 @@ class PlaceholderModule(BaseModule):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignTop)
         layout.addWidget(QLabel(f"<h3>{title}</h3>"))
-        body = QLabel(message)
+        body = QLabel(i18n.tr(message))
         body.setWordWrap(True)
         body.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(body)

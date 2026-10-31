@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.core import mesh_serialization
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.results_store import (
     INDEX_FILENAME,
     is_placeholder_label,
@@ -112,26 +112,26 @@ class NewProjectDialog(QDialog):
                  title: str = "New Project", message: str = "",
                  offer_default: bool = False) -> None:
         super().__init__(parent)
-        self.setWindowTitle(title)
+        self.setWindowTitle(i18n.tr(title))
         self.setMinimumWidth(480)
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
         if message:
-            intro = QLabel(message)
+            intro = QLabel(i18n.tr(message))
             intro.setWordWrap(True)
             layout.addWidget(intro)
 
         form = QFormLayout()
         self._name = QLineEdit(name)
-        self._name.setPlaceholderText("For example: Site A 2026")
-        form.addRow("Name", self._name)
+        self._name.setPlaceholderText(QCoreApplication.translate("PHGX", "For example: Site A 2026"))
+        form.addRow(QCoreApplication.translate("PHGX", "Name"), self._name)
         place = QHBoxLayout()
         self._location = QLineEdit(str(location))
-        browse = QPushButton("Browse…")
+        browse = QPushButton(QCoreApplication.translate("PHGX", "Browse…"))
         browse.clicked.connect(self._browse)
         place.addWidget(self._location, stretch=1)
         place.addWidget(browse)
-        form.addRow("Location", place)
+        form.addRow(QCoreApplication.translate("PHGX", "Location"), place)
         layout.addLayout(form)
 
         # Where the folder will be, or why it cannot be made there yet.
@@ -140,18 +140,18 @@ class NewProjectDialog(QDialog):
         self._note.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(self._note)
 
-        self._ask_again = QCheckBox("Don't ask again")
-        self._ask_again.setToolTip("Keep using the default folder without asking. "
-                                   "File › New Project… still makes a project.")
+        self._ask_again = QCheckBox(QCoreApplication.translate("PHGX", "Don't ask again"))
+        self._ask_again.setToolTip(QCoreApplication.translate("PHGX", "Keep using the default folder without asking. "
+                                   "File › New Project… still makes a project."))
         self._ask_again.setVisible(offer_default)
         layout.addWidget(self._ask_again)
 
         buttons = QDialogButtonBox()
         if offer_default:
-            keep = buttons.addButton("Use Default Folder", QDialogButtonBox.ActionRole)
+            keep = buttons.addButton(QCoreApplication.translate("PHGX", "Use Default Folder"), QDialogButtonBox.ActionRole)
             keep.clicked.connect(lambda: self.done(self.USE_DEFAULT))
         buttons.addButton(QDialogButtonBox.Cancel)
-        self._create = buttons.addButton("Create Project", QDialogButtonBox.AcceptRole)
+        self._create = buttons.addButton(QCoreApplication.translate("PHGX", "Create Project"), QDialogButtonBox.AcceptRole)
         self._create.setProperty("primary", True)
         self._create.setDefault(True)
         buttons.accepted.connect(self._accept_if_valid)
@@ -190,27 +190,25 @@ class NewProjectDialog(QDialog):
     # -- behaviour -----------------------------------------------------------
     def _browse(self) -> None:
         start = self._location.text().strip() or str(Path.home())
-        chosen = QFileDialog.getExistingDirectory(self, "Choose where to keep the project", start)
+        chosen = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", "Choose where to keep the project"), start)
         if chosen:
-            self._location.setText(str(Path(chosen)))
+            self._location.setText(i18n.tr(str(Path(chosen))))
 
     def _check(self) -> None:
         issue = self.problem()
         self._create.setEnabled(not issue)
         if issue:
             # An empty name is where every dialog starts; that is not an error.
-            self._note.setText(issue)
+            self._note.setText(i18n.tr(issue))
             theme.set_tone(self._note, "hint" if not self._name.text().strip() else "error")
             return
         target = str(self.project_path())
         if not mesh_serialization.ansi_safe(target):
             self._note.setText(
-                f"Creates {target}\nThis path has characters Windows' code page cannot "
-                "show. Runs still work, but mesh files are written through a temporary "
-                "folder, which is slower.")
+                QCoreApplication.translate("PHGX", "Creates {0}\nThis path has characters Windows' code page cannot show. Runs still work, but mesh files are written through a temporary folder, which is slower.").format(target))
             theme.set_tone(self._note, "warn")
             return
-        self._note.setText(f"Creates {target}")
+        self._note.setText(QCoreApplication.translate("PHGX", "Creates {0}").format(target))
         theme.set_tone(self._note, "hint")
 
     def _accept_if_valid(self) -> None:
@@ -252,7 +250,7 @@ class SaveRunsDialog(QDialog):
                  message: str = "", allow_discard: bool = False,
                  title: str = "Save Runs to Project") -> None:
         super().__init__(parent)
-        self.setWindowTitle(title)
+        self.setWindowTitle(i18n.tr(title))
         self.setMinimumWidth(600)
         self._records: List[Any] = list(records)
         self._edits: Dict[str, QLineEdit] = {}
@@ -274,12 +272,12 @@ class SaveRunsDialog(QDialog):
         for row, record in enumerate(self._records):
             named = not is_placeholder_label(record)
             edit = QLineEdit(str(record.label).strip() if named else "")
-            edit.setPlaceholderText(run_title(record))
-            edit.setToolTip(f"Run ID: {record.run_id}\nFolder: {record.run_dir}")
+            edit.setPlaceholderText(i18n.tr(run_title(record)))
+            edit.setToolTip(QCoreApplication.translate("PHGX", "Run ID: {0}\nFolder: {1}").format(record.run_id, record.run_dir))
             # The name is what is being edited, so it gets the room; the
             # description wraps rather than squeezing it.
             edit.setMinimumWidth(240)
-            what = QLabel(_what(record))
+            what = QLabel(i18n.tr(_what(record)))
             what.setWordWrap(True)
             theme.set_tone(what, "muted")
             grid.addWidget(edit, row, 0)
@@ -298,11 +296,11 @@ class SaveRunsDialog(QDialog):
 
         buttons = QDialogButtonBox()
         if allow_discard:
-            discard = buttons.addButton("Discard", QDialogButtonBox.DestructiveRole)
-            discard.setToolTip("Delete these runs' folders.")
+            discard = buttons.addButton(QCoreApplication.translate("PHGX", "Discard"), QDialogButtonBox.DestructiveRole)
+            discard.setToolTip(QCoreApplication.translate("PHGX", "Delete these runs' folders."))
             discard.clicked.connect(lambda: self.done(self.DISCARD))
         buttons.addButton(QDialogButtonBox.Cancel)
-        save = buttons.addButton("Save", QDialogButtonBox.AcceptRole)
+        save = buttons.addButton(QCoreApplication.translate("PHGX", "Save"), QDialogButtonBox.AcceptRole)
         save.setProperty("primary", True)
         save.setDefault(True)
         buttons.accepted.connect(self.accept)

@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QCoreApplication, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout
 from PyHydroGeophysX.qt_apps.widgets.readout import ReadoutLabel
 
@@ -82,9 +82,9 @@ class CurveViewer(QWidget):
         self._readout.setMinimumWidth(180)
         bar.addWidget(self._readout)
 
-        self._logx = QCheckBox("log x")
-        self._logy = QCheckBox("log y")
-        self._pick = QCheckBox("pick")
+        self._logx = QCheckBox(QCoreApplication.translate("PHGX", "log x"))
+        self._logy = QCheckBox(QCoreApplication.translate("PHGX", "log y"))
+        self._pick = QCheckBox(QCoreApplication.translate("PHGX", "pick"))
         self._logx.toggled.connect(self._apply_log)
         self._logy.toggled.connect(self._apply_log)
         bar.addWidget(self._logx)
@@ -95,7 +95,7 @@ class CurveViewer(QWidget):
             ("Export CSV", self._export_csv_dialog, "fa5s.file-csv"),
             ("Export PNG", self._export_png_dialog, "fa5s.camera"),
         ):
-            btn = QPushButton(label)
+            btn = QPushButton(i18n.tr(label))
             btn.setIcon(theme.icon(icon_name))
             btn.clicked.connect(slot)
             bar.addWidget(btn)
@@ -198,11 +198,11 @@ class CurveViewer(QWidget):
         exporter.export(str(path))
 
     def _export_csv_dialog(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Export curves as CSV", "curves.csv", "CSV (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export curves as CSV"), "curves.csv", "CSV (*.csv)")
         if path:
             self.export_csv(path)
 
     def _export_png_dialog(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Export plot as PNG", "plot.png", "PNG (*.png)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export plot as PNG"), "plot.png", "PNG (*.png)")
         if path:
             self.export_png(path)

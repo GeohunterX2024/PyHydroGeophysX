@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 import pyqtgraph as pg
-from PySide6.QtCore import QEvent, QSettings, QTimer, Qt
+from PySide6.QtCore import QCoreApplication, QEvent, QSettings, QTimer, Qt
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtWidgets import (
     QDialog,
@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.core import mesh_serialization
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.agents import assistants as assistant_registry
 from PyHydroGeophysX.qt_apps.agent.chat_panel import AssistantChatPanel
 from PyHydroGeophysX.qt_apps.agent.controller import StudioController
@@ -95,7 +95,7 @@ class PyHydroGeophysXStudio(QMainWindow):
 
     def __init__(self, context_path: Optional[str] = None, initial_module: str = "home") -> None:
         super().__init__()
-        self.setWindowTitle(WINDOW_TITLE)
+        self.setWindowTitle(i18n.tr(WINDOW_TITLE))
         self.state = StudioState.from_context(context_path)
         if initial_module and initial_module != "home":
             self.state.selected_module = initial_module
@@ -142,8 +142,8 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._controller = StudioController(self)
         self._chat = AssistantChatPanel(self._controller, self.log)
         right_tabs = QTabWidget()
-        right_tabs.addTab(self._chat, "Assistant")
-        right_tabs.addTab(self._properties, "Properties")
+        right_tabs.addTab(self._chat, QCoreApplication.translate("PHGX", "Assistant"))
+        right_tabs.addTab(self._properties, QCoreApplication.translate("PHGX", "Properties"))
         # Adds directly to the window's minimum width, so it is a floor for
         # comfort rather than for function: the chat panel itself needs 273, and
         # the dock is resizable for anyone who wants it wider.
@@ -161,7 +161,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._build_toolbar()
         self._geometry_restored = self._restore_window_settings()
 
-        self._status_label = QLabel("Ready")
+        self._status_label = QLabel(QCoreApplication.translate("PHGX", "Ready"))
         self.statusBar().addWidget(self._status_label)
         # Ticks only while a page is busy, to keep the elapsed time current.
         self._status_timer = QTimer(self)
@@ -244,9 +244,9 @@ class PyHydroGeophysXStudio(QMainWindow):
         """Name the Project in use in the status bar and the window title."""
         path = self.state.project_directory
         if path is None:
-            self.setWindowTitle(WINDOW_TITLE)
-            self._output_label.setText("Project: (none)")
-            self._output_label.setToolTip("Results go to the current working directory.")
+            self.setWindowTitle(i18n.tr(WINDOW_TITLE))
+            self._output_label.setText(QCoreApplication.translate("PHGX", "Project: (none)"))
+            self._output_label.setToolTip(QCoreApplication.translate("PHGX", "Results go to the current working directory."))
             return
         name = self._project_name()
         self.setWindowTitle(f"{name} — {WINDOW_TITLE}")
@@ -292,8 +292,8 @@ class PyHydroGeophysXStudio(QMainWindow):
             probe.touch()
             probe.unlink()
         except OSError as exc:
-            QMessageBox.warning(self, "Project folder",
-                                f"{path} cannot be written to:\n{exc}")
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Project folder"),
+                                QCoreApplication.translate("PHGX", "{0} cannot be written to:\n{1}").format(path, exc))
             return False
         if not self._activate_results_store(path):
             return False
@@ -330,8 +330,9 @@ class PyHydroGeophysXStudio(QMainWindow):
         return True
 
     def _make_dock(self, title: str, widget: QWidget, area: Qt.DockWidgetArea) -> QDockWidget:
-        dock = QDockWidget(title, self)
+        dock = QDockWidget(i18n.tr(title), self)
         dock.setWidget(widget)
+        # From the English title, so the saved window layout holds in every language.
         dock.setObjectName(f"dock_{title.lower()}")
         self.addDockWidget(area, dock)
         return dock
@@ -343,85 +344,95 @@ class PyHydroGeophysXStudio(QMainWindow):
         # live, take them out, leave. Every computation is already persisted the
         # moment it finishes, so nothing here is a "save your work or lose it"
         # command and none of it is on the critical path.
-        file_menu = menubar.addMenu("&File")
-        self._add_action(file_menu, "New Project…", self._new_project)
-        self._add_action(file_menu, "Open Project…", self._open_project)
-        self._add_action(file_menu, "Import Existing Results…", self._import_existing_results)
+        file_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&File"))
+        self._add_action(file_menu, QCoreApplication.translate("PHGX", "New Project…"), self._new_project)
+        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Open Project…"), self._open_project)
+        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Import Existing Results…"), self._import_existing_results)
         file_menu.addSeparator()
         self._save_action = self._add_action(
-            file_menu, "Save Runs to Project", self._save_runs)
+            file_menu, QCoreApplication.translate("PHGX", "Save Runs to Project"), self._save_runs)
         self._save_action.setShortcut("Ctrl+S")
         self._save_action.setStatusTip(
-            "Add this session's finished runs to the Project's history. "
-            "Nothing is recorded there until you do."
+            QCoreApplication.translate("PHGX", "Add this session's finished runs to the Project's history. "
+            "Nothing is recorded there until you do.")
         )
         self._discard_action = self._add_action(
-            file_menu, "Discard Unsaved Runs…", self._discard_runs)
-        export = self._add_action(file_menu, "Export Results…", self._export_results)
+            file_menu, QCoreApplication.translate("PHGX", "Discard Unsaved Runs…"), self._discard_runs)
+        export = self._add_action(file_menu, QCoreApplication.translate("PHGX", "Export Results…"), self._export_results)
         export.setShortcut("Ctrl+E")
         export.setStatusTip(
-            "Write the current module's results to a folder you choose, CSV included."
+            QCoreApplication.translate("PHGX", "Write the current module's results to a folder you choose, CSV included.")
         )
         file_menu.addSeparator()
         # The Streamlit bridge and the raw module JSON are for driving this app
         # from the web workflow. They are not how a person gets their results
         # out, so they sit apart from the command that is.
-        bridge = file_menu.addMenu("Streamlit Bridge")
-        self._add_action(bridge, "Open Project Context…", self._open_context)
-        self._add_action(bridge, "Save Studio Result", self._save_result)
-        self._add_action(bridge, "Export Module Result (JSON)…", self._export_current_result)
-        self._add_action(bridge, "Rebuild Run Index", self._save_project)
+        bridge = file_menu.addMenu(QCoreApplication.translate("PHGX", "Streamlit Bridge"))
+        self._add_action(bridge, QCoreApplication.translate("PHGX", "Open Project Context…"), self._open_context)
+        self._add_action(bridge, QCoreApplication.translate("PHGX", "Save Studio Result"), self._save_result)
+        self._add_action(bridge, QCoreApplication.translate("PHGX", "Export Module Result (JSON)…"), self._export_current_result)
+        self._add_action(bridge, QCoreApplication.translate("PHGX", "Rebuild Run Index"), self._save_project)
         file_menu.addSeparator()
-        self._add_action(file_menu, "Exit", self.close)
+        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Exit"), self.close)
 
-        view_menu = menubar.addMenu("&View")
-        self._add_action(view_menu, "Reset Layout", self._reset_layout)
+        view_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&View"))
+        self._add_action(view_menu, QCoreApplication.translate("PHGX", "Reset Layout"), self._reset_layout)
         view_menu.addSeparator()
         # One unit for every plot in the studio. Only the axes change: models,
         # meshes and exports stay in metres.
-        units_menu = view_menu.addMenu("Length Units")
+        units_menu = view_menu.addMenu(QCoreApplication.translate("PHGX", "Length Units"))
         self._unit_group = QActionGroup(self)
         self._unit_group.setExclusive(True)
         for unit, text in (("m", "Metres (m)"), ("ft", "Feet (ft)")):
             action = self._add_action(
-                units_menu, text, lambda _checked=False, u=unit: self._set_length_unit(u),
+                units_menu, i18n.tr(text), lambda _checked=False, u=unit: self._set_length_unit(u),
                 checkable=True)
             action.setData(unit)
             action.setChecked(unit == length_units.current())
-            action.setStatusTip("Show distances, elevations and depths on every plot in "
-                                f"{text.lower()}. The data themselves stay in metres.")
+            action.setStatusTip(QCoreApplication.translate("PHGX", "Show distances, elevations and depths on every plot in {0}. The data themselves stay in metres.").format(text.lower()))
             self._unit_group.addAction(action)
         # Light, Dark, or whatever the operating system is set to; remembered.
-        appearance_menu = view_menu.addMenu("Appearance")
+        appearance_menu = view_menu.addMenu(QCoreApplication.translate("PHGX", "Appearance"))
         self._appearance_group = QActionGroup(self)
         self._appearance_group.setExclusive(True)
         for value, text in (("system", "Match System"), ("light", "Light"), ("dark", "Dark")):
             action = self._add_action(
-                appearance_menu, text,
+                appearance_menu, i18n.tr(text),
                 lambda _checked=False, v=value: self._set_appearance(v), checkable=True)
             action.setData(value)
             action.setChecked(value == theme.appearance())
             self._appearance_group.addAction(action)
+        # Takes effect at the next start, when the translation is loaded (qt_apps.i18n).
+        language_menu = view_menu.addMenu(QCoreApplication.translate("PHGX", "Language"))
+        self._language_group = QActionGroup(self)
+        self._language_group.setExclusive(True)
+        for value, text in i18n.LANGUAGES.items():
+            # Each language by its own name, as language menus show them.
+            action = QAction(i18n.tr(text) if value == "system" else text, self, checkable=True)  # i18n: as written
+            action.setChecked(value == i18n.chosen_language())
+            action.triggered.connect(lambda _checked=False, v=value: self._set_language(v))
+            self._language_group.addAction(action)
+            language_menu.addAction(action)
         view_menu.addSeparator()
         view_menu.addAction(self._tree_dock.toggleViewAction())
         view_menu.addAction(self._properties_dock.toggleViewAction())
         view_menu.addAction(self._log_dock.toggleViewAction())
-        self._all_tools_action = self._add_action(view_menu, "Show all processing tools", self._toggle_all_tools, checkable=True)
+        self._all_tools_action = self._add_action(view_menu, QCoreApplication.translate("PHGX", "Show all processing tools"), self._toggle_all_tools, checkable=True)
         self._all_tools_action.setChecked(True)
 
-        tools_menu = menubar.addMenu("&Tools")
-        self._add_action(tools_menu, "Model Viewer", lambda: self.show_module("model_viewer"))
+        tools_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&Tools"))
+        self._add_action(tools_menu, QCoreApplication.translate("PHGX", "Model Viewer"), lambda: self.show_module("model_viewer"))
         tools_menu.addSeparator()
-        self._add_action(tools_menu, "Geophysical Data Processing", lambda: self.show_module("seismic"))
-        self._add_action(tools_menu, "Hydro → Geophysics", lambda: self.show_module("hydro_geophysics"))
-        subsurface = tools_menu.addMenu("Geophy → Hydrology")
-        self._add_action(subsurface, "Seismic → Structure", lambda: self.show_module("seismic3d"))
-        self._add_action(subsurface, "ERT → Water Content", lambda: self.show_module("geo_hydrology"))
+        self._add_action(tools_menu, QCoreApplication.translate("PHGX", "Geophysical Data Processing"), lambda: self.show_module("seismic"))
+        self._add_action(tools_menu, QCoreApplication.translate("PHGX", "Hydro → Geophysics"), lambda: self.show_module("hydro_geophysics"))
+        subsurface = tools_menu.addMenu(QCoreApplication.translate("PHGX", "Geophy → Hydrology"))
+        self._add_action(subsurface, QCoreApplication.translate("PHGX", "Seismic → Structure"), lambda: self.show_module("seismic3d"))
+        self._add_action(subsurface, QCoreApplication.translate("PHGX", "ERT → Water Content"), lambda: self.show_module("geo_hydrology"))
 
-        help_menu = menubar.addMenu("&Help")
-        self._add_action(help_menu, "Environment Check…", self._environment_check)
+        help_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&Help"))
+        self._add_action(help_menu, QCoreApplication.translate("PHGX", "Environment Check…"), self._environment_check)
         help_menu.addSeparator()
-        self._add_action(help_menu, "About", self._about)
+        self._add_action(help_menu, QCoreApplication.translate("PHGX", "About"), self._about)
 
     def _build_toolbar(self) -> None:
         from PySide6.QtCore import QSize
@@ -439,19 +450,19 @@ class PyHydroGeophysXStudio(QMainWindow):
         # reads as "save my results" while writing a manifest. New sits beside
         # Open: a Project is made by naming it, which a File menu entry that
         # opened a bare folder picker would leave easy to miss.
-        self._add_action(toolbar, "New Project", self._new_project, icon_name="fa5s.folder-plus")
-        self._add_action(toolbar, "Open Project", self._open_project, icon_name="fa5s.folder-open")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "New Project"), self._new_project, icon_name="fa5s.folder-plus")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Open Project"), self._open_project, icon_name="fa5s.folder-open")
         # "Save" adds the finished runs to the Project's history; the Streamlit
         # bridge commands are in the File menu.
         self._save_button = self._add_action(
-            toolbar, "Save", self._save_runs, icon_name="fa5s.save")
-        self._add_action(toolbar, "Export", self._export_results, icon_name="fa5s.file-export")
+            toolbar, QCoreApplication.translate("PHGX", "Save"), self._save_runs, icon_name="fa5s.save")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Export"), self._export_results, icon_name="fa5s.file-export")
         toolbar.addSeparator()
-        self._add_action(toolbar, "Select", lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.mouse-pointer")
-        self._add_action(toolbar, "Pan", lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.arrows-alt")
-        self._add_action(toolbar, "Zoom", lambda: self._set_mouse_mode(rect=True), icon_name="fa5s.search-plus")
-        self._pick_action = self._add_action(toolbar, "Pick", self._toggle_pick, checkable=True, icon_name="fa5s.crosshairs")
-        self._add_action(toolbar, "Delete", self._delete_last_marker, icon_name="fa5s.eraser")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Select"), lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.mouse-pointer")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Pan"), lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.arrows-alt")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Zoom"), lambda: self._set_mouse_mode(rect=True), icon_name="fa5s.search-plus")
+        self._pick_action = self._add_action(toolbar, QCoreApplication.translate("PHGX", "Pick"), self._toggle_pick, checkable=True, icon_name="fa5s.crosshairs")
+        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Delete"), self._delete_last_marker, icon_name="fa5s.eraser")
         # Day and night, at the far end of the toolbar.
         spacer = QWidget()
         spacer.setObjectName("toolbarSpacer")
@@ -487,9 +498,9 @@ class PyHydroGeophysXStudio(QMainWindow):
         if action is not None:
             dark = theme.is_dark()
             action.setIcon(theme.icon("fa5s.sun" if dark else "fa5s.moon"))
-            action.setText("Light" if dark else "Dark")
-            action.setToolTip("Switch to the light appearance" if dark
-                              else "Switch to the dark appearance")
+            action.setText(QCoreApplication.translate("PHGX", "Light") if dark else QCoreApplication.translate("PHGX", "Dark"))
+            action.setToolTip(QCoreApplication.translate("PHGX", "Switch to the light appearance") if dark
+                              else QCoreApplication.translate("PHGX", "Switch to the dark appearance"))
 
     def _set_length_unit(self, unit: str) -> None:
         """Redraw every plot with its axes in ``unit`` (``'m'`` or ``'ft'``)."""
@@ -498,7 +509,7 @@ class PyHydroGeophysXStudio(QMainWindow):
                  "the data stay in metres.", "info")
 
     def _add_action(self, target, text: str, slot, checkable: bool = False, icon_name: str = "") -> QAction:
-        action = QAction(text, self)
+        action = QAction(i18n.tr(text), i18n.tr(self))
         if icon_name:
             action.setIcon(theme.icon(icon_name))
         action.setCheckable(checkable)
@@ -576,10 +587,12 @@ class PyHydroGeophysXStudio(QMainWindow):
             return
         current = self._stack.currentWidget()
         now = time.monotonic()
-        parts = [f"Module: {getattr(current, 'module_title', '') or self.state.selected_module}"]
+        title = i18n.tr(getattr(current, 'module_title', '') or self.state.selected_module)
+        parts = [QCoreApplication.translate("PHGX", "Module: {0}").format(title)]
         doing = _page_activity(current)
         if doing:
-            parts.append("Working…" if doing == GENERIC_ACTIVITY else f"Working: {doing}")
+            parts.append(QCoreApplication.translate("PHGX", "Working…") if doing == GENERIC_ACTIVITY
+                         else QCoreApplication.translate("PHGX", "Working: {0}").format(i18n.tr(doing)))
             parts.extend(filter(None, [_elapsed_since(current, now)]))
         others = [page for page in self._pages.values()
                   if page is not current and _page_activity(page)]
@@ -598,7 +611,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             parts.append("Ready")
         text = "    ·    ".join(parts)
         if text != label.text():
-            label.setText(text)
+            label.setText(i18n.tr(text))
             # Painted now rather than at the next turn of the event loop: a
             # page announcing work on the GUI thread (set_activity) is about to
             # hold that loop, and the phrase has to be on screen meanwhile.
@@ -658,8 +671,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         independent = bool(getattr(agent, 'workflow_setup', '')) and self.state.selected_module in {'mesh3d', 'gravmag', 'joint_inversion'}
         self._independent_tool_note.setVisible(independent)
         self._independent_tool_note.setText(
-            f'Independent processing tool · These settings do not change the {agent.name} workflow. '
-            'Use Data & reports → Data to edit and check its run configuration.')
+            QCoreApplication.translate("PHGX", "Independent processing tool · These settings do not change the {0} workflow. Use Data & reports → Data to edit and check its run configuration.").format(agent.name))
 
     def _view_workflow_run(self, run_id, kind='model'):
         self.show_module('model_viewer')
@@ -685,7 +697,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._all_tools_action.setChecked(not focused)
         self._toggle_all_tools(not focused)
         for action in self._main_toolbar.actions():
-            if action.text() in {'Export', 'Select', 'Pan', 'Zoom', 'Pick', 'Delete'} or action.isSeparator():
+            if action.text() in {i18n.tr(t) for t in ('Export', 'Select', 'Pan', 'Zoom', 'Pick', 'Delete')} or action.isSeparator():
                 action.setVisible(not focused)
         for page in self._pages.values():
             compact = getattr(page, 'set_compact', None)
@@ -890,7 +902,7 @@ class PyHydroGeophysXStudio(QMainWindow):
 
     def _open_project(self) -> None:
         chosen = QFileDialog.getExistingDirectory(
-            self, "Open Project", str(self.state.results_store_root or Path.cwd())
+            self, QCoreApplication.translate("PHGX", "Open Project"), str(self.state.results_store_root or Path.cwd())
         )
         if chosen:
             # Land on the run browser: opening an existing Project is almost
@@ -917,7 +929,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             self._unsaved_label.setToolTip("")
             return
         plural = "" if len(pending) == 1 else "s"
-        self._unsaved_label.setText(f"● {len(pending)} unsaved run{plural}")
+        self._unsaved_label.setText(QCoreApplication.translate("PHGX", "● {0} unsaved run{1}").format(len(pending), plural))
         self._unsaved_label.setToolTip(
             "Finished runs that are not in the Project's history yet.\n"
             "Ctrl+S adds them; closing the window will ask.\n\n"
@@ -941,7 +953,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             saved = self.state.save_all_runs()
         except Exception as exc:  # noqa: BLE001
             self.log(f"Could not save runs: {exc}", "error")
-            QMessageBox.warning(self, "Save runs", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save runs"), i18n.tr(str(exc)))
             return
         if not saved:
             self.log("No finished runs are waiting to be saved.", "info")
@@ -956,9 +968,8 @@ class PyHydroGeophysXStudio(QMainWindow):
             self.log("No unsaved runs to discard.", "info")
             return
         answer = QMessageBox.question(
-            self, "Discard unsaved runs",
-            f"Permanently delete {len(pending)} unsaved run folder(s)?\n\n"
-            "Their inputs, outputs, and logs go with them. This cannot be undone.",
+            self, QCoreApplication.translate("PHGX", "Discard unsaved runs"),
+            QCoreApplication.translate("PHGX", "Permanently delete {0} unsaved run folder(s)?\n\nTheir inputs, outputs, and logs go with them. This cannot be undone.").format(len(pending)),
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if answer != QMessageBox.Yes:
@@ -967,7 +978,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             removed = self.state.discard_all_runs()
         except Exception as exc:  # noqa: BLE001
             self.log(f"Could not discard runs: {exc}", "error")
-            QMessageBox.warning(self, "Discard runs", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Discard runs"), i18n.tr(str(exc)))
             return
         self.log(f"Discarded {removed} unsaved run(s).", "info")
         self._refresh_model_viewer()
@@ -1029,7 +1040,7 @@ class PyHydroGeophysXStudio(QMainWindow):
                 removed = self.state.discard_all_runs()
                 self.log(f"Discarded {removed} unsaved run(s).", "info")
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.warning(self, "Unsaved runs", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Unsaved runs"), i18n.tr(str(exc)))
             return False
         return True
 
@@ -1054,7 +1065,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         finished = sum(1 for path in abandoned if store.is_recoverable(path))
         dialog = QMessageBox(self)
         dialog.setIcon(QMessageBox.Question)
-        dialog.setWindowTitle("Unsaved runs from an earlier session")
+        dialog.setWindowTitle(QCoreApplication.translate("PHGX", "Unsaved runs from an earlier session"))
         text = (f"This Project holds {len(abandoned)} run folder{plural} that an earlier "
                 "session never saved. They are not in the run history.")
         if finished:
@@ -1062,9 +1073,9 @@ class PyHydroGeophysXStudio(QMainWindow):
                      f"{'it' if finished == 1 else 'them'} back among the unsaved runs, "
                      "to save or discard; the others stay where they are.")
         dialog.setText(text + "\n\nDelete deletes all of them.")
-        recover = dialog.addButton("Recover", QMessageBox.AcceptRole) if finished else None
-        delete = dialog.addButton("Delete", QMessageBox.DestructiveRole)
-        later = dialog.addButton("Not now", QMessageBox.RejectRole)
+        recover = dialog.addButton(QCoreApplication.translate("PHGX", "Recover"), QMessageBox.AcceptRole) if finished else None
+        delete = dialog.addButton(QCoreApplication.translate("PHGX", "Delete"), QMessageBox.DestructiveRole)
+        later = dialog.addButton(QCoreApplication.translate("PHGX", "Not now"), QMessageBox.RejectRole)
         dialog.setDefaultButton(recover if recover is not None else later)
         dialog.exec()
         chosen = dialog.clickedButton()
@@ -1107,7 +1118,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         if not actions:
             store = self.state.results_store_root
             QMessageBox.information(
-                self, "Export results",
+                self, QCoreApplication.translate("PHGX", "Export results"),
                 f"{title} has no results to export yet. Run a computation first.\n\n"
                 + (f"Every run is also saved automatically under:\n{store}"
                    if store else "No Project folder is open yet."),
@@ -1118,7 +1129,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             return
         labels = [str(label) for label, _ in actions]
         choice, accepted = QInputDialog.getItem(
-            self, "Export results", f"{title} can export:", labels, 0, False
+            self, QCoreApplication.translate("PHGX", "Export results"), QCoreApplication.translate("PHGX", "{0} can export:").format(title), labels, 0, False
         )
         if accepted and choice in labels:
             actions[labels.index(choice)][1]()
@@ -1128,13 +1139,13 @@ class PyHydroGeophysXStudio(QMainWindow):
             store = self.state.ensure_results_store()
             count = len(store.rebuild_index())
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.warning(self, "Save Project", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save Project"), i18n.tr(str(exc)))
             return
         self.log(f"Project index saved ({count} runs).", "success")
 
     def _import_existing_results(self) -> None:
         chosen = QFileDialog.getExistingDirectory(
-            self, "Import existing results folder", str(self.state.output_dir or Path.cwd())
+            self, QCoreApplication.translate("PHGX", "Import existing results folder"), str(self.state.output_dir or Path.cwd())
         )
         if not chosen:
             return
@@ -1142,14 +1153,13 @@ class PyHydroGeophysXStudio(QMainWindow):
         preview = store.preview_legacy(chosen)
         if not preview:
             QMessageBox.information(
-                self, "Import existing results",
-                "No explicit workflow recipe/result pairs were found. No files were changed.",
+                self, QCoreApplication.translate("PHGX", "Import existing results"),
+                QCoreApplication.translate("PHGX", "No explicit workflow recipe/result pairs were found. No files were changed."),
             )
             return
         answer = QMessageBox.question(
-            self, "Import existing results",
-            f"Found {len(preview)} recipe/result pair(s). Add run metadata without "
-            "moving the scientific files?",
+            self, QCoreApplication.translate("PHGX", "Import existing results"),
+            QCoreApplication.translate("PHGX", "Found {0} recipe/result pair(s). Add run metadata without moving the scientific files?").format(len(preview)),
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
         )
         if answer != QMessageBox.Yes:
@@ -1157,7 +1167,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         try:
             imported = store.import_legacy(chosen)
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.warning(self, "Import existing results", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Import existing results"), i18n.tr(str(exc)))
             return
         self.log(f"Imported {len(imported)} legacy run(s).", "success")
         self.show_module("model_viewer")
@@ -1166,7 +1176,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             viewer.use_current_store()
 
     def _open_context(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open project context", "", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Open project context"), "", "JSON (*.json)")
         if not path:
             return
         # The whole state is replaced, runs and all, so this leaves the Project
@@ -1190,10 +1200,10 @@ class PyHydroGeophysXStudio(QMainWindow):
             path = self.state.save_result()
         except Exception as exc:  # noqa: BLE001
             self.log(f"Failed to save result: {exc}", "error")
-            QMessageBox.warning(self, "Save failed", str(exc))
+            QMessageBox.warning(self, QCoreApplication.translate("PHGX", "Save failed"), i18n.tr(str(exc)))
             return
         self.log(f"Saved studio result to {path}", "success")
-        QMessageBox.information(self, "Result saved", f"Studio result written to:\n{path}")
+        QMessageBox.information(self, QCoreApplication.translate("PHGX", "Result saved"), QCoreApplication.translate("PHGX", "Studio result written to:\n{0}").format(path))
 
     def _export_current_result(self) -> None:
         # Ask the page for its own key rather than reusing the navigator's.
@@ -1208,7 +1218,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             title = getattr(page, "module_title", key)
             self.log(f"No result to export for module '{title}'.", "warn")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export module result", f"{key}_result.json", "JSON (*.json)")
+        path, _ = QFileDialog.getSaveFileName(self, QCoreApplication.translate("PHGX", "Export module result"), f"{key}_result.json", "JSON (*.json)")
         if not path:
             return
         with open(path, "w", encoding="utf-8") as handle:
@@ -1225,6 +1235,12 @@ class PyHydroGeophysXStudio(QMainWindow):
             dock.setFloating(False)
             dock.show()
             self.addDockWidget(area, dock)
+
+    def _set_language(self, language: str) -> None:
+        i18n.set_language(language)
+        QMessageBox.information(
+            self, QCoreApplication.translate("PHGX", "Language"),
+            QCoreApplication.translate("PHGX", "The new language is used the next time the Studio starts."))
 
     def _environment_check(self) -> None:
         """Run phgx-doctor's checks and show the report (PyHydroGeophysX.doctor)."""
@@ -1246,7 +1262,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             QApplication.restoreOverrideCursor()
         verdict = {0: "All checks passed.", 1: "Warnings found.", 2: "Errors found."}[exit_code(checks)]
         dialog = QDialog(self)
-        dialog.setWindowTitle(f"Environment Check - {verdict}")
+        dialog.setWindowTitle(QCoreApplication.translate("PHGX", "Environment Check - {0}").format(verdict))
         layout = QVBoxLayout(dialog)
         text = QPlainTextEdit(format_report(checks))
         text.setReadOnly(True)
@@ -1261,11 +1277,8 @@ class PyHydroGeophysXStudio(QMainWindow):
     def _about(self) -> None:
         QMessageBox.about(
             self,
-            "About",
-            f"<b>{WINDOW_TITLE}</b><br><br>"
-            "Local desktop companion to the PyHydroGeophysX Streamlit app for "
-            "professional geophysical mouse interaction: data processing, "
-            "hydro-to-geophysics profile selection, picking, and forward modeling.",
+            QCoreApplication.translate("PHGX", "About"),
+            QCoreApplication.translate("PHGX", "<b>{0}</b><br><br>Local desktop companion to the PyHydroGeophysX Streamlit app for professional geophysical mouse interaction: data processing, hydro-to-geophysics profile selection, picking, and forward modeling.").format(WINDOW_TITLE),
         )
 
     # -- properties panel ----------------------------------------------------

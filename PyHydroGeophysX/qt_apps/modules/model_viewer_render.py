@@ -7,6 +7,7 @@ keeps reading from, which the page closes before the run can be deleted).
 from __future__ import annotations
 
 import csv
+from PySide6.QtCore import QCoreApplication
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -94,7 +95,7 @@ def numpy_view(
             host = QWidget(); layout = QVBoxLayout(host)
             controls = QHBoxLayout(); step = QSpinBox()
             step.setRange(0, array.shape[0] - 1)
-            controls.addWidget(QLabel("Step / slice:")); controls.addWidget(step); controls.addStretch(1)
+            controls.addWidget(QLabel(QCoreApplication.translate("PHGX", "Step / slice:"))); controls.addWidget(step); controls.addStretch(1)
             view = ArrayViewer(colormaps=colormaps)
             sample = np.asarray(array).ravel()[::max(1, array.size // 250_000)]
             if log_scale:

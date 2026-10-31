@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QCoreApplication, Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.petrophysics import temperature as temperature_model
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -103,9 +103,9 @@ class TemperatureOptions(QGroupBox):
         self._applied_report: Optional[Mapping[str, Any]] = None
         self._applied_settings: Optional[Dict[str, Any]] = None
         self.setToolTip(
-            "Report every time step at one reference temperature, so the change "
+            QCoreApplication.translate("PHGX", "Report every time step at one reference temperature, so the change "
             "between surveys is moisture rather than the seasonal warming and "
-            "cooling of the ground (about 2 % of resistivity per degC).")
+            "cooling of the ground (about 2 % of resistivity per degC)."))
         form = QFormLayout(self)
         self._form = form
 
@@ -113,54 +113,54 @@ class TemperatureOptions(QGroupBox):
         self._ref.setRange(-20.0, 60.0); self._ref.setDecimals(1)
         self._ref.setValue(25.0); self._ref.setSuffix(" °C")
         self._ref.setToolTip(
-            "Temperature the corrected sections are reported at. 25 °C is the "
+            QCoreApplication.translate("PHGX", "Temperature the corrected sections are reported at. 25 °C is the "
             "laboratory convention petrophysical relations are calibrated at; the "
             "site's annual mean is the other defensible choice, and keeps the "
-            "correction small.")
-        form.addRow("Reference", self._ref)
+            "correction small."))
+        form.addRow(QCoreApplication.translate("PHGX", "Reference"), self._ref)
 
         self._model = QComboBox()
-        self._model.addItem("Hayley et al. 2007 (≈2.0 %/°C)", "hayley")
-        self._model.addItem("Linear (Campbell/Arps)", "linear")
+        self._model.addItem(QCoreApplication.translate("PHGX", "Hayley et al. 2007 (≈2.0 %/°C)"), "hayley")
+        self._model.addItem(QCoreApplication.translate("PHGX", "Linear (Campbell/Arps)"), "linear")
         self._model.setToolTip(
-            "Hayley et al. (2007) is fitted on soils and pore fluids from 0 to "
+            QCoreApplication.translate("PHGX", "Hayley et al. (2007) is fitted on soils and pore fluids from 0 to "
             "25 °C. The linear form is the classic 1 + α(T − Tref) with α set "
-            "below.")
+            "below."))
         self._model.currentIndexChanged.connect(self._sync_rows)
-        form.addRow("Law", self._model)
+        form.addRow(QCoreApplication.translate("PHGX", "Law"), self._model)
 
         self._alpha = QDoubleSpinBox()
         self._alpha.setRange(0.0, 0.2); self._alpha.setDecimals(4)
         self._alpha.setSingleStep(0.001); self._alpha.setValue(0.025)
         self._alpha.setToolTip(
-            "Fractional resistivity change per °C in the linear law. 0.025 (2.5 %) "
-            "is the standard value for pore water.")
-        form.addRow("α (per °C)", self._alpha)
+            QCoreApplication.translate("PHGX", "Fractional resistivity change per °C in the linear law. 0.025 (2.5 %) "
+            "is the standard value for pore water."))
+        form.addRow(QCoreApplication.translate("PHGX", "α (per °C)"), self._alpha)
 
         self._mode = QComboBox()
-        self._mode.addItem("Constant temperature", "constant")
-        self._mode.addItem("Measured profile (depth × time)", "profile")
-        self._mode.addItem("Surface record → 1-D conduction", "surface")
-        self._mode.addItem("Seasonal model (depth + date)", "seasonal")
+        self._mode.addItem(QCoreApplication.translate("PHGX", "Constant temperature"), "constant")
+        self._mode.addItem(QCoreApplication.translate("PHGX", "Measured profile (depth × time)"), "profile")
+        self._mode.addItem(QCoreApplication.translate("PHGX", "Surface record → 1-D conduction"), "surface")
+        self._mode.addItem(QCoreApplication.translate("PHGX", "Seasonal model (depth + date)"), "seasonal")
         self._mode.setToolTip(
-            "Where the ground temperature comes from. A measured profile - a "
+            QCoreApplication.translate("PHGX", "Where the ground temperature comes from. A measured profile - a "
             "thermistor string - gives it with depth and through time, so nothing "
             "has to be modelled. Most sites only measure the surface, which is what "
             "the 1-D conduction mode is for: it diffuses that record into the ground "
             "and supplies the depth structure. One temperature per survey belongs "
             "there too - applied uniformly over depth it would correct the deep "
-            "ground by what happened at the surface, which it never felt.")
+            "ground by what happened at the surface, which it never felt."))
         self._mode.currentIndexChanged.connect(self._sync_rows)
-        form.addRow("Temperature from", self._mode)
+        form.addRow(QCoreApplication.translate("PHGX", "Temperature from"), self._mode)
 
         self._value = QDoubleSpinBox()
         self._value.setRange(-20.0, 60.0); self._value.setDecimals(1)
         self._value.setValue(15.0); self._value.setSuffix(" °C")
         self._value.setToolTip(
-            "One temperature for the whole section and the whole sequence. This "
+            QCoreApplication.translate("PHGX", "One temperature for the whole section and the whole sequence. This "
             "rescales every step by the same factor, so it changes the resistivity "
-            "values but not the change between surveys.")
-        form.addRow("Temperature", self._value)
+            "values but not the change between surveys."))
+        form.addRow(QCoreApplication.translate("PHGX", "Temperature"), self._value)
 
         self._profile, profile_row = self._file_row(
             "CSV: date, depth_m, temperature_C",
@@ -175,7 +175,7 @@ class TemperatureOptions(QGroupBox):
             "swing is damped with depth towards its mean, at the annual damping "
             "depth of the diffusivity.")
         self._profile_row = profile_row
-        form.addRow("Profile table", profile_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Profile table"), profile_row)
         self._profile_note = self._note_label()
         form.addRow("", self._profile_note)
 
@@ -186,7 +186,7 @@ class TemperatureOptions(QGroupBox):
             "monitoring period are ample; an air-temperature series from a nearby "
             "station is a workable stand-in.")
         self._surface_row = surface_row
-        form.addRow("Surface record", surface_row)
+        form.addRow(QCoreApplication.translate("PHGX", "Surface record"), surface_row)
         self._surface_note = self._note_label()
         form.addRow("", self._surface_note)
 
@@ -194,13 +194,13 @@ class TemperatureOptions(QGroupBox):
         self._diffusivity.setRange(0.005, 1.0); self._diffusivity.setDecimals(3)
         self._diffusivity.setSingleStep(0.01)
         self._diffusivity.setValue(float(temperature_model.DEFAULT_DIFFUSIVITY))
-        self._diffusivity.setSuffix(" m²/day")
+        self._diffusivity.setSuffix(QCoreApplication.translate("PHGX", " m²/day"))
         self._diffusivity.setToolTip(
-            "Thermal diffusivity of the ground. Soils run about 0.04 to 0.13 m²/day; "
+            QCoreApplication.translate("PHGX", "Thermal diffusivity of the ground. Soils run about 0.04 to 0.13 m²/day; "
             "wetter and denser ground is higher. The damping depth below says what "
-            "the value means in metres.")
+            "the value means in metres."))
         self._diffusivity.valueChanged.connect(self._sync_damping_note)
-        form.addRow("Diffusivity", self._diffusivity)
+        form.addRow(QCoreApplication.translate("PHGX", "Diffusivity"), self._diffusivity)
 
         self._damping_note = self._note_label()
         form.addRow("", self._damping_note)
@@ -209,54 +209,54 @@ class TemperatureOptions(QGroupBox):
         self._mean.setRange(-20.0, 40.0); self._mean.setDecimals(1)
         self._mean.setValue(12.0); self._mean.setSuffix(" °C")
         self._mean.setToolTip(
-            "Annual mean ground temperature, which is what the ground settles to "
+            QCoreApplication.translate("PHGX", "Annual mean ground temperature, which is what the ground settles to "
             "below a few damping depths. Close to the annual mean air temperature "
-            "at most sites.")
-        form.addRow("Annual mean", self._mean)
+            "at most sites."))
+        form.addRow(QCoreApplication.translate("PHGX", "Annual mean"), self._mean)
 
         self._amplitude = QDoubleSpinBox()
         self._amplitude.setRange(0.0, 40.0); self._amplitude.setDecimals(1)
         self._amplitude.setValue(10.0); self._amplitude.setSuffix(" °C")
         self._amplitude.setToolTip(
-            "Half the peak-to-peak annual swing at the ground surface.")
-        form.addRow("Surface amplitude", self._amplitude)
+            QCoreApplication.translate("PHGX", "Half the peak-to-peak annual swing at the ground surface."))
+        form.addRow(QCoreApplication.translate("PHGX", "Surface amplitude"), self._amplitude)
 
         self._damping = QDoubleSpinBox()
         self._damping.setRange(0.1, 20.0); self._damping.setDecimals(2)
         self._damping.setValue(2.5); self._damping.setSuffix(" m")
         self._damping.setToolTip(
-            "Depth at which the annual swing has decayed to 1/e of its surface "
+            QCoreApplication.translate("PHGX", "Depth at which the annual swing has decayed to 1/e of its surface "
             "amplitude. Typically 2–3 m in soils, more in dry coarse ground. Below "
-            "about three of these the correction stops varying with the season.")
-        form.addRow("Damping depth", self._damping)
+            "about three of these the correction stops varying with the season."))
+        form.addRow(QCoreApplication.translate("PHGX", "Damping depth"), self._damping)
 
         self._peak = QDoubleSpinBox()
         self._peak.setRange(1.0, 365.0); self._peak.setDecimals(0)
         self._peak.setValue(200.0)
         self._peak.setToolTip(
-            "Day of the year the ground surface is warmest: about 200 (mid-July) in "
-            "the northern hemisphere, about 20 in the southern.")
-        form.addRow("Warmest day", self._peak)
+            QCoreApplication.translate("PHGX", "Day of the year the ground surface is warmest: about 200 (mid-July) in "
+            "the northern hemisphere, about 20 in the southern."))
+        form.addRow(QCoreApplication.translate("PHGX", "Warmest day"), self._peak)
 
         buttons = QWidget()
         bar = QHBoxLayout(buttons)
         bar.setContentsMargins(0, 4, 0, 0)
-        self._apply = QPushButton("Apply")
+        self._apply = QPushButton(QCoreApplication.translate("PHGX", "Apply"))
         self._apply.setProperty("primary", True)
         self._apply.setToolTip(
-            "Correct the section on screen with these settings. Press again after "
-            "changing them; nothing is corrected until you do.")
+            QCoreApplication.translate("PHGX", "Correct the section on screen with these settings. Press again after "
+            "changing them; nothing is corrected until you do."))
         self._apply.clicked.connect(self._on_apply)
-        self._remove = QPushButton("Remove")
-        self._remove.setToolTip("Show the resistivity as inverted again.")
+        self._remove = QPushButton(QCoreApplication.translate("PHGX", "Remove"))
+        self._remove.setToolTip(QCoreApplication.translate("PHGX", "Show the resistivity as inverted again."))
         self._remove.clicked.connect(self.removeRequested.emit)
         bar.addWidget(self._apply, stretch=1)
         bar.addWidget(self._remove)
-        form.addRow(buttons)
+        form.addRow(i18n.tr(buttons))
 
         self._status = QLabel("")
         self._status.setWordWrap(True)
-        form.addRow(self._status)
+        form.addRow(i18n.tr(self._status))
 
         for spin in (self._ref, self._alpha, self._value, self._diffusivity,
                      self._mean, self._amplitude, self._damping, self._peak):
@@ -288,9 +288,9 @@ class TemperatureOptions(QGroupBox):
         bar = QHBoxLayout(row)
         bar.setContentsMargins(0, 0, 0, 0)
         edit = QLineEdit()
-        edit.setPlaceholderText(placeholder)
-        edit.setToolTip(tooltip)
-        browse = QPushButton("Browse…")
+        edit.setPlaceholderText(i18n.tr(placeholder))
+        edit.setToolTip(i18n.tr(tooltip))
+        browse = QPushButton(QCoreApplication.translate("PHGX", "Browse…"))
         browse.clicked.connect(lambda: self._browse_into(edit))
         bar.addWidget(edit, stretch=1)
         bar.addWidget(browse)
@@ -298,10 +298,10 @@ class TemperatureOptions(QGroupBox):
 
     def _browse_into(self, edit: QLineEdit) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Temperature record", "",
+            self, QCoreApplication.translate("PHGX", "Temperature record"), "",
             "Tables (*.csv *.txt *.dat);;All files (*)")
         if path:
-            edit.setText(path)
+            edit.setText(i18n.tr(path))
             self._describe_files()
 
     def _row_label(self, widget: QWidget):
@@ -317,8 +317,7 @@ class TemperatureOptions(QGroupBox):
     def _sync_damping_note(self, *_args: Any) -> None:
         depth = temperature_model.annual_damping_depth(float(self._diffusivity.value()))
         self._damping_note.setText(
-            f"Annual swing falls to 1/e by about {depth:.1f} m, and is negligible "
-            f"below roughly {3 * depth:.0f} m.")
+            QCoreApplication.translate("PHGX", "Annual swing falls to 1/e by about {0:.1f} m, and is negligible below roughly {1:.0f} m.").format(depth, 3 * depth))
 
     def _sync_rows(self, *_args: Any) -> None:
         """Show the inputs the selected law and temperature source actually read."""
@@ -355,7 +354,7 @@ class TemperatureOptions(QGroupBox):
                 text = describe()
             except Exception as exc:  # noqa: BLE001 - see above
                 text = f"Could not read {Path(edit.text().strip()).name}: {exc}"
-            note.setText(text)
+            note.setText(i18n.tr(text))
 
     def _profile_summary(self) -> str:
         path = self._profile.text().strip()
@@ -461,7 +460,7 @@ class TemperatureOptions(QGroupBox):
             for edit, key in ((self._profile, "profile_path"),
                               (self._surface, "surface_path")):
                 if key in values:
-                    edit.setText(str(values[key] or ""))
+                    edit.setText(i18n.tr(str(values[key] or "")))
         finally:
             self._restoring = False
         self._sync_rows()
@@ -556,8 +555,8 @@ class TemperatureOptions(QGroupBox):
         return self._status.text()
 
     def _set_status(self, text: str, level: str, tooltip: str = "") -> None:
-        self._status.setText(text)
-        self._status.setToolTip(tooltip)
+        self._status.setText(i18n.tr(text))
+        self._status.setToolTip(i18n.tr(tooltip))
         self._status.setStyleSheet(
             f"color:{_STATUS_COLORS.get(level, _STATUS_COLORS['muted'])};")
 

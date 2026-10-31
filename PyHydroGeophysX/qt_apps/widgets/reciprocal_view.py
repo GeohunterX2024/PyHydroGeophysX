@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QCoreApplication, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PyHydroGeophysX.qt_apps import ert_records, theme
+from PyHydroGeophysX.qt_apps import i18n, ert_records, theme
 from PyHydroGeophysX.qt_apps.qt_utils import ContentWidthScrollArea
 from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
 
@@ -138,64 +138,64 @@ class ReciprocalErrorView(QWidget):
         col = QVBoxLayout(column)
         col.setContentsMargins(0, 0, 4, 0)
 
-        fit_box = QGroupBox("Error model")
+        fit_box = QGroupBox(QCoreApplication.translate("PHGX", "Error model"))
         fit_form = QFormLayout(fit_box)
         self._fit_to = QComboBox()
         for label, value in _CHOICES:
-            self._fit_to.addItem(label, value)
-        self._fit_to.setToolTip(_TIP if self._editable else
-                                "How this run fitted its error model; fixed once it ran.")
+            self._fit_to.addItem(i18n.tr(label), value)
+        self._fit_to.setToolTip(i18n.tr(_TIP) if self._editable else
+                                QCoreApplication.translate("PHGX", "How this run fitted its error model; fixed once it ran."))
         self._fit_to.setEnabled(self._editable)
         self._fit_to.currentIndexChanged.connect(self._on_fit_to)
-        fit_form.addRow("Fit to", self._fit_to)
+        fit_form.addRow(QCoreApplication.translate("PHGX", "Fit to"), self._fit_to)
         self._result = QLabel()
         self._result.setWordWrap(True)
         self._result.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        fit_form.addRow(self._result)
+        fit_form.addRow(i18n.tr(self._result))
         col.addWidget(fit_box)
 
-        show_box = QGroupBox("Show")
+        show_box = QGroupBox(QCoreApplication.translate("PHGX", "Show"))
         show_form = QFormLayout(show_box)
         self._error_as = QComboBox()
-        self._error_as.addItem("Ohms  (|dR|)", False)
-        self._error_as.addItem("Percent of the resistance", True)
+        self._error_as.addItem(QCoreApplication.translate("PHGX", "Ohms  (|dR|)"), False)
+        self._error_as.addItem(QCoreApplication.translate("PHGX", "Percent of the resistance"), True)
         self._error_as.setToolTip(
-            "Draw each pair's disagreement in ohms, as the model is fitted, or as a "
+            QCoreApplication.translate("PHGX", "Draw each pair's disagreement in ohms, as the model is fitted, or as a "
             "percentage of its resistance - the number the reciprocal-error limit "
             "under More checks and a data error in percent are compared with. The "
-            "model is the same either way.")
+            "model is the same either way."))
         self._error_as.currentIndexChanged.connect(lambda _i: self._render())
-        show_form.addRow("Error as", self._error_as)
-        self._show_left_out = QCheckBox("Pairs the filter left out")
+        show_form.addRow(QCoreApplication.translate("PHGX", "Error as"), self._error_as)
+        self._show_left_out = QCheckBox(QCoreApplication.translate("PHGX", "Pairs the filter left out"))
         self._show_left_out.setChecked(True)
-        self._show_left_out.setToolTip("Draw, in grey, the pairs the fit does not use.")
+        self._show_left_out.setToolTip(QCoreApplication.translate("PHGX", "Draw, in grey, the pairs the fit does not use."))
         self._show_left_out.toggled.connect(lambda _on: self._render())
-        show_form.addRow(self._show_left_out)
-        self._by_survey = QCheckBox("Colour by survey")
+        show_form.addRow(i18n.tr(self._show_left_out))
+        self._by_survey = QCheckBox(QCoreApplication.translate("PHGX", "Colour by survey"))
         self._by_survey.setChecked(True)
-        self._by_survey.setToolTip("Colour a time-lapse series' pairs from the first "
-                                   "survey to the last, or draw them in one colour.")
+        self._by_survey.setToolTip(QCoreApplication.translate("PHGX", "Colour a time-lapse series' pairs from the first "
+                                   "survey to the last, or draw them in one colour."))
         self._by_survey.toggled.connect(lambda _on: self._render())
-        show_form.addRow(self._by_survey)
+        show_form.addRow(i18n.tr(self._by_survey))
         col.addWidget(show_box)
 
-        use_box = QGroupBox("Inversion")
+        use_box = QGroupBox(QCoreApplication.translate("PHGX", "Inversion"))
         use_layout = QVBoxLayout(use_box)
         self._use_note = QLabel()
         self._use_note.setWordWrap(True)
         use_layout.addWidget(self._use_note)
-        self._use_button = QPushButton("Use for the data errors")
+        self._use_button = QPushButton(QCoreApplication.translate("PHGX", "Use for the data errors"))
         self._use_button.setToolTip(
-            "Take the next inversion's data errors from this model: under Data errors, "
-            "the source becomes “From the reciprocal error model”.")
+            QCoreApplication.translate("PHGX", "Take the next inversion's data errors from this model: under Data errors, "
+            "the source becomes “From the reciprocal error model”."))
         self._use_button.clicked.connect(self.useRequested.emit)
         use_layout.addWidget(self._use_button)
         use_box.setVisible(self._editable)
         col.addWidget(use_box)
 
-        self._save = QPushButton("Save figure and pairs…")
-        self._save.setToolTip("Save the figure as it is drawn, and every pair beside it "
-                              "as a CSV table with the model in its header.")
+        self._save = QPushButton(QCoreApplication.translate("PHGX", "Save figure and pairs…"))
+        self._save.setToolTip(QCoreApplication.translate("PHGX", "Save the figure as it is drawn, and every pair beside it "
+                              "as a CSV table with the model in its header."))
         self._save.clicked.connect(self._save_figure)
         col.addWidget(self._save)
         col.addStretch(1)
@@ -220,10 +220,10 @@ class ReciprocalErrorView(QWidget):
     def set_use_state(self, used: bool) -> None:
         """Say whether the next inversion takes its data errors from this model."""
         self._use_note.setText(
-            "The next inversion takes its data errors from this model."
+            QCoreApplication.translate("PHGX", "The next inversion takes its data errors from this model.")
             if used else
-            "The next inversion does not use this model: its data errors come from "
-            "the source chosen under Data errors.")
+            QCoreApplication.translate("PHGX", "The next inversion does not use this model: its data errors come from "
+            "the source chosen under Data errors."))
         self._use_button.setVisible(not used)
 
     def _on_appearance(self, *_args: Any) -> None:
@@ -238,7 +238,7 @@ class ReciprocalErrorView(QWidget):
         """Say ``text`` in place of the plot (no data, no pairs, still reading)."""
         self._pairs = None
         self._fit = None
-        self._placeholder.setText(str(text))
+        self._placeholder.setText(i18n.tr(str(text)))
         self._stack.setCurrentWidget(self._placeholder)
         self._sync_side()
 
@@ -295,12 +295,12 @@ class ReciprocalErrorView(QWidget):
                     else np.ones(len(pairs["kept"]), dtype=bool))
             left_out = int((~used).sum())
         self._show_left_out.setEnabled(left_out > 0)
-        self._show_left_out.setText(f"Pairs the filter left out ({left_out:,})"
-                                    if left_out else "Pairs the filter left out")
+        self._show_left_out.setText(QCoreApplication.translate("PHGX", "Pairs the filter left out ({0:,})").format(left_out)
+                                    if left_out else QCoreApplication.translate("PHGX", "Pairs the filter left out"))
         self._by_survey.setVisible(self._series)
         self._error_as.setEnabled(pairs is not None)
         self._save.setEnabled(pairs is not None)
-        self._result.setText(self._result_text())
+        self._result.setText(i18n.tr(self._result_text()))
 
     def _result_text(self) -> str:
         """The fitted model in a few plain lines, for the panel."""
@@ -332,7 +332,7 @@ class ReciprocalErrorView(QWidget):
             by_survey=self._by_survey.isChecked())
         text = ert_records.error_model_status(self._pairs, self._fit, fit_to,
                                               series=self._series, hints=self._hints)
-        self._status.setText(" ".join(part for part in (text, self._note) if part))
+        self._status.setText(i18n.tr(" ".join(part for part in (text, self._note) if part)))
         self._sync_side()
         self._canvas.draw_idle()
         self._toolbar.update()   # Home and Back belong to the new plot
@@ -342,7 +342,7 @@ class ReciprocalErrorView(QWidget):
         if self._pairs is None:
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save the reciprocal error figure", "reciprocal_errors.png",
+            self, QCoreApplication.translate("PHGX", "Save the reciprocal error figure"), "reciprocal_errors.png",
             "PNG image (*.png)")
         if not path:
             return
@@ -364,8 +364,7 @@ class ReciprocalErrorView(QWidget):
         rows = np.column_stack([survey, R, dR, 100.0 * dR / R, used.astype(int)])
         np.savetxt(table, rows, delimiter=",", header=header, comments="# ",
                    fmt=["%d", "%.8g", "%.8g", "%.6g", "%d"])
-        self._status.setText(f"Saved {figure_path.name} and {table.name} in "
-                             f"{figure_path.parent}.")
+        self._status.setText(QCoreApplication.translate("PHGX", "Saved {0} and {1} in {2}.").format(figure_path.name, table.name, figure_path.parent))
 
 
 __all__ = ["ReciprocalErrorView"]

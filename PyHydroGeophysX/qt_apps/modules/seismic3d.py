@@ -24,7 +24,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import QCoreApplication, Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -50,7 +50,7 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.data_processing import run_inputs
 from PyHydroGeophysX.Geophy_modular import structure_integration as seismic3d_pipeline
-from PyHydroGeophysX.qt_apps import io_utils, theme
+from PyHydroGeophysX.qt_apps import i18n, io_utils, theme
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
 from PyHydroGeophysX.qt_apps.qt_utils import (
     BusyStateController,
@@ -166,7 +166,7 @@ class _LineMapView(QWidget):
         unit = length_units.current()
         set_length_axis(ax, "x", "Easting", unit=unit)
         set_length_axis(ax, "y", "Northing", unit=unit)
-        ax.set_title("Seismic lines: a dot marks distance 0, the arrow points along the line")
+        ax.set_title(QCoreApplication.translate("PHGX", "Seismic lines: a dot marks distance 0, the arrow points along the line"))
         self._canvas.draw_idle()
         self._toolbar.update()
 
@@ -184,7 +184,7 @@ class _VelocitySectionView(QWidget):
         self._canvas = FigureCanvasQTAgg(self._figure)
         bar, self._toolbar = toolbar_row(self._canvas, self)
         controls = QHBoxLayout()
-        controls.addWidget(QLabel("Line"))
+        controls.addWidget(QLabel(QCoreApplication.translate("PHGX", "Line")))
         self.line_choice = QComboBox()
         controls.addWidget(self.line_choice)
         controls.addStretch(1)
@@ -229,8 +229,7 @@ class _VelocitySectionView(QWidget):
                         label=f"Bedrock top ({data['threshold']:.0f} m/s)")
                 ax.legend(loc="lower right", fontsize=8, framealpha=0.9)
             set_section_axes(ax, mesh=data.get("mesh"), unit=length_units.current())
-            ax.set_title(f"{data['name']}: velocity, and the bedrock top where it passes "
-                         f"{data['threshold']:.0f} m/s")
+            ax.set_title(QCoreApplication.translate("PHGX", "{0}: velocity, and the bedrock top where it passes {1:.0f} m/s").format(data['name'], data['threshold']))
         self._canvas.draw_idle()
         self._toolbar.update()
 
@@ -258,16 +257,16 @@ class Seismic3DModule(BaseModule):
 
         root = QHBoxLayout(self)
         self._tabs = QTabWidget()
-        self._tabs.addTab(self._build_map_tab(), "Map")
+        self._tabs.addTab(self._build_map_tab(), QCoreApplication.translate("PHGX", "Map"))
         self._section_view = _VelocitySectionView(cmaps.colormap_settings(self.state))
         self._section_view.line_choice.currentIndexChanged.connect(self._on_line_chosen)
-        self._tabs.addTab(self._section_view, "Section")
+        self._tabs.addTab(self._section_view, QCoreApplication.translate("PHGX", "Section"))
         # A velocity volume, so it takes the colour map chosen for velocity
         # models - the seismic page's sections use the same one.
         self._volume_view = VTKVolumeView(colormaps=cmaps.colormap_settings(self.state),
                                           colormap_key=cmaps.VELOCITY)
-        self._tabs.addTab(self._volume_view, "3D model")
-        self._tabs.addTab(self._build_figures_tab(), "Figures")
+        self._tabs.addTab(self._volume_view, QCoreApplication.translate("PHGX", "3D model"))
+        self._tabs.addTab(self._build_figures_tab(), QCoreApplication.translate("PHGX", "Figures"))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         self._guide = NextStepStrip()
         self._reproduce = ReproduceBar()
@@ -283,26 +282,26 @@ class Seismic3DModule(BaseModule):
 
     # -- centre: the map, a section, the 3D model ----------------------------
     def _build_start_card(self) -> QWidget:
-        example_btn = QPushButton("Use example")
+        example_btn = QPushButton(QCoreApplication.translate("PHGX", "Use example"))
         example_btn.setProperty("primary", True)
         example_btn.setIcon(theme.icon("fa5s.box-open", color="#ffffff"))
-        example_btn.setToolTip("Add three synthetic velocity lines that cross one site.")
+        example_btn.setToolTip(QCoreApplication.translate("PHGX", "Add three synthetic velocity lines that cross one site."))
         example_btn.clicked.connect(self._use_example)
-        add_btn = QPushButton("Add a line…")
+        add_btn = QPushButton(QCoreApplication.translate("PHGX", "Add a line…"))
         add_btn.setIcon(theme.icon("fa5s.folder-plus"))
         add_btn.clicked.connect(self._add_line_folder)
-        format_btn = QPushButton("Data format")
+        format_btn = QPushButton(QCoreApplication.translate("PHGX", "Data format"))
         format_btn.setIcon(theme.icon("fa5s.question-circle"))
         format_btn.clicked.connect(self._show_format_help)
         return start_card(
-            "Build a 3D model from seismic lines",
-            "Join 2D seismic velocity sections into a 3D velocity model and a bedrock "
-            "surface, for a hydrologic model or to split an ERT model into layers.",
-            ["Add the seismic lines: each line's velocity section, and where it lies "
-             "on the map.",
-             "Choose the velocity that marks the top of bedrock, and check it on each "
-             "line's section.",
-             "Set the 3D grid, and press Build 3D model."],
+            QCoreApplication.translate("PHGX", "Build a 3D model from seismic lines"),
+            QCoreApplication.translate("PHGX", "Join 2D seismic velocity sections into a 3D velocity model and a bedrock "
+            "surface, for a hydrologic model or to split an ERT model into layers."),
+            [QCoreApplication.translate("PHGX", "Add the seismic lines: each line's velocity section, and where it lies "
+             "on the map."),
+             QCoreApplication.translate("PHGX", "Choose the velocity that marks the top of bedrock, and check it on each "
+             "line's section."),
+             QCoreApplication.translate("PHGX", "Set the 3D grid, and press Build 3D model.")],
             [example_btn, add_btn, format_btn],
             note="The example is three synthetic lines crossing one site.")
 
@@ -319,11 +318,11 @@ class Seismic3DModule(BaseModule):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
-        header.addWidget(QLabel("Show"))
+        header.addWidget(QLabel(QCoreApplication.translate("PHGX", "Show")))
         self._figure_choice = QComboBox()
         self._figure_choice.currentIndexChanged.connect(self._show_selected_figure)
         header.addWidget(self._figure_choice, stretch=1)
-        open_btn = QPushButton("Open output folder")
+        open_btn = QPushButton(QCoreApplication.translate("PHGX", "Open output folder"))
         open_btn.setIcon(theme.icon("fa5s.folder-open"))
         open_btn.clicked.connect(self._open_output_folder)
         header.addWidget(open_btn)
@@ -369,11 +368,11 @@ class Seismic3DModule(BaseModule):
         flayout.addWidget(rule)
         self._run_reason = _hint()
         flayout.addWidget(self._run_reason)
-        self._run_btn = QPushButton("Build 3D model")
+        self._run_btn = QPushButton(QCoreApplication.translate("PHGX", "Build 3D model"))
         self._run_btn.setProperty("primary", True)
         self._run_btn.setIcon(theme.icon("fa5s.cubes", color="#ffffff"))
-        self._run_btn.setToolTip("Interpolate the lines' velocity and their bedrock tops "
-                                 "across the site, onto the 3D grid.")
+        self._run_btn.setToolTip(QCoreApplication.translate("PHGX", "Interpolate the lines' velocity and their bedrock tops "
+                                 "across the site, onto the 3D grid."))
         self._run_btn.clicked.connect(self._run_build)
         flayout.addWidget(self._run_btn)
         self._progress = QProgressBar()
@@ -393,25 +392,25 @@ class Seismic3DModule(BaseModule):
         return column
 
     def _build_lines_group(self) -> QGroupBox:
-        box = QGroupBox("1  Seismic lines")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "1  Seismic lines"))
         layout = QVBoxLayout(box)
-        add_btn = QPushButton("Add a line…")
+        add_btn = QPushButton(QCoreApplication.translate("PHGX", "Add a line…"))
         add_btn.setProperty("primary", True)
         add_btn.setIcon(theme.icon("fa5s.folder-plus", color="#ffffff"))
-        add_btn.setToolTip("Add a line from a folder with velmesh.bms and Vinvmodel.npy.")
+        add_btn.setToolTip(QCoreApplication.translate("PHGX", "Add a line from a folder with velmesh.bms and Vinvmodel.npy."))
         add_btn.clicked.connect(self._add_line_folder)
-        example_btn = QPushButton("Use example")
+        example_btn = QPushButton(QCoreApplication.translate("PHGX", "Use example"))
         example_btn.setIcon(theme.icon("fa5s.box-open"))
-        example_btn.setToolTip("Add three synthetic velocity lines that cross one site.")
+        example_btn.setToolTip(QCoreApplication.translate("PHGX", "Add three synthetic velocity lines that cross one site."))
         example_btn.clicked.connect(self._use_example)
         files_btn = QPushButton()
         files_btn.setIcon(theme.icon("fa5s.file-medical"))
-        files_btn.setToolTip("Add a line from a mesh file and a velocity file chosen "
-                             "one by one.")
+        files_btn.setToolTip(QCoreApplication.translate("PHGX", "Add a line from a mesh file and a velocity file chosen "
+                             "one by one."))
         files_btn.clicked.connect(self._add_line_files)
         help_btn = QPushButton()
         help_btn.setIcon(theme.icon("fa5s.question-circle"))
-        help_btn.setToolTip("What a line needs.")
+        help_btn.setToolTip(QCoreApplication.translate("PHGX", "What a line needs."))
         help_btn.clicked.connect(self._show_format_help)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -419,8 +418,8 @@ class Seismic3DModule(BaseModule):
             row.addWidget(button)
         row.addStretch(1)
         layout.addLayout(row)
-        layout.addWidget(_hint("Place each line on the map by its two ends, in metres. "
-                               "Start is where its section's distance 0 lies."))
+        layout.addWidget(_hint(QCoreApplication.translate("PHGX", "Place each line on the map by its two ends, in metres. "
+                               "Start is where its section's distance 0 lies.")))
         self._table = QTableWidget(0, len(_COLUMNS))
         self._table.setHorizontalHeaderLabels(_COLUMNS)
         self._table.verticalHeader().setVisible(False)
@@ -430,17 +429,17 @@ class Seismic3DModule(BaseModule):
         self._table.itemChanged.connect(lambda *_: self._on_lines_changed())
         self._table.itemSelectionChanged.connect(self._on_table_selection)
         layout.addWidget(self._table)
-        remove_btn = QPushButton("Remove selected")
+        remove_btn = QPushButton(QCoreApplication.translate("PHGX", "Remove selected"))
         remove_btn.setIcon(theme.icon("fa5s.trash"))
         remove_btn.clicked.connect(self._remove_selected)
         layout.addWidget(merged_row(remove_btn))
         return box
 
     def _build_structure_group(self) -> QGroupBox:
-        box = QGroupBox("2  Bedrock interface")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "2  Bedrock interface"))
         form = QFormLayout(box)
-        form.addRow(_hint("The top of bedrock is where the velocity first passes this "
-                          "value going down. The Section tab draws it on each line."))
+        form.addRow(i18n.tr(_hint(QCoreApplication.translate("PHGX", "The top of bedrock is where the velocity first passes this "
+                          "value going down. The Section tab draws it on each line."))))
         self._threshold = _number(1200.0, 200.0, 8000.0, 50.0, 0, " m/s",
                                   "About 1200 m/s for the regolith / bedrock boundary.")
         self._interval = _number(4.0, 0.5, 50.0, 0.5, 1, " m",
@@ -448,25 +447,25 @@ class Seismic3DModule(BaseModule):
         for box_ in (self._threshold, self._interval):
             box_.valueChanged.connect(lambda *_: self._section_debounced.trigger())
             box_.valueChanged.connect(lambda *_: self._sync_page())
-        form.addRow("Bedrock top at", self._threshold)
-        form.addRow("Pick every", self._interval)
-        handoff = QPushButton("Send to ERT → Water Content")
+        form.addRow(QCoreApplication.translate("PHGX", "Bedrock top at"), self._threshold)
+        form.addRow(QCoreApplication.translate("PHGX", "Pick every"), self._interval)
+        handoff = QPushButton(QCoreApplication.translate("PHGX", "Send to ERT → Water Content"))
         handoff.setIcon(theme.icon("fa5s.share"))
-        handoff.setToolTip("Send the bedrock top of the line on the Section tab to ERT → "
-                           "Water Content, to split its model into regolith and bedrock.")
+        handoff.setToolTip(QCoreApplication.translate("PHGX", "Send the bedrock top of the line on the Section tab to ERT → "
+                           "Water Content, to split its model into regolith and bedrock."))
         handoff.clicked.connect(self._send_structure_to_hydrology)
-        form.addRow(merged_row(handoff))
+        form.addRow(i18n.tr(merged_row(handoff)))
         return box
 
     def _build_grid_group(self) -> QGroupBox:
-        box = QGroupBox("3  3D grid")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "3  3D grid"))
         form = QFormLayout(box)
         self._grid_res = make_spinbox(50, 10, 200, tooltip="Cells along each map axis.")
         self._depth = _number(50.0, 5.0, 500.0, 5.0, 1, " m", "How deep the model goes.")
         self._n_layers = make_spinbox(19, 2, 100, tooltip="Layers of cells down to that depth.")
         self._interp = QComboBox()
-        self._interp.addItem("Linear (griddata)", "griddata")
-        self._interp.addItem("Kriging", "kriging")
+        self._interp.addItem(QCoreApplication.translate("PHGX", "Linear (griddata)"), "griddata")
+        self._interp.addItem(QCoreApplication.translate("PHGX", "Kriging"), "kriging")
         try:
             from PyHydroGeophysX.core.kriging_3d import GSTOOLS_AVAILABLE
         except Exception:  # noqa: BLE001
@@ -474,13 +473,13 @@ class Seismic3DModule(BaseModule):
             GSTOOLS_AVAILABLE = False
         if not GSTOOLS_AVAILABLE:
             self._interp.model().item(self._interp.findData("kriging")).setEnabled(False)
-            self._interp.setToolTip("Kriging needs the optional 'gstools' package; "
-                                    "linear interpolation is used otherwise.")
+            self._interp.setToolTip(QCoreApplication.translate("PHGX", "Kriging needs the optional 'gstools' package; "
+                                    "linear interpolation is used otherwise."))
         self._interp.currentIndexChanged.connect(self._on_interp_changed)
-        form.addRow("Cells across", merged_row(self._grid_res, "× each way"))
-        form.addRow("Depth", self._depth)
-        form.addRow("Layers", self._n_layers)
-        form.addRow("Between lines", self._interp)
+        form.addRow(QCoreApplication.translate("PHGX", "Cells across"), merged_row(self._grid_res, "× each way"))
+        form.addRow(QCoreApplication.translate("PHGX", "Depth"), self._depth)
+        form.addRow(QCoreApplication.translate("PHGX", "Layers"), self._n_layers)
+        form.addRow(QCoreApplication.translate("PHGX", "Between lines"), self._interp)
         adv, aform = fold()
         self._z_scale = _number(1.0, 0.1, 50.0, 0.5, 1, tip=(
             "Vertical exaggeration during the 3D interpolation, so thin vertical "
@@ -489,8 +488,8 @@ class Seismic3DModule(BaseModule):
             40000, 2000, 500000, tooltip="Velocity samples are thinned to this many "
                                          "before the 3D interpolation, to keep it quick.")
         self._max_points.setSingleStep(5000)
-        aform.addRow("Vertical scale", self._z_scale)
-        aform.addRow("Velocity samples", self._max_points)
+        aform.addRow(QCoreApplication.translate("PHGX", "Vertical scale"), self._z_scale)
+        aform.addRow(QCoreApplication.translate("PHGX", "Velocity samples"), self._max_points)
         d = seismic3d_pipeline.DEFAULT_KRIGING
         self._krig_model = QComboBox()
         self._krig_model.addItems(list(seismic3d_pipeline.VARIOGRAM_MODELS))
@@ -502,19 +501,19 @@ class Seismic3DModule(BaseModule):
         self._krig_nugget = _number(d["nugget"], 0.0, 100.0, 0.05, 3)
         self._krig_rows = [self._krig_model, self._len_x, self._len_y, self._len_z,
                            self._krig_var, self._krig_nugget]
-        aform.addRow("Kriging model", self._krig_model)
-        aform.addRow("Range east", self._len_x)
-        aform.addRow("Range north", self._len_y)
-        aform.addRow("Range down", self._len_z)
-        aform.addRow("Variance (sill)", self._krig_var)
-        aform.addRow("Nugget", self._krig_nugget)
-        export_btn = QPushButton("Save 3D settings")
+        aform.addRow(QCoreApplication.translate("PHGX", "Kriging model"), self._krig_model)
+        aform.addRow(QCoreApplication.translate("PHGX", "Range east"), self._len_x)
+        aform.addRow(QCoreApplication.translate("PHGX", "Range north"), self._len_y)
+        aform.addRow(QCoreApplication.translate("PHGX", "Range down"), self._len_z)
+        aform.addRow(QCoreApplication.translate("PHGX", "Variance (sill)"), self._krig_var)
+        aform.addRow(QCoreApplication.translate("PHGX", "Nugget"), self._krig_nugget)
+        export_btn = QPushButton(QCoreApplication.translate("PHGX", "Save 3D settings"))
         export_btn.setIcon(theme.icon("fa5s.file-export"))
-        export_btn.setToolTip("Write the lines and settings to seismic3d_config.json, "
-                              "without building anything.")
+        export_btn.setToolTip(QCoreApplication.translate("PHGX", "Write the lines and settings to seismic3d_config.json, "
+                              "without building anything."))
         export_btn.clicked.connect(self._export_config)
-        aform.addRow(merged_row(export_btn))
-        form.addRow(adv)
+        aform.addRow(i18n.tr(merged_row(export_btn)))
+        form.addRow(i18n.tr(adv))
         self._on_interp_changed()
         return box
 
@@ -574,20 +573,20 @@ class Seismic3DModule(BaseModule):
         if not hasattr(self, "_run_reason"):
             return
         reason = self._run_blocker()
-        self._run_reason.setText(reason)
+        self._run_reason.setText(i18n.tr(reason))
         self._run_reason.setVisible(bool(reason))
         if self._run_busy is None:
             self._run_btn.setEnabled(not reason)
         lines = bool(self._lines)
         self._map_stack.setCurrentIndex(1 if lines else 0)
         self._guide.setVisible(lines or self._run_busy is not None)
-        self._guide.setText(self._next_step())
+        self._guide.setText(i18n.tr(self._next_step()))
         for group in (self._structure_group, self._grid_group):
             group.setEnabled(lines)
         done = {self._lines_group: lines, self._structure_group: lines,
                 self._grid_group: lines}
         for group, title in self._step_titles.items():
-            group.setTitle(f"{title}  ✓" if done[group] else title)
+            group.setTitle(f"{title}  ✓" if done[group] else i18n.tr(title))
         self._tabs.setTabEnabled(_SECTION_TAB, lines)
         self._tabs.setTabEnabled(_MODEL_TAB, self._has_results)
         self._tabs.setTabEnabled(_FIGURES_TAB, self._has_results)
@@ -734,7 +733,7 @@ class Seismic3DModule(BaseModule):
             self.log(f"No synthetic velocity lines found under {root}.", "warn")
 
     def _add_line_folder(self) -> None:
-        path = select_directory(self, "Select velocity-model folder", Path.cwd())
+        path = select_directory(self, QCoreApplication.translate("PHGX", "Select velocity-model folder"), Path.cwd())
         if not path:
             return
         files = seismic3d_pipeline.find_velocity_files(Path(path))
@@ -750,10 +749,10 @@ class Seismic3DModule(BaseModule):
                  "info")
 
     def _add_line_files(self) -> None:
-        mesh, _ = QFileDialog.getOpenFileName(self, "Select mesh", "", "Mesh (*.bms);;All files (*)")
+        mesh, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Select mesh"), "", "Mesh (*.bms);;All files (*)")
         if not mesh:
             return
-        vel, _ = QFileDialog.getOpenFileName(self, "Select velocity array", "", "Array (*.npy);;All files (*)")
+        vel, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Select velocity array"), "", "Array (*.npy);;All files (*)")
         if not vel:
             return
         r = self._table.rowCount()
@@ -805,15 +804,12 @@ class Seismic3DModule(BaseModule):
         # under the Build button says so.
         built = result.get("status") != "config_exported"
         self._result_summary.setText(
-            f"Built from {result.get('n_lines', '—')} lines on a "
-            f"{result.get('grid_resolution', '—')} × {result.get('grid_resolution', '—')} "
-            f"grid: velocity {self._fmt_range(result.get('velocity_range'))} m/s, "
-            f"bedrock {self._fmt_range(result.get('bedrock_depth_range'))} m deep.")
+            QCoreApplication.translate("PHGX", "Built from {0} lines on a {1} × {2} grid: velocity {3} m/s, bedrock {4} m deep.").format(result.get('n_lines', '—'), result.get('grid_resolution', '—'), result.get('grid_resolution', '—'), self._fmt_range(result.get('velocity_range')), self._fmt_range(result.get('bedrock_depth_range'))))
         self._figure_choice.blockSignals(True)
         self._figure_choice.clear()
         for fig in result.get("figure_paths", []):
             if Path(fig).exists():
-                self._figure_choice.addItem(Path(fig).stem.replace("_", " ").capitalize(),
+                self._figure_choice.addItem(i18n.tr(Path(fig).stem.replace("_", " ").capitalize()),
                                             str(fig))
         self._figure_choice.blockSignals(False)
         if self._figure_choice.count():
@@ -830,7 +826,7 @@ class Seismic3DModule(BaseModule):
             bits.append(f"3D volume file not found: {vtk}")
         if result.get("config_path"):
             bits.append(f"3D settings: {result['config_path']}")
-        self._result_files.setText("<br>".join(bits))
+        self._result_files.setText(i18n.tr("<br>".join(bits)))
         # Without a 3D view (no OpenGL, no VTK) the figures are the result.
         self._results_tab = _MODEL_TAB if rendered else _FIGURES_TAB
         self._has_results = built
@@ -868,7 +864,7 @@ class Seismic3DModule(BaseModule):
         except Exception:  # noqa: BLE001
             _logger.debug("Seismic3DModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
-        dlg = QDialog(self); dlg.setWindowTitle("Seismic → Structure input format")
+        dlg = QDialog(self); dlg.setWindowTitle(QCoreApplication.translate("PHGX", "Seismic → Structure input format"))
         dlg.resize(760, 620); lay = QVBoxLayout(dlg)
         browser = QTextBrowser(); browser.setOpenExternalLinks(True)
         try:
@@ -877,7 +873,7 @@ class Seismic3DModule(BaseModule):
             _logger.debug("Seismic3DModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
-        close_btn = QPushButton("Close"); close_btn.clicked.connect(dlg.accept)
+        close_btn = QPushButton(QCoreApplication.translate("PHGX", "Close")); close_btn.clicked.connect(dlg.accept)
         lay.addWidget(close_btn); dlg.exec()
 
     # -- params / run --------------------------------------------------------
@@ -996,9 +992,9 @@ class Seismic3DModule(BaseModule):
         self._workflow_recipe_path = str(recipe_path)
         self._run_busy = BusyStateController([self._run_btn])
         self._run_busy.start()
-        self._run_btn.setText("Building…")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Building…"))
         self._progress.setVisible(True); self._progress.setRange(0, 0)
-        self._run_status.setText("Building the 3D model…")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Building the 3D model…"))
         theme.set_tone(self._run_status, None)
         self._sync_page()
         self.log("Starting seismic → 3D model build…", "info")
@@ -1027,14 +1023,14 @@ class Seismic3DModule(BaseModule):
         self._on_build_ok(result.legacy_payload())
 
     def _on_worker_log(self, message: str, level: str) -> None:
-        self._run_status.setText(message); self.log(message, level)
+        self._run_status.setText(i18n.tr(message)); self.log(message, level)
 
     def _on_build_ok(self, result: dict) -> None:
         self._progress.setRange(0, 1); self._progress.setValue(1)
         self.log(f"3D model built: {result.get('n_grid_points')} grid points.", "success")
         self.report_result(result)
         self._populate_results(result)
-        self._run_status.setText(f"Finished. The model is on the {self._results_place()} tab.")
+        self._run_status.setText(QCoreApplication.translate("PHGX", "Finished. The model is on the {0} tab.").format(self._results_place()))
         theme.set_tone(self._run_status, "ok")
         self._current = 4
 
@@ -1048,14 +1044,14 @@ class Seismic3DModule(BaseModule):
             # that can be changed before building again. Exporting the
             # configuration in its place would blame a backend that is there.
             self.log(f"3D model build failed: {message}", "error")
-            self._run_status.setText(f"The build failed: {message}")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "The build failed: {0}").format(message))
             theme.set_tone(self._run_status, "error")
             return
         self.log(f"3D model build could not run: {message}", "warn")
         config_path = self._export_config()
         note = ("The 3D engine (pygimli) is not installed or could not be loaded. The "
                 f"3D settings were saved to {config_path}.")
-        self._run_status.setText(note); self.log(note, "warn")
+        self._run_status.setText(i18n.tr(note)); self.log(note, "warn")
         theme.set_tone(self._run_status, "warn")
         self._populate_results({"status": "config_exported", "n_lines": len(self._lines),
                                 "config_path": config_path, "figure_paths": []})
@@ -1064,12 +1060,12 @@ class Seismic3DModule(BaseModule):
         if self._run_busy is not None:
             self._run_busy.finish()
             self._run_busy = None
-        self._run_btn.setText("Build 3D model")
+        self._run_btn.setText(QCoreApplication.translate("PHGX", "Build 3D model"))
         self._progress.setVisible(False)
         if self._worker is not None and self._worker.is_cancelled():
             self._run_problem = "Stopped by user"
-            self._run_status.setText("Stopped before it finished. Press Build 3D model to "
-                                     "start again.")
+            self._run_status.setText(QCoreApplication.translate("PHGX", "Stopped before it finished. Press Build 3D model to "
+                                     "start again."))
             theme.set_tone(self._run_status, "warn")
         self._sync_page()
 

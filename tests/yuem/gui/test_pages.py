@@ -51,3 +51,47 @@ def test_main_window_offers_the_environment_check(qtbot: Any, state: StudioState
     )
     labels = [action.text() for action in help_menu.actions()]
     assert "Environment Check…" in labels
+
+
+@pytest.mark.parametrize("key", sorted(MODULE_SPECS))
+def test_page_builds_in_chinese(qtbot: Any, state: StudioState, key: str) -> None:
+    """Translated templates are formatted as each page builds; a broken one raises here."""
+    from PySide6.QtWidgets import QApplication
+
+    from PyHydroGeophysX.qt_apps import i18n
+
+    app = QApplication.instance()
+    i18n.install_translator(app, "zh_CN")
+    try:
+        errors: list[str] = []
+        page = build_module(
+            key, state, lambda message, level="info": errors.append(message) if level == "error" else None
+        )
+        qtbot.addWidget(page)
+        assert not isinstance(page, PlaceholderModule), errors
+        page.stop_workers(wait_ms=5000)
+    finally:
+        i18n.install_translator(app, "en")
+
+
+def test_the_studio_starts_without_font_warnings(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+
+    env = {
+        **os.environ,
+        "QT_QPA_PLATFORM": "offscreen",
+        "PHGX_PROJECT_DIR": str(tmp_path / "project"),
+        "PHGX_LOG_DIR": str(tmp_path / "logs"),
+    }
+    done = subprocess.run(
+        [sys.executable, "-m", "PyHydroGeophysX.qt_apps.launcher", "--self-test"],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=120,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr[-2000:]
+    assert "missing font family" not in done.stderr

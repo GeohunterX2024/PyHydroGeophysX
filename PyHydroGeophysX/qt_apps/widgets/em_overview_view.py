@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import numpy as np
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QCoreApplication, Qt, QTimer
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -43,6 +43,7 @@ from PyHydroGeophysX.visualization.basemap import (
     fit_local_transform,
 )
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -105,17 +106,17 @@ class EMOverviewView(QWidget):
         row.setContentsMargins(6, 2, 6, 2)
         self._line = QComboBox()
         self._line.setToolTip(
-            "Which survey line to section. Lines are sectioned one at a time "
+            QCoreApplication.translate("PHGX", "Which survey line to section. Lines are sectioned one at a time "
             "because their along-line distances are not continuous with each "
-            "other; 'All lines' chains them and marks the joins.")
+            "other; 'All lines' chains them and marks the joins."))
         self._line.currentIndexChanged.connect(self._redraw)
         row.addWidget(self._line)
-        self._basemap = QCheckBox("Basemap")
+        self._basemap = QCheckBox(QCoreApplication.translate("PHGX", "Basemap"))
         self._basemap.setToolTip(
-            "Draw map tiles under the soundings. Tiles are fetched once and cached "
+            QCoreApplication.translate("PHGX", "Draw map tiles under the soundings. Tiles are fetched once and cached "
             "on disk, so a line already looked at stays available offline. Needs "
             "the survey's longitude/latitude, which a TEMcompany project carries; "
-            "the axes stay in projected metres, so distances are unaffected.")
+            "the axes stay in projected metres, so distances are unaffected."))
         self._basemap.toggled.connect(self._on_basemap_toggled)
         self._basemap_source = QComboBox()
         self._basemap_source.addItems(list(TILE_SOURCES))
@@ -128,10 +129,10 @@ class EMOverviewView(QWidget):
         self._map_share.setValue(30)
         self._map_share.setFixedWidth(88)
         self._map_share.setToolTip(
-            "Width of the map column, against the section beside it. Scrolling "
+            QCoreApplication.translate("PHGX", "Width of the map column, against the section beside it. Scrolling "
             "over either panel zooms it about the cursor, dragging pans, and a "
-            "double-click returns to the whole survey.")
-        map_group = group("Map", self._map_share)
+            "double-click returns to the whole survey."))
+        map_group = group(QCoreApplication.translate("PHGX", "Map"), self._map_share)
         row.addWidget(map_group)
         if self._section_only:
             for control in (self._basemap, self._basemap_source, map_group):
@@ -144,39 +145,39 @@ class EMOverviewView(QWidget):
         # frozen into the result.
         self._below_doi = QComboBox()
         for label, key in (("fade", "fade"), ("hide", "hide"), ("show", "show")):
-            self._below_doi.addItem(f"DOI: {label}", key)
+            self._below_doi.addItem(QCoreApplication.translate("PHGX", "DOI: {0}").format(label), key)
         self._below_doi.setToolTip(
-            "How the cells below the depth of investigation are drawn. Below that "
+            QCoreApplication.translate("PHGX", "How the cells below the depth of investigation are drawn. Below that "
             "depth, changing the whole remaining column by one decade in "
             "resistivity moves the predicted response by less than the threshold "
             "beside this control, measured in the gates' own error bars.\n\n"
             "Fade draws them washed out, so the section stays continuous and the "
             "regularized part is still distinguishable. Hide leaves them blank. "
             "Show draws them at full strength, with the depth-of-investigation "
-            "line marking where they begin.")
+            "line marking where they begin."))
         self._below_doi.currentIndexChanged.connect(self._redraw)
         self._style = QComboBox()
         for label, key in (("Smooth", "smooth"), ("Layer cells", "cells")):
-            self._style.addItem(label, key)
+            self._style.addItem(i18n.tr(label), key)
         self._style.setToolTip(
-            "Smooth interpolates the recovered models between soundings and down "
+            QCoreApplication.translate("PHGX", "Smooth interpolates the recovered models between soundings and down "
             "each layer stack, so the section reads continuously rather than as a "
             "grid of blocks. It adds no resolution, and the exported model is "
             "unchanged.\n\n"
             "Layer cells draws one rectangle per layer per sounding, which is what "
-            "the inversion solved for.")
+            "the inversion solved for."))
         self._style.currentIndexChanged.connect(self._redraw)
         self._vertical = QComboBox()
         for label, key in (("Depth", "depth"), ("Elevation", "elevation")):
-            self._vertical.addItem(label, key)
+            self._vertical.addItem(i18n.tr(label), key)
         self._vertical.setToolTip(
-            "Depth measures from each sounding's own ground surface, so the "
+            QCoreApplication.translate("PHGX", "Depth measures from each sounding's own ground surface, so the "
             "section is flat-topped and layers line up by burial depth.\n\n"
             "Elevation hangs every sounding from its recorded ground level, so "
             "the top of the section is the topography and a flat-lying unit reads "
             "as flat. Available when the survey carries elevations. The inversion "
             "is unchanged either way, since each 1D model is solved under its own "
-            "station.")
+            "station."))
         self._vertical.currentIndexChanged.connect(self._redraw)
         self._doi_threshold = QDoubleSpinBox()
         self._doi_threshold.setRange(0.02, 50.0)
@@ -185,14 +186,14 @@ class EMOverviewView(QWidget):
         self._doi_threshold.setValue(float(DOI_SENSITIVITY_THRESHOLD))
         self._doi_threshold.setPrefix("S ≥ ")
         self._doi_threshold.setToolTip(
-            "Cumulated sensitivity a depth must carry to count as investigated. S "
+            QCoreApplication.translate("PHGX", "Cumulated sensitivity a depth must carry to count as investigated. S "
             "is the sum, over every layer at and below that depth, of how far the "
             "predicted response moves when the layer changes by one e-fold in "
             "resistivity, measured in error bars. The definition follows "
             "Christiansen and Auken (2012).\n\n"
             "Higher values put the depth of investigation shallower and shorten "
             "the section; lower values extend it deeper. The value carries no "
-            "units, so one setting applies across systems.")
+            "units, so one setting applies across systems."))
         self._doi_threshold.valueChanged.connect(self._redraw)
         # The section's colour map: the result's own (turbo) until one is chosen.
         self._colormap = cmaps.ColormapChooser(cmaps.EM_SECTION, "turbo", shared=colormaps)
@@ -277,9 +278,9 @@ class EMOverviewView(QWidget):
         self._vertical.blockSignals(False)
         if not has_relief:
             self._vertical.setToolTip(
-                "No ground elevations for these soundings, or the survey is flat "
+                QCoreApplication.translate("PHGX", "No ground elevations for these soundings, or the survey is flat "
                 "to within 5 cm, so depth and elevation would draw the same "
-                "section. A TEM project records an elevation per station.")
+                "section. A TEM project records an elevation per station."))
         if self._sensitivity is not None and "doi_threshold" in result:
             self._doi_threshold.blockSignals(True)
             self._doi_threshold.setValue(float(result["doi_threshold"]))
@@ -307,13 +308,13 @@ class EMOverviewView(QWidget):
             # which disagree is a different problem from one that carries none,
             # and the first message sends the reader looking for the wrong thing.
             self._basemap.setToolTip(
-                "This project's longitude/latitude and its projected coordinates "
+                QCoreApplication.translate("PHGX", "This project's longitude/latitude and its projected coordinates "
                 "do not place the soundings in the same spot, so imagery cannot "
                 "be registered to the survey. The section is unaffected: it is "
-                "drawn from the projected coordinates alone."
+                "drawn from the projected coordinates alone.")
                 if has_geographic else
-                "No longitude/latitude for these soundings, so map tiles cannot "
-                "be placed. A TEMcompany project folder carries them.")
+                QCoreApplication.translate("PHGX", "No longitude/latitude for these soundings, so map tiles cannot "
+                "be placed. A TEMcompany project folder carries them."))
 
         lines = np.asarray(result.get("line_numbers", []), dtype=int).ravel()
         if lines.size < n_pos:
@@ -324,9 +325,9 @@ class EMOverviewView(QWidget):
         self._line.blockSignals(True)
         self._line.clear()
         for value in unique:
-            self._line.addItem(f"Line {int(value)}", int(value))
+            self._line.addItem(QCoreApplication.translate("PHGX", "Line {0}").format(int(value)), int(value))
         if unique.size > 1:
-            self._line.addItem("All lines", -1)
+            self._line.addItem(QCoreApplication.translate("PHGX", "All lines"), -1)
         self._line.setCurrentIndex(0)
         self._line.blockSignals(False)
         self._line.setVisible(unique.size > 1)
@@ -616,7 +617,7 @@ class EMOverviewView(QWidget):
                         float(np.nanmax(surface)) + 0.06 * bottom)
             set_length_axis(ax, "y", "Elevation")
         set_length_axis(ax, "x", "Distance along line")
-        ax.set_title(self._section_title(selected, lines, distance), fontsize=11)
+        ax.set_title(i18n.tr(self._section_title(selected, lines, distance)), fontsize=11)
         for boundary in np.flatnonzero(np.diff(lines)) + 1:
             ax.axvline(0.5 * (distance[boundary - 1] + distance[boundary]),
                        color="white", lw=1.4, ls="--", alpha=0.9)
@@ -1026,8 +1027,8 @@ class EMOverviewView(QWidget):
         ax.set_xlabel(f"Easting − {east:,.0f} {unit}"
                       + (f",   Northing − {north:,.0f} {unit}" if upright else ""),
                       fontsize=9)
-        ax.set_ylabel("" if upright else f"Northing − {north:,.0f} {unit}", fontsize=9)
-        ax.set_title("Survey map", fontsize=11)
+        ax.set_ylabel("" if upright else QCoreApplication.translate("PHGX", "Northing − {0:,.0f} {1}").format(north, unit), fontsize=9)
+        ax.set_title(QCoreApplication.translate("PHGX", "Survey map"), fontsize=11)
         ax.tick_params(labelsize=8)
         # Grid lines help on a plain background and only clutter imagery.
         ax.grid(False) if attribution else ax.grid(True, alpha=0.3)

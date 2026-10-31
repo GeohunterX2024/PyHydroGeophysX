@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -38,6 +38,7 @@ from PyHydroGeophysX.visualization.ert_style import (
     ert_model_plot_kwargs,
 )
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -139,9 +140,9 @@ class MeshResultView(QWidget):
         # widgets.flow_layout). Controls that belong together wrap together.
         bar = FlowLayout(spacing=6)
         bar.addWidget(group(self._toolbar, self._coords))
-        self._show_mesh = QCheckBox("Show mesh")
+        self._show_mesh = QCheckBox(QCoreApplication.translate("PHGX", "Show mesh"))
         self._show_mesh.setChecked(True)
-        self._show_mesh.setToolTip("Overlay the inversion mesh cell boundaries.")
+        self._show_mesh.setToolTip(QCoreApplication.translate("PHGX", "Overlay the inversion mesh cell boundaries."))
         self._show_mesh.toggled.connect(self._redraw)
         bar.addWidget(self._show_mesh)
 
@@ -151,12 +152,12 @@ class MeshResultView(QWidget):
         # traditional resistivity software produces. Both are display choices: no
         # resolution is added and the exported model is unchanged.
         self._smooth = QComboBox()
-        self._smooth.addItem("Off", 0)
-        self._smooth.addItem("Cells ×1", 1)
-        self._smooth.addItem("Cells ×2", 2)
-        self._smooth.addItem("Contour", -1)
+        self._smooth.addItem(QCoreApplication.translate("PHGX", "Off"), 0)
+        self._smooth.addItem(QCoreApplication.translate("PHGX", "Cells ×1"), 1)
+        self._smooth.addItem(QCoreApplication.translate("PHGX", "Cells ×2"), 2)
+        self._smooth.addItem(QCoreApplication.translate("PHGX", "Contour"), -1)
         self._smooth.setToolTip(
-            "How smoothly the model is drawn. “Cells” interpolates it onto a "
+            QCoreApplication.translate("PHGX", "How smoothly the model is drawn. “Cells” interpolates it onto a "
             "subdivided mesh and still draws cells; “Contour” draws filled "
             "contours on a regular grid instead, for the continuous image "
             "traditional resistivity software produces. Display only - no "
@@ -164,37 +165,37 @@ class MeshResultView(QWidget):
             "“Show mesh” off to see the effect.\n\n"
             "Contours cannot reproduce the soft per-cell sensitivity fade, so "
             "they draw the whole section: use “Hide below” or “Clean cut” to trim "
-            "it to what the data resolve.")
+            "it to what the data resolve."))
         self._smooth.currentIndexChanged.connect(self._on_smooth_changed)
 
         self._levels = QSpinBox()
         self._levels.setRange(4, 128)
         self._levels.setValue(40)
-        self._levels.setPrefix("levels ")
+        self._levels.setPrefix(QCoreApplication.translate("PHGX", "levels "))
         self._levels.setMaximumWidth(110)
         self._levels.setKeyboardTracking(False)
         self._levels.setToolTip(
-            "Number of filled contour bands. A high count reads as a continuous "
+            QCoreApplication.translate("PHGX", "Number of filled contour bands. A high count reads as a continuous "
             "image; a low one bands the section, which is easier to read a value "
-            "off but invents edges where the model is smooth.")
+            "off but invents edges where the model is smooth."))
         self._levels.setVisible(False)
         self._levels.valueChanged.connect(self._redraw)
-        bar.addWidget(group("Smooth", self._smooth, self._levels))
+        bar.addWidget(group(QCoreApplication.translate("PHGX", "Smooth"), self._smooth, self._levels))
 
         # Sensitivity controls. ERT resolution falls off with depth and away from
         # the line, so part of every section is decoration; these say how much.
-        self._show_cov = QCheckBox("Sensitivity")
+        self._show_cov = QCheckBox(QCoreApplication.translate("PHGX", "Sensitivity"))
         self._show_cov.setToolTip(
-            "Draw the coverage (log10 cumulative sensitivity) instead of the model, "
-            "so you can see which parts of the section the data actually constrain.")
+            QCoreApplication.translate("PHGX", "Draw the coverage (log10 cumulative sensitivity) instead of the model, "
+            "so you can see which parts of the section the data actually constrain."))
         self._show_cov.toggled.connect(self._redraw)
         bar.addWidget(self._show_cov)
 
-        self._mask_low = QCheckBox("Hide below")
+        self._mask_low = QCheckBox(QCoreApplication.translate("PHGX", "Hide below"))
         self._mask_low.setToolTip(
-            "Blank the cells whose coverage falls under the threshold, rather than "
+            QCoreApplication.translate("PHGX", "Blank the cells whose coverage falls under the threshold, rather than "
             "letting poorly constrained cells read as real structure. On by default; "
-            "the line under the plot states the cut.")
+            "the line under the plot states the cut."))
         self._mask_low.setChecked(True)
         self._mask_low.toggled.connect(self._redraw)
 
@@ -202,12 +203,12 @@ class MeshResultView(QWidget):
         # ten-metre triangles at depth, so the cut comes out as a saw-tooth with
         # islands hanging off it. Clipping the drawing to the coverage envelope cuts
         # on that line instead: the clean shape traditional software produces.
-        self._clean_cut = QCheckBox("Clean cut")
+        self._clean_cut = QCheckBox(QCoreApplication.translate("PHGX", "Clean cut"))
         self._clean_cut.setToolTip(
-            "Clip the section to a smooth envelope at the coverage cut, instead of "
+            QCoreApplication.translate("PHGX", "Clip the section to a smooth envelope at the coverage cut, instead of "
             "blanking cell by cell. The edge then follows how deep the survey sees "
             "rather than where the mesh happens to put a triangle. Needs "
-            "“Hide below”.")
+            "“Hide below”."))
         self._clean_cut.setEnabled(False)
         self._clean_cut.toggled.connect(self._redraw)
 
@@ -217,16 +218,16 @@ class MeshResultView(QWidget):
         self._cov_threshold.setSingleStep(0.25)
         self._cov_threshold.setValue(-2.0)
         self._cov_threshold.setToolTip(
-            "Coverage cut in log10 units. The status line under the plot reports the "
-            "range for the current result and how much of the section survives.")
+            QCoreApplication.translate("PHGX", "Coverage cut in log10 units. The status line under the plot reports the "
+            "range for the current result and how much of the section survives."))
         self._cov_threshold.valueChanged.connect(self._redraw)
         self._cut_group = group(self._mask_low, self._clean_cut, self._cov_threshold)
         bar.addWidget(self._cut_group)
 
-        self._rays = QCheckBox("Rays")
+        self._rays = QCheckBox(QCoreApplication.translate("PHGX", "Rays"))
         self._rays.setToolTip(
-            "Overlay the first-arrival ray paths. Where no ray passes, the velocity "
-            "is regularization rather than data. Travel-time results only.")
+            QCoreApplication.translate("PHGX", "Overlay the first-arrival ray paths. Where no ray passes, the velocity "
+            "is regularization rather than data. Travel-time results only."))
         self._rays.toggled.connect(self._redraw)
         self._rays.setVisible(False)  # shown once an SRT result arrives
         bar.addWidget(self._rays)
@@ -235,13 +236,13 @@ class MeshResultView(QWidget):
         # either passed through or it did not. A log-sensitivity threshold is an
         # ERT question, so SRT gets this instead of "Sensitivity" and
         # "Hide below".
-        self._hide_uncovered = QCheckBox("Hide uncovered")
+        self._hide_uncovered = QCheckBox(QCoreApplication.translate("PHGX", "Hide uncovered"))
         self._hide_uncovered.setChecked(True)
         self._hide_uncovered.setToolTip(
-            "Blank the cells no ray passes through. Their velocity comes from the "
+            QCoreApplication.translate("PHGX", "Blank the cells no ray passes through. Their velocity comes from the "
             "regularization pulling on neighbours, not from the travel times, so "
             "showing them invites reading structure into the smoothing. Untick to "
-            "see the full inverted domain.")
+            "see the full inverted domain."))
         self._hide_uncovered.toggled.connect(self._redraw)
         self._hide_uncovered.setVisible(False)  # shown once an SRT result arrives
         bar.addWidget(self._hide_uncovered)
@@ -250,12 +251,12 @@ class MeshResultView(QWidget):
         # for a single model and wrong for a series: each time step gets its own
         # scale, so the change everyone is looking for is exactly what the
         # rescaling hides. Locking freezes the limits across steps.
-        self._lock_range = QCheckBox("Lock range")
+        self._lock_range = QCheckBox(QCoreApplication.translate("PHGX", "Lock range"))
         self._lock_range.setToolTip(
-            "Freeze the colour limits instead of rescaling to each result. Time "
+            QCoreApplication.translate("PHGX", "Freeze the colour limits instead of rescaling to each result. Time "
             "steps can only be compared on one scale; without this, every step "
             "is stretched to its own min/max and the change between them cannot "
-            "be read off the colours.")
+            "be read off the colours."))
         self._lock_range.toggled.connect(self._on_lock_toggled)
 
         self._cmin = QDoubleSpinBox()
@@ -266,9 +267,7 @@ class MeshResultView(QWidget):
             box.setMaximumWidth(96)
             box.setKeyboardTracking(False)  # redraw on commit, not per keystroke
             box.setEnabled(False)
-            box.setToolTip(f"{name} colour limit, applied when “Lock range” is "
-                           "ticked. While it is unticked these track the result "
-                           "on screen, so ticking the box keeps what you see.")
+            box.setToolTip(QCoreApplication.translate("PHGX", "{0} colour limit, applied when “Lock range” is ticked. While it is unticked these track the result on screen, so ticking the box keeps what you see.").format(name))
             box.valueChanged.connect(self._on_limit_changed)
         bar.addWidget(group(self._lock_range, self._cmin, self._cmax))
 
@@ -286,7 +285,7 @@ class MeshResultView(QWidget):
         colour_row = QHBoxLayout()
         colour_row.setContentsMargins(0, 0, 0, 0)
         colour_row.addStretch(1)
-        colour_row.addWidget(QLabel("Colour map"))
+        colour_row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Colour map")))
         colour_row.addWidget(self._colormap)
 
         self._cov_note = QLabel("")
@@ -780,7 +779,7 @@ class MeshResultView(QWidget):
                 "vertical axis", lambda m=source_mesh: vertical_axis(mesh=m))
             set_section_axes(ax, vertical=mode, depth_reference=reference)
             if self._title:
-                ax.set_title(self._title)
+                ax.set_title(i18n.tr(self._title))
             self._drawn = {"shape": shape, "frame": frame, "mesh": mesh,
                            "mask": mask_key, "locked": locked,
                            "mappable": mappable, "colorbar": cbar, "contour": drew_contour,

@@ -31,7 +31,7 @@ import copy
 from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
-from PySide6.QtCore import QTimer, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QTimer, Qt, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QAbstractSpinBox,
@@ -52,7 +52,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.inversion.ert_zones import normalize_zones, zone_colors, zone_prior
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.qt_utils import ContentWidthScrollArea
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.readout import navigation_toolbar
@@ -247,31 +247,31 @@ class MeshPreviewView(QWidget):
         # would re-lay out the page on every mouse move (see widgets.readout).
         self._toolbar, self._coords = navigation_toolbar(self._canvas, self)
 
-        self._show_outer = QCheckBox("Outer region")
+        self._show_outer = QCheckBox(QCoreApplication.translate("PHGX", "Outer region"))
         self._show_outer.setToolTip(
-            "Also draw the outer (\"infinite\") region: the coarse cells pyGIMLi "
+            QCoreApplication.translate("PHGX", "Also draw the outer (\"infinite\") region: the coarse cells pyGIMLi "
             "appends around the parameter domain so the boundary condition sits far "
             "from the electrodes. They are part of the forward mesh but are never "
             "inverted, and they reach many times further than the section, so the "
-            "view zooms out to show them.")
+            "view zooms out to show them."))
         self._show_outer.toggled.connect(self._redraw)
-        self._show_edges = QCheckBox("Cell edges")
+        self._show_edges = QCheckBox(QCoreApplication.translate("PHGX", "Cell edges"))
         self._show_edges.setChecked(True)
-        self._show_edges.setToolTip("Draw the cell boundaries.")
+        self._show_edges.setToolTip(QCoreApplication.translate("PHGX", "Draw the cell boundaries."))
         self._show_edges.toggled.connect(self._redraw)
-        self._rebuild = QPushButton("Rebuild")
+        self._rebuild = QPushButton(QCoreApplication.translate("PHGX", "Rebuild"))
         self._rebuild.setIcon(theme.icon("fa5s.sync"))
         self._rebuild.setToolTip(
-            "Build the mesh again from the current data and mesh settings. It is "
-            "rebuilt on its own when this tab is opened after they change.")
+            QCoreApplication.translate("PHGX", "Build the mesh again from the current data and mesh settings. It is "
+            "rebuilt on its own when this tab is opened after they change."))
         self._rebuild.clicked.connect(self.rebuildRequested.emit)
         # The 3-D view's own tools, in place of the plot toolbar.
-        self._clip = QCheckBox("Cut open")
+        self._clip = QCheckBox(QCoreApplication.translate("PHGX", "Cut open"))
         self._clip.setToolTip(
-            "Cut the inverted cells with a plane to see inside: drag the plane, or "
-            "its arrow to turn it.")
+            QCoreApplication.translate("PHGX", "Cut the inverted cells with a plane to see inside: drag the plane, or "
+            "its arrow to turn it."))
         self._clip.toggled.connect(self._redraw)
-        self._reset_3d = QPushButton("Reset view")
+        self._reset_3d = QPushButton(QCoreApplication.translate("PHGX", "Reset view"))
         self._reset_3d.setIcon(theme.icon("fa5s.expand"))
         self._reset_3d.clicked.connect(lambda: self._volume and self._volume.reset_view())
         self._volume: Optional[_VolumeView] = None   # built with the first volume
@@ -340,53 +340,53 @@ class MeshPreviewView(QWidget):
 
     # -- zone panel ----------------------------------------------------------
     def _build_zone_panel(self) -> QWidget:
-        box = QGroupBox("A-priori zones")
+        box = QGroupBox(QCoreApplication.translate("PHGX", "A-priori zones"))
         layout = QVBoxLayout(box)
         intro = QLabel(
-            "Draw a polygon on the mesh and give it the resistivity known from a "
+            QCoreApplication.translate("PHGX", "Draw a polygon on the mesh and give it the resistivity known from a "
             "borehole, an excavation or another survey. The inversion starts from "
-            "it; tick Fixed to keep the zone out of the inversion altogether.")
+            "it; tick Fixed to keep the zone out of the inversion altogether."))
         intro.setWordWrap(True)
         layout.addWidget(intro)
 
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
-        self._draw_btn = QPushButton("Draw zone")
+        self._draw_btn = QPushButton(QCoreApplication.translate("PHGX", "Draw zone"))
         self._draw_btn.setIcon(theme.icon("fa5s.draw-polygon"))
         self._draw_btn.setCheckable(True)
         self._draw_btn.setToolTip(
-            "Click on the mesh to place the vertices and click the first one again "
+            QCoreApplication.translate("PHGX", "Click on the mesh to place the vertices and click the first one again "
             "to close the polygon. Esc starts the polygon over; press the button "
-            "again to stop without adding a zone.")
+            "again to stop without adding a zone."))
         self._draw_btn.toggled.connect(self._on_draw_toggled)
-        self._remove_btn = QPushButton("Remove")
+        self._remove_btn = QPushButton(QCoreApplication.translate("PHGX", "Remove"))
         self._remove_btn.setIcon(theme.icon("fa5s.trash-alt"))
-        self._remove_btn.setToolTip("Remove the selected zones.")
+        self._remove_btn.setToolTip(QCoreApplication.translate("PHGX", "Remove the selected zones."))
         self._remove_btn.clicked.connect(self._remove_selected)
-        self._clear_btn = QPushButton("Clear")
-        self._clear_btn.setToolTip("Remove every zone.")
+        self._clear_btn = QPushButton(QCoreApplication.translate("PHGX", "Clear"))
+        self._clear_btn.setToolTip(QCoreApplication.translate("PHGX", "Remove every zone."))
         self._clear_btn.clicked.connect(self._clear_zones)
         buttons.addWidget(self._draw_btn, 1)
         buttons.addWidget(self._remove_btn)
         buttons.addWidget(self._clear_btn)
         layout.addLayout(buttons)
 
-        self._draw_hint = QLabel("Click to place vertices; click the first vertex to "
-                                 "close. Esc starts over.")
+        self._draw_hint = QLabel(QCoreApplication.translate("PHGX", "Click to place vertices; click the first vertex to "
+                                 "close. Esc starts over."))
         self._draw_hint.setWordWrap(True)
         self._draw_hint.setStyleSheet(f"color:{theme.PALETTE['accent']};")
         self._draw_hint.setVisible(False)
         layout.addWidget(self._draw_hint)
         self._zone_3d_note = QLabel(
-            "Zones are drawn on a 2-D mesh. In a 3-D mesh they are boxes, set in the "
-            "3D Mesh Builder before the mesh is built.")
+            QCoreApplication.translate("PHGX", "Zones are drawn on a 2-D mesh. In a 3-D mesh they are boxes, set in the "
+            "3D Mesh Builder before the mesh is built."))
         self._zone_3d_note.setWordWrap(True)
         self._zone_3d_note.setStyleSheet(f"color:{theme.PALETTE['muted']};")
         self._zone_3d_note.setVisible(False)
         layout.addWidget(self._zone_3d_note)
 
         self._table = QTableWidget(0, 4)
-        self._table.setHorizontalHeaderLabels(["Zone", "ρ (Ω·m)", "Fixed", "Cells"])
+        self._table.setHorizontalHeaderLabels([QCoreApplication.translate("PHGX", "Zone"), "ρ (Ω·m)", QCoreApplication.translate("PHGX", "Fixed"), QCoreApplication.translate("PHGX", "Cells")])
         self._table.verticalHeader().setVisible(False)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -395,9 +395,9 @@ class MeshPreviewView(QWidget):
         for column in (_RHO, _FIXED, _CELLS):
             header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
         self._table.setToolTip(
-            "Double-click a name to rename the zone. Cells counts the cells of the "
+            QCoreApplication.translate("PHGX", "Double-click a name to rename the zone. Cells counts the cells of the "
             "parameter domain whose centre lies inside the polygon; where zones "
-            "overlap, the one lower in the list takes the cell.")
+            "overlap, the one lower in the list takes the cell."))
         self._table.itemChanged.connect(self._on_item_changed)
         self._table.itemSelectionChanged.connect(self._redraw)
         self._table.setMinimumHeight(120)
@@ -406,9 +406,9 @@ class MeshPreviewView(QWidget):
         # What the zones do to the mesh and to the regularization, beyond their
         # values. Both are off by default, so zones act through their values
         # alone.
-        self._conform = QCheckBox("Mesh follows the zones")
+        self._conform = QCheckBox(QCoreApplication.translate("PHGX", "Mesh follows the zones"))
         self._conform.setToolTip(
-            "Build the mesh again so that the zone outlines become cell edges: "
+            QCoreApplication.translate("PHGX", "Build the mesh again so that the zone outlines become cell edges: "
             "no cell straddles an "
             "outline, so a zone's value - and a fixed zone - covers exactly the "
             "area drawn. The mesh is rebuilt after every zone you draw, move or "
@@ -416,18 +416,18 @@ class MeshPreviewView(QWidget):
             "of an outline inside the inverted region are used. An outline meets "
             "the surface at the nearest surface node, and a vertex within a fifth "
             "of an electrode spacing of the surface or of a node is moved onto it, "
-            "so no slivers of tiny cells form. Not available for an imported mesh.")
+            "so no slivers of tiny cells form. Not available for an imported mesh."))
         self._conform_help = self._conform.toolTip()  # restored when it is available again
         self._conform.toggled.connect(self._on_conform_toggled)
-        self._decouple = QCheckBox("Sharp zone edges")
+        self._decouple = QCheckBox(QCoreApplication.translate("PHGX", "Sharp zone edges"))
         self._decouple.setToolTip(
-            "Drop the smoothness constraint between cells on either side of a "
+            QCoreApplication.translate("PHGX", "Drop the smoothness constraint between cells on either side of a "
             "zone outline - between two zones, or a zone and the ground around "
             "it - so the inversion may put a sharp contrast there instead of "
             "smearing it out. Use it for a boundary known from a borehole, GPR "
             "or an excavation. The cell edges it cuts are drawn in black. Every "
             "engine honours it; rebuilding the mesh along the outlines makes the "
-            "cut follow them exactly rather than the nearest cell edges.")
+            "cut follow them exactly rather than the nearest cell edges."))
         self._decouple.toggled.connect(self._on_decouple_toggled)
         # A check box cannot wrap its text, so each says what it does on a
         # line of its own underneath.
@@ -436,7 +436,7 @@ class MeshPreviewView(QWidget):
                                 "outlines; it is rebuilt after every zone edit."),
                 (self._decouple, "No smoothing across the outlines: the model may "
                                  "jump there. Cut edges are drawn in black.")):
-            hint = QLabel(text)
+            hint = QLabel(i18n.tr(text))
             hint.setWordWrap(True)
             hint.setContentsMargins(22, 0, 0, 2)
             hint.setStyleSheet(f"color:{theme.PALETTE['muted']}; font-size:8pt;")
@@ -524,7 +524,7 @@ class MeshPreviewView(QWidget):
         mesh restores it, and the page leaves it out of the run meanwhile.
         """
         self._conform.setEnabled(bool(available))
-        self._conform.setToolTip(self._conform_help if available or not reason else reason)
+        self._conform.setToolTip(i18n.tr(self._conform_help) if available or not reason else i18n.tr(reason))
 
     # -- drawing -------------------------------------------------------------
     def _summary(self) -> str:
@@ -609,7 +609,7 @@ class MeshPreviewView(QWidget):
         if self._selector is not None:
             return  # a redraw would wipe the polygon being drawn
         preview = self._preview
-        self._info.setText(self._summary())
+        self._info.setText(i18n.tr(self._summary()))
         volume = self._volume_view() if preview and preview.get("para_grid") is not None else None
         self._views.setCurrentIndex(1 if volume is not None else 0)
         for widget in (self._toolbar, self._coords):
@@ -622,7 +622,7 @@ class MeshPreviewView(QWidget):
                                  edges=self._show_edges.isChecked(),
                                  clip=self._clip.isChecked())
             except Exception as exc:  # noqa: BLE001 - said under the view
-                self._info.setText(f"The 3-D view could not draw this mesh: {exc}")
+                self._info.setText(QCoreApplication.translate("PHGX", "The 3-D view could not draw this mesh: {0}").format(exc))
             return
         ax = self._ax
         ax.clear()
@@ -696,7 +696,7 @@ class MeshPreviewView(QWidget):
         title = "Inversion mesh"
         if not outer_on:
             title += " (parameter domain)"
-        ax.set_title(title)
+        ax.set_title(i18n.tr(title))
         self._canvas.draw_idle()
 
     # -- zone editing --------------------------------------------------------
@@ -774,7 +774,7 @@ class MeshPreviewView(QWidget):
             name = item.text().strip()
             if not name:
                 self._table.blockSignals(True)
-                item.setText(zone["name"])
+                item.setText(i18n.tr(zone["name"]))
                 self._table.blockSignals(False)
                 return
             zone["name"] = name
@@ -847,7 +847,7 @@ class MeshPreviewView(QWidget):
         for row, count in enumerate(self._counts):
             item = self._table.item(row, _CELLS)
             if item is not None:
-                item.setText(str(count))
+                item.setText(i18n.tr(str(count)))
 
     def _zone_counts(self) -> List[Optional[int]]:
         counts = list(self._counts)
@@ -868,7 +868,7 @@ class MeshPreviewView(QWidget):
                                       decouple=self._decouple.isChecked())
         colour = theme.PALETTE["red"] if warn else theme.PALETTE["muted"]
         self._engine_note.setStyleSheet(f"color:{colour}; font-size:8pt;")
-        self._engine_note.setText(text)
+        self._engine_note.setText(i18n.tr(text))
 
     def _on_conform_toggled(self, on: bool) -> None:
         self.conformChanged.emit(bool(on))

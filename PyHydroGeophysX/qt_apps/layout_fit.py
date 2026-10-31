@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QWidget,
 )
+from PyHydroGeophysX.qt_apps import i18n
 
 #: A plain label at least this long is treated as prose and wrapped.
 PROSE_CHARS = 45
@@ -191,7 +192,7 @@ def relax_minimum_width(page: QWidget) -> Dict[str, int]:
         if _text_width(label, text) < RELAX_FLOOR_PX:
             continue
         if not label.toolTip():
-            label.setToolTip(text)
+            label.setToolTip(i18n.tr(text))
         label.installEventFilter(_ELIDE_FILTER)
         _elide(label, FORM_LABEL_MIN_PX if _names_a_field(label) else 0)
         counts["elided_label"] += 1
@@ -204,7 +205,7 @@ def relax_minimum_width(page: QWidget) -> Dict[str, int]:
         if natural < RELAX_FLOOR_PX:
             continue
         if not button.toolTip():
-            button.setToolTip(text)
+            button.setToolTip(i18n.tr(text))
         # An explicit minimum replaces the content-derived one in Qt's layout
         # maths, so the caption still sets the preferred size and the button
         # looks unchanged until the window is genuinely too narrow for it.

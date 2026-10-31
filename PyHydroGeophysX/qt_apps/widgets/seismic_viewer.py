@@ -15,7 +15,7 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import functions as pg_fn
-from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QRectF, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QPainterPath, QPen
 from PySide6.QtWidgets import (
     QComboBox,
@@ -231,7 +231,7 @@ class SeismicViewer(QWidget):
         self._colormap = cmaps.ColormapChooser(
             cmaps.SEISMIC_GATHER, cmaps.GATHER, shared=colormaps)
         self._colormap.colormapChanged.connect(self._apply_colormap)
-        bar.addWidget(group("Display", self._style_combo, self._colormap))
+        bar.addWidget(group(QCoreApplication.translate("PHGX", "Display"), self._style_combo, self._colormap))
         # The amplitude image's limits, beside its colour map. A wiggle has no
         # colour scale, so they are hidden while only wiggles are drawn.
         self._range = ColorRange(decimals=4, what="the amplitude colours")
@@ -241,18 +241,18 @@ class SeismicViewer(QWidget):
         self._stride.setRange(1, 64)
         self._stride.setValue(1)
         self._stride.valueChanged.connect(lambda *_: self._render())
-        bar.addWidget(group("Wiggle/N", self._stride))
+        bar.addWidget(group(QCoreApplication.translate("PHGX", "Wiggle/N"), self._stride))
         self._tmax_spin = QDoubleSpinBox()
         self._tmax_spin.setDecimals(4)
         self._tmax_spin.setRange(0.0, 1e9)
         self._tmax_spin.setSuffix(" s")
-        self._tmax_spin.setToolTip("Truncate the time axis (e.g. to the longest first arrival).")
+        self._tmax_spin.setToolTip(QCoreApplication.translate("PHGX", "Truncate the time axis (e.g. to the longest first arrival)."))
         self._tmax_spin.valueChanged.connect(self._on_tmax_changed)
-        self._auto_btn = QPushButton("Auto")
+        self._auto_btn = QPushButton(QCoreApplication.translate("PHGX", "Auto"))
         self._auto_btn.setMaximumWidth(60)
-        self._auto_btn.setToolTip("Auto-fit the time window to the first arrivals.")
+        self._auto_btn.setToolTip(QCoreApplication.translate("PHGX", "Auto-fit the time window to the first arrivals."))
         self._auto_btn.clicked.connect(self._reset_window)
-        bar.addWidget(group("Max time", self._tmax_spin, self._auto_btn))
+        bar.addWidget(group(QCoreApplication.translate("PHGX", "Max time"), self._tmax_spin, self._auto_btn))
         # Rewritten on every mouse move, so not a QLabel, which would re-lay out
         # the page each time (see widgets.readout); its width is that of its
         # sample text, so the row does not re-flow as it changes.
@@ -269,8 +269,8 @@ class SeismicViewer(QWidget):
         self._vb.dragMoved.connect(self._drag_move)
         self._vb.dragFinished.connect(self._drag_finish)
         self._plot = self._glw.addPlot(viewBox=self._vb)
-        self._plot.setLabel("bottom", "Trace")
-        self._plot.setLabel("left", "Time (s)")
+        self._plot.setLabel("bottom", QCoreApplication.translate("PHGX", "Trace"))
+        self._plot.setLabel("left", QCoreApplication.translate("PHGX", "Time (s)"))
         self._plot.invertY(True)
         self._plot.setAspectLocked(False)
 
@@ -318,10 +318,10 @@ class SeismicViewer(QWidget):
             self._suggest_stride(ntraces)
         if self._dt:
             self._time = np.arange(nsamples) * self._dt
-            self._plot.setLabel("left", "Time (s)")
+            self._plot.setLabel("left", QCoreApplication.translate("PHGX", "Time (s)"))
         else:
             self._time = np.arange(nsamples, dtype=float)
-            self._plot.setLabel("left", "Sample")
+            self._plot.setLabel("left", QCoreApplication.translate("PHGX", "Sample"))
         self._full_max = float(self._time[-1]) if self._time.size else float(nsamples)
         self._configure_tmax_spin()
         if self._auto_window_on or self._window_max is None:
@@ -377,7 +377,7 @@ class SeismicViewer(QWidget):
             self._tmax_spin.setSingleStep(max(self._dt * 5, 0.001))
             lo = self._dt * 5
         else:
-            self._tmax_spin.setSuffix(" smp"); self._tmax_spin.setDecimals(0)
+            self._tmax_spin.setSuffix(QCoreApplication.translate("PHGX", " smp")); self._tmax_spin.setDecimals(0)
             self._tmax_spin.setSingleStep(10)
             lo = 5.0
         self._tmax_spin.setRange(lo, float(self._full_max or 1.0))
@@ -582,11 +582,11 @@ class SeismicViewer(QWidget):
     def _on_move(self, scene_pos) -> None:
         hit = self._coords(scene_pos)
         if hit is None:
-            self._readout.setText("trace: -, time: -, amp: -")
+            self._readout.setText(QCoreApplication.translate("PHGX", "trace: -, time: -, amp: -"))
             return
         trace, t, amp = hit
         unit = "s" if self._dt else "smp"
-        self._readout.setText(f"trace: {trace}, time: {t:.4g} {unit}, amp: {amp:.3g}")
+        self._readout.setText(QCoreApplication.translate("PHGX", "trace: {0}, time: {1:.4g} {2}, amp: {3:.3g}").format(trace, t, unit, amp))
 
     def _in_record(self, t: float) -> bool:
         """Whether ``t`` lies between the record's first and last sample."""

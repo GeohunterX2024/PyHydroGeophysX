@@ -22,7 +22,7 @@ from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QCoreApplication, QTimer, Qt
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget, QTabWidget,
 )
@@ -37,6 +37,7 @@ from PyHydroGeophysX.visualization.axis_units import (
     set_length_axis, set_section_axes, to_display_length)
 from PyHydroGeophysX.visualization.pyvista_compat import try_import_pyvista
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ class VTKVolumeView(QWidget):
         self._actors: list = []   # the colour-mapped actors now on screen
         self._range_field: Optional[str] = None   # the field the colour range is for
         self._field = QComboBox(self)
-        self._field.setToolTip('Physical property or categorical labels to display')
+        self._field.setToolTip(QCoreApplication.translate("PHGX", 'Physical property or categorical labels to display'))
         self._field.currentTextChanged.connect(self._on_field_changed)
         self._colormap = cmaps.ColormapChooser(
             colormap_key, self._cmap, shared=colormaps, parent=self)
@@ -124,14 +125,14 @@ class VTKVolumeView(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self._info = QLabel(
-            "Open a model to inspect its 3D properties here."
+            QCoreApplication.translate("PHGX", "Open a model to inspect its 3D properties here.")
         )
         self._info.setWordWrap(True)
         layout.addWidget(self._info)
 
         ok, pv, qt_interactor, err = try_import_pyvista()
         self._pv = pv if ok else None
-        self._clip_cb = QCheckBox("Clip plane (drag to inspect the interior)")
+        self._clip_cb = QCheckBox(QCoreApplication.translate("PHGX", "Clip plane (drag to inspect the interior)"))
         if ok:
             try:
                 # Rendered when something changes, not on a timer: pyvistaqt
@@ -143,7 +144,7 @@ class VTKVolumeView(QWidget):
                 # Wraps in a narrow panel instead of widening the page.
                 controls = FlowLayout(spacing=6)
                 self._clip_cb.toggled.connect(self._redraw)
-                reset = QPushButton("Reset view")
+                reset = QPushButton(QCoreApplication.translate("PHGX", "Reset view"))
                 reset.clicked.connect(self._reset_camera)
                 controls.addWidget(self._clip_cb)
                 controls.addWidget(reset)
@@ -160,15 +161,7 @@ class VTKVolumeView(QWidget):
             self._colormap.hide()   # nothing here to colour
             self._range.hide()
             self._notice = QLabel(
-                "Interactive 3D view is unavailable in this session.<br>"
-                f"<code>{err}</code><br><br>"
-                "If pyvista is missing, install the 3D viewers with "
-                "<code>pip install \"pyhydrogeophysx[desktop-3d]\"</code>. Check "
-                "<code>conda list numpy</code> first: a conda channel there means "
-                "this environment's packages are conda-managed, so use "
-                "<code>conda install -c conda-forge pyvista pyvistaqt</code> "
-                "instead.<br><br>"
-                "The generated figures and files remain available in the next tab."
+                QCoreApplication.translate("PHGX", "Interactive 3D view is unavailable in this session.<br><code>{0}</code><br><br>If pyvista is missing, install the 3D viewers with <code>pip install \"pyhydrogeophysx[desktop-3d]\"</code>. Check <code>conda list numpy</code> first: a conda channel there means this environment's packages are conda-managed, so use <code>conda install -c conda-forge pyvista pyvistaqt</code> instead.<br><br>The generated figures and files remain available in the next tab.").format(err)
             )
             self._notice.setWordWrap(True)
             self._notice.setAlignment(Qt.AlignCenter)
@@ -187,8 +180,8 @@ class VTKVolumeView(QWidget):
         self._info.setVisible(not compact or self._mesh is None)
         self._colormap.setVisible(not compact and self.interactive_available)
         self._range.setVisible(not compact and self.interactive_available)
-        self._clip_cb.setText('Slice' if compact else 'Clip plane (drag to inspect the interior)')
-        self._clip_cb.setToolTip('Drag the clipping plane to inspect the model interior.')
+        self._clip_cb.setText(QCoreApplication.translate("PHGX", 'Slice') if compact else QCoreApplication.translate("PHGX", 'Clip plane (drag to inspect the interior)'))
+        self._clip_cb.setToolTip(QCoreApplication.translate("PHGX", 'Drag the clipping plane to inspect the model interior.'))
 
     def show_file(
         self,
@@ -209,12 +202,11 @@ class VTKVolumeView(QWidget):
         self._forget()
         vtk_path = Path(path)
         if not vtk_path.is_file():
-            self._info.setText(f"3D volume file not found: <code>{vtk_path}</code>")
+            self._info.setText(QCoreApplication.translate("PHGX", "3D volume file not found: <code>{0}</code>").format(vtk_path))
             return False
         if not self.interactive_available and not linked_sections:
             self._info.setText(
-                f"3D volume saved at <code>{vtk_path}</code>. "
-                "Use the Figures & files tab in this session."
+                QCoreApplication.translate("PHGX", "3D volume saved at <code>{0}</code>. Use the Figures & files tab in this session.").format(vtk_path)
             )
             return False
         try:
@@ -223,7 +215,7 @@ class VTKVolumeView(QWidget):
                 self._pv = pyvista
             dataset = self._pv.read(str(vtk_path))
         except Exception as exc:  # noqa: BLE001 - VTK backend-specific failures
-            self._info.setText(f"Could not display <code>{vtk_path.name}</code>: {exc}")
+            self._info.setText(QCoreApplication.translate("PHGX", "Could not display <code>{0}</code>: {1}").format(vtk_path.name, exc))
             return False
         return self.show_dataset(
             dataset, name=vtk_path.name, scalar_candidates=scalar_candidates, cmap=cmap,
@@ -274,7 +266,7 @@ class VTKVolumeView(QWidget):
         if dataset is not self._mesh:
             self._forget()
         if not self.interactive_available and not linked_sections:
-            self._info.setText(f"{name}: interactive 3D is unavailable in this session.")
+            self._info.setText(QCoreApplication.translate("PHGX", "{0}: interactive 3D is unavailable in this session.").format(name))
             return False
         vtk_path = Path(str(name))
         try:
@@ -310,7 +302,7 @@ class VTKVolumeView(QWidget):
                 self._add_sections()
             return True
         except Exception as exc:  # noqa: BLE001 - VTK backend-specific failures
-            self._info.setText(f"Could not display <code>{vtk_path.name}</code>: {exc}")
+            self._info.setText(QCoreApplication.translate("PHGX", "Could not display <code>{0}</code>: {1}").format(vtk_path.name, exc))
             return False
 
     def _reset_camera(self) -> None:
@@ -398,7 +390,7 @@ class VTKVolumeView(QWidget):
         if not name or self._mesh is None:
             return
         self._scalar = name
-        self._info.setText(f'<b>{self._source_name}</b> · scalar: {name} · drag to rotate, wheel to zoom')
+        self._info.setText(QCoreApplication.translate("PHGX", "<b>{0}</b> · scalar: {1} · drag to rotate, wheel to zoom").format(self._source_name, name))
         self._choose_field_colormap()
         camera = self._plotter.camera_position if self._plotter is not None else None
         self._redraw()
@@ -418,11 +410,11 @@ class VTKVolumeView(QWidget):
             if self._tabs is None:
                 self.layout().removeWidget(self._plotter.interactor)
                 self._tabs = QTabWidget()
-                self._tabs.addTab(self._plotter.interactor, '3D model')
+                self._tabs.addTab(self._plotter.interactor, QCoreApplication.translate("PHGX", '3D model'))
                 self.layout().addWidget(self._tabs, 1)
             elif self._tabs.count() > 1:
                 self._tabs.removeTab(1)
-            self._tabs.addTab(self._sections, 'Linked sections && values')
+            self._tabs.addTab(self._sections, QCoreApplication.translate("PHGX", 'Linked sections && values'))
             self._sections.pointChanged.connect(self._mark_point)
             try:
                 self._plotter.disable_picking()
@@ -437,7 +429,7 @@ class VTKVolumeView(QWidget):
             self._field.show()
             self.layout().addWidget(self._field)
             self.layout().addWidget(self._sections, 1)
-            self._info.setText('Interactive 3D is unavailable · physical-coordinate sections remain available')
+            self._info.setText(QCoreApplication.translate("PHGX", 'Interactive 3D is unavailable · physical-coordinate sections remain available'))
 
     def _mark_point(self, coordinates):
         if self._plotter is not None:
@@ -566,10 +558,10 @@ class Model3DView(QWidget):
                 self._plotter.add_axes()
                 # Wraps in a narrow panel instead of widening the page.
                 bar = FlowLayout(spacing=6)
-                self._clip_cb = QCheckBox("Clip plane (drag to slice)")
+                self._clip_cb = QCheckBox(QCoreApplication.translate("PHGX", "Clip plane (drag to slice)"))
                 self._clip_cb.setChecked(True)
                 self._clip_cb.toggled.connect(self._redraw_pv)
-                reset = QPushButton("Reset view")
+                reset = QPushButton(QCoreApplication.translate("PHGX", "Reset view"))
                 reset.clicked.connect(lambda: self._plotter and self._plotter.reset_camera())
                 bar.addWidget(self._clip_cb); bar.addWidget(reset)
                 bar.addWidget(self._colormap); bar.addWidget(self._range)
@@ -614,7 +606,7 @@ class Model3DView(QWidget):
         layout.addWidget(bar)
         layout.addWidget(self._canvas, stretch=1)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Depth"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Depth")))
         # A slider moved puts the new slice into the images already drawn, once
         # per turn of the event loop: redrawing both panels, their colour bars
         # and the model's percentiles per mouse move makes a drag stutter.
@@ -624,7 +616,7 @@ class Model3DView(QWidget):
         self._z_slider = QSlider(Qt.Horizontal)
         self._z_slider.valueChanged.connect(self._slice_moved.request)
         row.addWidget(self._z_slider, stretch=1)
-        row.addWidget(QLabel("Y position"))
+        row.addWidget(QLabel(QCoreApplication.translate("PHGX", "Y position")))
         self._y_slider = QSlider(Qt.Horizontal)
         self._y_slider.valueChanged.connect(self._slice_moved.request)
         row.addWidget(self._y_slider, stretch=1)
@@ -807,9 +799,9 @@ class Model3DView(QWidget):
             return
         zi, yj = self._slice_indices()
         drawn["depth"].set_array(self._model[:, :, zi].T)
-        drawn["depth"].axes.set_title(self._slice_title("Depth slice", "z", drawn["zc"][zi]))
+        drawn["depth"].axes.set_title(i18n.tr(self._slice_title("Depth slice", "z", drawn["zc"][zi])))
         drawn["section"].set_array(self._model[:, yj, :].T)
-        drawn["section"].axes.set_title(self._slice_title("Cross-section", "y", drawn["yc"][yj]))
+        drawn["section"].axes.set_title(i18n.tr(self._slice_title("Cross-section", "y", drawn["yc"][yj])))
         self._canvas.draw_idle()
 
     @staticmethod
@@ -860,8 +852,8 @@ class Model3DView(QWidget):
             im = ax.pcolormesh(ex, ez, m[:, 0, :].T, cmap=cmap, norm=norm, shading="auto")
             field_name = self._label.strip() or "Model"
             ax.set_title(
-                "Resistivity section"
-                if "resist" in field_name.lower() else f"{field_name} section"
+                QCoreApplication.translate("PHGX", "Resistivity section")
+                if "resist" in field_name.lower() else QCoreApplication.translate("PHGX", "{0} section").format(field_name)
             )
             # A line whose soundings carry no elevations hangs from z = 0 and
             # reads as depth.
@@ -875,12 +867,12 @@ class Model3DView(QWidget):
         ax1 = self._fig.add_subplot(121)
         ax2 = self._fig.add_subplot(122)
         im1 = ax1.pcolormesh(ex, ey, m[:, :, zi].T, cmap=cmap, norm=norm, shading="auto")
-        ax1.set_title(self._slice_title("Depth slice", "z", zc[zi]))
+        ax1.set_title(i18n.tr(self._slice_title("Depth slice", "z", zc[zi])))
         set_length_axis(ax1, "x", "x"); set_length_axis(ax1, "y", "y")
         ax1.set_aspect("equal", "box")
         bar1 = self._fig.colorbar(im1, ax=ax1, shrink=0.85, label=self._label)
         im2 = ax2.pcolormesh(ex, ez, m[:, yj, :].T, cmap=cmap, norm=norm, shading="auto")
-        ax2.set_title(self._slice_title("Cross-section", "y", yc[yj]))
+        ax2.set_title(i18n.tr(self._slice_title("Cross-section", "y", yc[yj])))
         set_section_axes(ax2, z=ez, xlabel="x",
                          elevation_name="elevation", depth_name="depth")
         bar2 = self._fig.colorbar(im2, ax=ax2, shrink=0.85, label=self._label)

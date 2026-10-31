@@ -1,7 +1,7 @@
 """Physical-coordinate sections and aligned comparisons of rectilinear models."""
 
 import numpy as np
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QCoreApplication, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel, QDoubleSpinBox, QComboBox
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -11,6 +11,7 @@ from matplotlib.ticker import MaxNLocator
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout, group
 from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
+from PyHydroGeophysX.qt_apps import i18n
 
 
 def require_aligned(a, b):
@@ -187,7 +188,7 @@ class ScientificSections(QWidget):
         xyz = [float(c[i]) for c, i in zip(self.centers, self.indices)]
         value = values[x, y, z]
         label = self.metadata.get('names', {}).get(str(int(value)), '') if self.metadata.get('colors') else ''
-        self.readout.setText(f'{self.field}: {value:.6g} {label} · E {xyz[0]:,.3f}, N {xyz[1]:,.3f}, Z {xyz[2]:,.3f} m · Z is elevation, not depth')
+        self.readout.setText(QCoreApplication.translate("PHGX", "{0}: {1:.6g} {2} · E {3:,.3f}, N {4:,.3f}, Z {5:,.3f} m · Z is elevation, not depth").format(self.field, value, label, xyz[0], xyz[1], xyz[2]))
         limits = self._limits
         categorical = self.metadata.get('colors')
         common = dict(cmap=self.cmap, vmin=limits[0], vmax=limits[1])
@@ -226,7 +227,7 @@ class ScientificSections(QWidget):
                 vertical, horizontal = self._crosshairs[n]
                 vertical.set_xdata([xyz[i] / self.axis_scales[i]] * 2)
                 horizontal.set_ydata([xyz[j] / self.axis_scales[j]] * 2)
-                ax.set_title(title, fontsize=10)
+                ax.set_title(i18n.tr(title), fontsize=10)
                 continue
             artist = ax.pcolormesh(self.edges[i] / self.axis_scales[i], self.edges[j] / self.axis_scales[j], plane, shading='flat', **style)
             self._artists.append(artist)
@@ -238,7 +239,7 @@ class ScientificSections(QWidget):
                 ax.axhline(xyz[j] / self.axis_scales[j], color='black', lw=.6)))
             axis_labels = [f'{name} ({"km" if scale == 1000 else "m"})' for name, scale in zip(('E', 'N', 'Z'), self.axis_scales)]
             ax.set(xlabel=axis_labels[i], ylabel=axis_labels[j])
-            ax.set_title(title, fontsize=10)
+            ax.set_title(i18n.tr(title), fontsize=10)
             ax.set_aspect(self.axis_scales[j] / self.axis_scales[i])
             ax.ticklabel_format(style='plain', useOffset=False)
             ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
@@ -269,7 +270,7 @@ class ModelComparison(QWidget):
         if any(not np.isfinite(mesh.cell_data[field]).all() for mesh in (a, b) for field in fields):
             raise ValueError('Comparison fields contain nonfinite model values.')
         layout = QVBoxLayout(self)
-        note = QLabel(f'A: {names[0]}\nB: {names[1]}\nSame grid · shared scale · difference B − A · no resampling')
+        note = QLabel(QCoreApplication.translate("PHGX", "A: {0}\nB: {1}\nSame grid · shared scale · difference B − A · no resampling").format(names[0], names[1]))
         note.setWordWrap(True)
         layout.addWidget(note)
         select = QComboBox()

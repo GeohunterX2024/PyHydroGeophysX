@@ -212,6 +212,8 @@ PyHydroGeophysX = [
     "logo.png",
     "*.md",
     "qt_apps/modules/*.md",
+    # The Studio's compiled translations (qt_apps/i18n.py).
+    "qt_apps/translations/*.qm",
     # The assistants' written procedures (agents/skills.py).
     "agents/assistants/*/skills/**/*",
 ]

@@ -1,5 +1,6 @@
 """Explicit survey placement and Add to Map handoff shared by result pages."""
 from pathlib import Path
+from PySide6.QtCore import QCoreApplication
 
 import numpy as np
 from PySide6.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
@@ -9,6 +10,7 @@ from PyHydroGeophysX.qt_apps.project_map import (
     ProjectMapStore, em_snapshot, mesh_snapshot, place_profile, grid_snapshot, point_snapshot,
 )
 import logging
+from PyHydroGeophysX.qt_apps import i18n
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ def result_snapshot(page):
         if not choices:
             raise ValueError('Load or process a gravity/magnetic product first.')
         from PySide6.QtWidgets import QInputDialog
-        field, ok = QInputDialog.getItem(page, 'Gravity / Magnetics', 'Product to add', choices, 0, False)
+        field, ok = QInputDialog.getItem(page, QCoreApplication.translate("PHGX", 'Gravity / Magnetics'), QCoreApplication.translate("PHGX", 'Product to add'), choices, 0, False)
         if not ok:
             return None
         if field != 'Recovered 3D model':
@@ -54,7 +56,7 @@ def result_snapshot(page):
             raise ValueError('Run the joint inversion first.')
         from PySide6.QtWidgets import QInputDialog
         choices = [k for k, v in result.models.items() if np.size(v)]
-        method, ok = QInputDialog.getItem(page, 'Joint result', 'Model to add', choices, 0, False)
+        method, ok = QInputDialog.getItem(page, QCoreApplication.translate("PHGX", 'Joint result'), QCoreApplication.translate("PHGX", 'Model to add'), choices, 0, False)
         if not ok:
             return None
         values = result.models[method]
@@ -135,68 +137,68 @@ class MapExportDialog(QDialog):
     def __init__(self, meta, arrays, parent=None):
         super().__init__(parent)
         self.meta, self.arrays = meta, arrays
-        self.setWindowTitle('Add result to Project Map')
+        self.setWindowTitle(QCoreApplication.translate("PHGX", 'Add result to Project Map'))
         self.resize(560, 380)
         layout = QVBoxLayout(self)
-        note = QLabel('Save a map snapshot in this project. Source results stay unchanged.\n'
-                      'Profile elevation is not a map coordinate. Confirm the survey location below.')
+        note = QLabel(QCoreApplication.translate("PHGX", 'Save a map snapshot in this project. Source results stay unchanged.\n'
+                      'Profile elevation is not a map coordinate. Confirm the survey location below.'))
         note.setWordWrap(True)
         layout.addWidget(note)
         form = QFormLayout()
         layout.addLayout(form)
         self.name = QLineEdit(meta.get('label', meta['method']))
-        form.addRow('Survey name', self.name)
+        form.addRow(QCoreApplication.translate("PHGX", 'Survey name'), self.name)
         self.mode = QComboBox()
         if 'survey_xy' in arrays:
-            self.mode.addItem('Coordinates carried by this result', 'embedded')
-        self.mode.addItem('Straight line: start + bearing', 'straight')
-        self.mode.addItem('CSV control points: distance,x,y', 'controls')
-        self.mode.addItem('CSV positions: x,y (one row per sample)', 'rows')
+            self.mode.addItem(QCoreApplication.translate("PHGX", 'Coordinates carried by this result'), 'embedded')
+        self.mode.addItem(QCoreApplication.translate("PHGX", 'Straight line: start + bearing'), 'straight')
+        self.mode.addItem(QCoreApplication.translate("PHGX", 'CSV control points: distance,x,y'), 'controls')
+        self.mode.addItem(QCoreApplication.translate("PHGX", 'CSV positions: x,y (one row per sample)'), 'rows')
         if meta['kind'] in ('grid', 'points', 'wells'):
             self.mode.removeItem(self.mode.findData('straight'))
             self.mode.removeItem(self.mode.findData('controls'))
         if meta['kind'] == 'wells':
             # Wells are placed where their own coordinates say, nowhere else.
             self.mode.removeItem(self.mode.findData('rows'))
-        form.addRow('Location', self.mode)
+        form.addRow(QCoreApplication.translate("PHGX", 'Location'), self.mode)
         self.crs = QComboBox()
         self.crs.setEditable(True)
         self.crs.addItems(['LOCAL', 'EPSG:4326', 'EPSG:32615', 'EPSG:26915'])
         self.crs.setCurrentText(meta.get('suggested_crs') or 'LOCAL')
-        form.addRow('Coordinate system', self.crs)
-        hint = QLabel('LOCAL = shared project coordinates in metres (no basemap).\n'
+        form.addRow(QCoreApplication.translate("PHGX", 'Coordinate system'), self.crs)
+        hint = QLabel(QCoreApplication.translate("PHGX", 'LOCAL = shared project coordinates in metres (no basemap).\n'
                       'EPSG:4326 = longitude, latitude. Or enter the survey EPSG code.\n'
-                      'Start + bearing needs a projected metre CRS or LOCAL.')
+                      'Start + bearing needs a projected metre CRS or LOCAL.'))
         hint.setWordWrap(True)
-        form.addRow(hint)
+        form.addRow(i18n.tr(hint))
         self.east, self.north, self.bearing = (QDoubleSpinBox() for _ in range(3))
         for box in (self.east, self.north):
             box.setRange(-1e9, 1e9)
             box.setDecimals(4)
         self.bearing.setRange(0, 359.9999)
         self.bearing.setDecimals(4)
-        self.bearing.setSuffix('° clockwise from north')
+        self.bearing.setSuffix(QCoreApplication.translate("PHGX", '° clockwise from north'))
         distance = np.asarray(arrays['distance'])
-        form.addRow(f'Start X at distance {distance.min():g} m', self.east)
-        form.addRow('Start Y', self.north)
-        form.addRow('Bearing', self.bearing)
+        form.addRow(QCoreApplication.translate("PHGX", "Start X at distance {0:g} m").format(distance.min()), self.east)
+        form.addRow(QCoreApplication.translate("PHGX", 'Start Y'), self.north)
+        form.addRow(QCoreApplication.translate("PHGX", 'Bearing'), self.bearing)
         self.csv = QLineEdit()
-        browse = QPushButton('Choose location CSV…')
+        browse = QPushButton(QCoreApplication.translate("PHGX", 'Choose location CSV…'))
         browse.clicked.connect(self._browse)
-        form.addRow(browse, self.csv)
+        form.addRow(i18n.tr(browse), self.csv)
         sample_text = (f'{distance.size} wells, placed at their own easting and northing in the '
                        'coordinate system above.' if meta['kind'] == 'wells' else
                        f'{distance.size} horizontal model cells / stations. CSV rows follow stored result order.'
                        if meta['kind'] in ('grid', 'points') else
                        f'{distance.size} samples; distance {distance.min():g}–{distance.max():g} m. '
                        'CSV rows must follow result order. Control points must span this distance range.')
-        self.sample_note = QLabel(sample_text)
+        self.sample_note = QLabel(i18n.tr(sample_text))
         self.sample_note.setWordWrap(True)
-        form.addRow(self.sample_note)
+        form.addRow(i18n.tr(self.sample_note))
         self.mode.currentIndexChanged.connect(self._sync)
         self._sync()
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
-        buttons.button(QDialogButtonBox.Save).setText('Add to Map')
+        buttons.button(QDialogButtonBox.Save).setText(QCoreApplication.translate("PHGX", 'Add to Map'))
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -208,9 +210,9 @@ class MapExportDialog(QDialog):
         self.csv.setEnabled(mode in ('controls', 'rows'))
 
     def _browse(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Survey location CSV', '', 'CSV (*.csv)')
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", 'Survey location CSV'), '', 'CSV (*.csv)')
         if path:
-            self.csv.setText(path)
+            self.csv.setText(i18n.tr(path))
 
     def placement(self):
         mode, crs = self.mode.currentData(), self.crs.currentText().strip()
@@ -243,7 +245,7 @@ def add_result_to_map(page):
             return
         save_snapshot_to_map(page, *snapshot)
     except Exception as exc:
-        QMessageBox.warning(page, 'Add to Map', str(exc))
+        QMessageBox.warning(page, QCoreApplication.translate("PHGX", 'Add to Map'), i18n.tr(str(exc)))
 
 
 def save_snapshot_to_map(page, meta, arrays):
@@ -270,11 +272,11 @@ def save_snapshot_to_map(page, meta, arrays):
                 xy, crs = dialog.placement()
                 entry = ProjectMapStore(store.root).add(meta, arrays, xy, crs, dialog.name.text())
             except Exception as exc:
-                QMessageBox.warning(page, 'Survey location', str(exc))
+                QMessageBox.warning(page, QCoreApplication.translate("PHGX", 'Survey location'), i18n.tr(str(exc)))
                 continue
             page.state.map_selected_id = entry['id']
             page.log(f"Saved '{entry['name']}' to Project Map.", 'success')
             page.navigateRequested.emit('project_map')
             break
     except Exception as exc:
-        QMessageBox.warning(page, 'Add to Map', str(exc))
+        QMessageBox.warning(page, QCoreApplication.translate("PHGX", 'Add to Map'), i18n.tr(str(exc)))

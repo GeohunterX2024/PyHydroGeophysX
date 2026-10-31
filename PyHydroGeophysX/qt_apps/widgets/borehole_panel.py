@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence
 
 import numpy as np
-from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QObject, Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.data_processing import boreholes as bh
-from PyHydroGeophysX.qt_apps import theme
+from PyHydroGeophysX.qt_apps import i18n, theme
 
 __all__ = ["BoreholeStore", "BoreholeDataPanel", "store_for"]
 
@@ -126,7 +126,7 @@ def _float(text: str) -> float:
 
 
 def _hint(text: str) -> QLabel:
-    label = QLabel(text)
+    label = QLabel(i18n.tr(text))
     label.setWordWrap(True)
     theme.set_tone(label, "hint")
     return label
@@ -154,7 +154,7 @@ class BoreholeDataPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        load_box = QGroupBox("Load")
+        load_box = QGroupBox(QCoreApplication.translate("PHGX", "Load"))
         load_layout = QVBoxLayout(load_box)
         rows = (
             (("Wells…", "wells", "Well locations: well_id, easting, northing, ground_elevation, "
@@ -172,17 +172,17 @@ class BoreholeDataPanel(QWidget):
         for row in rows:
             line = QHBoxLayout()
             for label, kind, tip in row:
-                button = QPushButton(label)
-                button.setToolTip(tip)
+                button = QPushButton(i18n.tr(label))
+                button.setToolTip(i18n.tr(tip))
                 button.clicked.connect(lambda _=False, k=kind: self._load(k))
                 line.addWidget(button)
             load_layout.addLayout(line)
         tools = QHBoxLayout()
-        templates = QPushButton("Templates…")
-        templates.setToolTip("Write the column templates, each with an example row, to a folder.")
+        templates = QPushButton(QCoreApplication.translate("PHGX", "Templates…"))
+        templates.setToolTip(QCoreApplication.translate("PHGX", "Write the column templates, each with an example row, to a folder."))
         templates.clicked.connect(self._write_templates)
-        clear = QPushButton("Clear")
-        clear.setToolTip("Remove every well, log and water level.")
+        clear = QPushButton(QCoreApplication.translate("PHGX", "Clear"))
+        clear.setToolTip(QCoreApplication.translate("PHGX", "Remove every well, log and water level."))
         clear.clicked.connect(self._clear)
         tools.addWidget(templates)
         tools.addWidget(clear)
@@ -192,7 +192,7 @@ class BoreholeDataPanel(QWidget):
         load_layout.addWidget(self._summary)
         layout.addWidget(load_box)
 
-        data_box = QGroupBox("Data")
+        data_box = QGroupBox(QCoreApplication.translate("PHGX", "Data"))
         data_layout = QVBoxLayout(data_box)
         self._tabs = QTabWidget()
         self._wells = _table(["Well", "Easting", "Northing", "Ground (m)", "Datum offset (m)",
@@ -203,16 +203,16 @@ class BoreholeDataPanel(QWidget):
         self._logs.setEditTriggers(QAbstractItemView.NoEditTriggers)
         for table in (self._wells, self._lith, self._levels):
             table.itemChanged.connect(self._on_table_edited)
-        self._tabs.addTab(self._wells, "Wells")
-        self._tabs.addTab(self._lith, "Lithology")
-        self._tabs.addTab(self._levels, "Water levels")
-        self._tabs.addTab(self._logs, "Geophysical logs")
+        self._tabs.addTab(self._wells, QCoreApplication.translate("PHGX", "Wells"))
+        self._tabs.addTab(self._lith, QCoreApplication.translate("PHGX", "Lithology"))
+        self._tabs.addTab(self._levels, QCoreApplication.translate("PHGX", "Water levels"))
+        self._tabs.addTab(self._logs, QCoreApplication.translate("PHGX", "Geophysical logs"))
         self._tabs.currentChanged.connect(self._sync_row_buttons)
         data_layout.addWidget(self._tabs)
         row_buttons = QHBoxLayout()
-        self._add = QPushButton("Add row")
+        self._add = QPushButton(QCoreApplication.translate("PHGX", "Add row"))
         self._add.clicked.connect(self._add_row)
-        self._remove = QPushButton("Remove row")
+        self._remove = QPushButton(QCoreApplication.translate("PHGX", "Remove row"))
         self._remove.clicked.connect(self._remove_rows)
         row_buttons.addWidget(self._add)
         row_buttons.addWidget(self._remove)
@@ -220,14 +220,14 @@ class BoreholeDataPanel(QWidget):
         data_layout.addLayout(row_buttons)
         layout.addWidget(data_box)
 
-        legend_box = QGroupBox("Lithology legend")
+        legend_box = QGroupBox(QCoreApplication.translate("PHGX", "Lithology legend"))
         lform = QVBoxLayout(legend_box)
         self._legend = _table(["Unit", "Colour", "Label"], height=100)
         self._legend.itemChanged.connect(self._on_legend_edited)
         self._legend.cellDoubleClicked.connect(self._pick_colour)
         lform.addWidget(self._legend)
-        lform.addWidget(_hint("Double-click a colour to change it; edit a label to rename it "
-                              "in the legend."))
+        lform.addWidget(_hint(QCoreApplication.translate("PHGX", "Double-click a colour to change it; edit a label to rename it "
+                              "in the legend.")))
         layout.addWidget(legend_box)
 
         store.changed.connect(self._sync_from_store)
@@ -240,7 +240,7 @@ class BoreholeDataPanel(QWidget):
         self._syncing = True
         try:
             self._fill_tables()
-            self._summary.setText(self._store.describe())
+            self._summary.setText(i18n.tr(self._store.describe()))
             self._sync_row_buttons()
         finally:
             self._syncing = False
@@ -277,7 +277,7 @@ class BoreholeDataPanel(QWidget):
             swatch = QTableWidgetItem("")
             swatch.setFlags(swatch.flags() & ~Qt.ItemIsEditable)
             swatch.setBackground(QColor(colour))
-            swatch.setToolTip(colour)
+            swatch.setToolTip(i18n.tr(colour))
             self._legend.setItem(r, 0, unit_item)
             self._legend.setItem(r, 1, swatch)
             self._legend.setItem(r, 2, QTableWidgetItem(label))
@@ -384,7 +384,7 @@ class BoreholeDataPanel(QWidget):
     def _load(self, kind: str) -> None:
         names = {"wells": "wells", "lithology": "lithology logs", "water": "water levels",
                  "logs": "geophysical logs"}
-        path, _ = QFileDialog.getOpenFileName(self, f"Load {names[kind]}", "",
+        path, _ = QFileDialog.getOpenFileName(self, QCoreApplication.translate("PHGX", "Load {0}").format(names[kind]), "",
                                               _LOG_FILTER if kind == "logs" else _TABLE_FILTER)
         if not path:
             return
@@ -397,7 +397,7 @@ class BoreholeDataPanel(QWidget):
         self._log(f"Loaded {n} {names[kind]} {what} from {Path(path).name}.", "success")
 
     def _write_templates(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Write borehole templates to")
+        folder = QFileDialog.getExistingDirectory(self, QCoreApplication.translate("PHGX", "Write borehole templates to"))
         if not folder:
             return
         paths = bh.write_templates(folder)
