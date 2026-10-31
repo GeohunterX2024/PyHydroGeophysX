@@ -77,6 +77,8 @@ from PyHydroGeophysX.qt_apps.workers import (
     ProcessWorkflowWorker,
     TaskWorker,
 )
+from PyHydroGeophysX.qt_apps.modules.ert_mesh_preview import derive_preview, mesh_build_spec
+from PyHydroGeophysX.qt_apps.process_jobs import scratch_process_worker
 from PyHydroGeophysX.data_processing.ert_io import save_edited_ert_container
 from PyHydroGeophysX.visualization.axis_units import length_factor, set_length_axis
 from PyHydroGeophysX.workflows import (
@@ -4445,25 +4447,23 @@ class ERTProcessingModule(BaseModule):
     def _mesh_from_e4d_config(self, path: str) -> str:
         """Build an E4D configuration's mesh once, and keep it as a .bms.
 
-        The build runs off the UI thread - a borehole mesh takes seconds - while a
-        local event loop keeps the window responsive until it is done. The run
+        The build runs in a process of its own (``ert.e4d_mesh``) - a borehole
+        mesh takes seconds - while a local event loop keeps the window
+        responsive until it is done. The run
         then inverts the saved mesh rather than rebuilding it every time.
         """
-        from PyHydroGeophysX.core.e4d_mesh import build_e4d_mesh, read_e4d_config
-
         stem = Path(path).stem
-        folder = self.state.ensure_results_store().scratch_dir(self.module_key) / "e4d" / stem
-
-        def build():
-            built = build_e4d_mesh(read_e4d_config(path), folder, name=stem)
-            target = folder / f"{stem}.bms"
-            built["mesh"].save(str(target))
-            return str(target), built["mesher"]
-
+        spec = WorkflowSpec(
+            workflow_id="ert.e4d_mesh",
+            inputs={"config": ArtifactRef.from_path(Path(path), artifact_id="ert:e4d_config",
+                                                    kind="e4d_mesh_configuration")},
+            parameters={"name": stem}, metadata={"source": "qt"})
         settled: Dict[str, Any] = {}
         loop = QEventLoop()
-        worker = TaskWorker(build)
-        worker.succeeded.connect(lambda result: (settled.update(result=result), loop.quit()))
+        worker = scratch_process_worker(
+            spec, self.state.ensure_results_store().scratch_dir(self.module_key) / "e4d" / stem)
+        worker.succeeded.connect(lambda result: (settled.update(result=(
+            result.summary["mesh_path"], result.summary["mesher"])), loop.quit()))
         worker.failed.connect(lambda message: (settled.update(error=message), loop.quit()))
         self.register_worker(worker, activity="Building the mesh")
         self._mesh_note.setText(f"Building the mesh {Path(path).name} describes, as E4D would…")
@@ -4703,19 +4703,31 @@ class ERTProcessingModule(BaseModule):
         key, args, where = request
         if not force and key in (self._mesh_preview_key, self._mesh_preview_pending):
             return
-        scratch = None
-        if args[0] == "single":
-            scratch = self.state.ensure_results_store().scratch_dir(self.module_key)
+        scratch = self.state.ensure_results_store().scratch_dir(self.module_key)
         self._supersede_mesh_preview()
         self._mesh_preview_pending = key
         self._mesh_tab.set_status("Building the inversion mesh…")
-        worker = TaskWorker(self._mesh_preview_task, *args, scratch)
-        worker.succeeded.connect(
-            lambda preview, w=worker: self._on_mesh_preview_ready(w, key, where, preview))
-        worker.failed.connect(
-            lambda error, w=worker: self._on_mesh_preview_failed(w, key, error))
+        try:
+            spec = mesh_build_spec(*args, scratch)
+        except (ValueError, OSError, RuntimeError) as exc:  # said on the Mesh tab, as a failed build is
+            self._on_mesh_preview_failed(None, key, str(exc))
+            return
+        # The generator in a process of its own (a native crash ends only that);
+        # the preview is then derived from the mesh in a thread.
+        worker = scratch_process_worker(spec, scratch / "mesh_preview", objects=("mesh", "data"))
+        worker.succeeded.connect(lambda result, w=worker: self._derive_mesh_preview(w, key, where, result))
+        worker.failed.connect(lambda error, w=worker: self._on_mesh_preview_failed(w, key, error))
         self._mesh_worker = self.register_worker(worker, activity="Previewing the mesh")
         worker.start()
+
+    def _derive_mesh_preview(self, worker, key, where: str, result) -> None:
+        if worker is not self._mesh_worker:
+            return
+        follow = TaskWorker(derive_preview, result)
+        follow.succeeded.connect(lambda preview, w=follow: self._on_mesh_preview_ready(w, key, where, preview))
+        follow.failed.connect(lambda error, w=follow: self._on_mesh_preview_failed(w, key, error))
+        self._mesh_worker = self.register_worker(follow, activity="Previewing the mesh")
+        follow.start()
 
     def _mesh_summary(self) -> Dict[str, Any]:
         """The counts of the mesh on the Mesh tab, and whether it is current."""
@@ -4739,45 +4751,6 @@ class ERTProcessingModule(BaseModule):
         self._mesh_preview_pending = None
         if previous is not None and previous.isRunning():
             previous.cancel()
-
-    @staticmethod
-    def _mesh_preview_task(kind, source, instrument, electrodes, options, scratch):
-        """Build the mesh the next run would build, off the UI thread.
-
-        Through the run's own steps: a single survey is saved with the electrode
-        edits applied and read back, as the run inverts it; a series is meshed
-        around its first survey, read with its instrument and placed from the
-        electrode file (``electrodes``, a path there); the mesh itself comes from
-        the builder both inversions use, with ``options`` as its keywords.
-        """
-        from PyHydroGeophysX.inversion.ert_mesh import build_inversion_mesh, mesh_preview
-
-        data = None
-        if kind == "single":
-            path = save_edited_ert_container(
-                source, Path(scratch) / "mesh_preview_data.dat", electrodes)
-            data = ert_load.load_ert_container(path, instrument=None)
-        elif kind == "timelapse":
-            data = ert_load.load_ert_container(source, instrument=instrument,
-                                               electrode_file=electrodes)
-        report: Dict[str, Any] = {}
-        mesh = build_inversion_mesh(data, **options, report=report)
-        preview = mesh_preview(mesh, data)
-        preview["build"] = report
-        if preview["dim"] == 3:
-            # Made here, off the UI thread: a volume of a few hundred thousand
-            # cells takes seconds. Without PyVista the tab says so.
-            from PyHydroGeophysX.qt_apps.widgets.mesh_preview import volume_parts
-
-            try:
-                preview.update(volume_parts(mesh))
-            except Exception as exc:  # noqa: BLE001 - the counts still show
-                preview["grid_error"] = str(exc)
-        if data is not None and data.haveData("rhoa"):
-            rhoa = np.asarray(data["rhoa"], dtype=float)
-            rhoa = rhoa[np.isfinite(rhoa) & (rhoa > 0)]
-            preview["median_rhoa"] = float(np.median(rhoa)) if rhoa.size else None
-        return preview
 
     def _on_mesh_preview_ready(self, worker, key, where: str, preview: Dict[str, Any]) -> None:
         if worker is not self._mesh_worker:

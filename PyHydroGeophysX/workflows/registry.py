@@ -229,6 +229,18 @@ _register_builtins([
         module_key="mt",
     ),
     WorkflowDescriptor(
+        "ert.mesh_build",
+        "PyHydroGeophysX.workflows.mesh_jobs:run_ert_mesh_build",
+        "Build the inversion mesh an ERT run would build (the Mesh tab's preview).",
+        module_key="ert",
+    ),
+    WorkflowDescriptor(
+        "ert.e4d_mesh",
+        "PyHydroGeophysX.workflows.mesh_jobs:run_ert_e4d_mesh",
+        "Build an E4D mesh configuration's mesh and save it as .bms.",
+        module_key="ert",
+    ),
+    WorkflowDescriptor(
         "mesh3d.build",
         "PyHydroGeophysX.workflows.domain:run_mesh3d",
         "Generate a 3-D ERT mesh from serializable configuration.",

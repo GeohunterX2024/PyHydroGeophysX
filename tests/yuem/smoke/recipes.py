@@ -167,6 +167,32 @@ def _ert_single(ws: Workspace) -> WorkflowSpec:
     )
 
 
+@builder("ert.mesh_build")
+def _ert_mesh_build(ws: Workspace) -> WorkflowSpec:
+    path = ws.examples / "ERT" / "Bert" / "fielddataline2.dat"
+    return WorkflowSpec(
+        workflow_id="ert.mesh_build",
+        inputs={"data": ws.ref(path, "ert-mesh-data", "ert_data")},
+        parameters={"kind": "single", "options": {"mesh_quality": 30.0}},
+    )
+
+
+@builder("ert.e4d_mesh")
+def _ert_e4d_mesh(ws: Workspace) -> WorkflowSpec:
+    from PyHydroGeophysX.core.e4d_mesh import e4d_config_from_electrodes, write_e4d_config
+
+    electrodes = np.array([(x, y, 0.0) for x in (0.0, 4.0, 8.0) for y in (0.0, 4.0)])
+    config, _ = e4d_config_from_electrodes(
+        electrodes, outer_distance=20.0, bottom_depth=20.0, fine_volume=4.0
+    )
+    path = write_e4d_config(config, ws.root / "inputs" / "smoke_e4d.cfg")
+    return WorkflowSpec(
+        workflow_id="ert.e4d_mesh",
+        inputs={"config": ws.ref(path, "ert-e4d-config", "e4d_mesh_configuration")},
+        parameters={"name": "smoke_e4d"},
+    )
+
+
 @builder("seismic.srt_inversion")
 def _srt(ws: Workspace) -> WorkflowSpec:
     path = ws.examples / "Seismic" / "srtfieldline2.dat"
