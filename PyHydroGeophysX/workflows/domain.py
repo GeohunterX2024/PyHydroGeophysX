@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, Iterator, Mapping, Optional
 import numpy as np
 
 from PyHydroGeophysX.data_processing import run_inputs
+from PyHydroGeophysX.errors import DataValidationError
 
 from .models import ArtifactRef, RunContext, WorkflowRunResult, WorkflowSpec
 
@@ -81,8 +82,9 @@ def _load_array(value: Any, context: RunContext, *, name: str) -> np.ndarray:
             key = str(value.metadata.get("array_key") or name)
             if key not in archive.files:
                 if len(archive.files) != 1:
-                    raise ValueError(
-                        f"Artifact {path} has arrays {archive.files}; metadata.array_key is required."
+                    raise DataValidationError(
+                        f"it has arrays {archive.files}; metadata.array_key is required.",
+                        file=path,
                     )
                 key = archive.files[0]
             array = archive[key]
@@ -414,7 +416,7 @@ def run_ert3d_forward(spec: WorkflowSpec, context: RunContext) -> WorkflowRunRes
         or not isinstance(mesh_structure_ref, ArtifactRef)
         or not isinstance(sensors_ref, ArtifactRef)
     ):
-        raise ValueError(
+        raise DataValidationError(
             "ert3d.forward requires mesh, mesh_structure, and sensors ArtifactRefs."
         )
     structure_path = context.resolve_artifact(mesh_structure_ref)
@@ -438,7 +440,7 @@ def run_ert_single(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResult
 
     source = spec.inputs.get("data")
     if not isinstance(source, ArtifactRef):
-        raise ValueError("ert.single_inversion requires inputs.data as an ArtifactRef.")
+        raise DataValidationError("ert.single_inversion requires inputs.data as an ArtifactRef.", field="data")
     parameters = dict(spec.parameters)
     # The page records the regularization weight as "lambda", which cannot be a
     # Python keyword; it is the inversion's ``lam``.
@@ -488,8 +490,8 @@ def run_srt_inversion(spec: WorkflowSpec, context: RunContext) -> WorkflowRunRes
 
     travel_time = spec.inputs.get("traveltime")
     if not isinstance(travel_time, ArtifactRef):
-        raise ValueError(
-            "seismic.srt_inversion requires inputs.traveltime as an ArtifactRef."
+        raise DataValidationError(
+            "seismic.srt_inversion requires inputs.traveltime as an ArtifactRef.", field="traveltime"
         )
     travel_time_path = context.resolve_artifact(travel_time)
     # Only the inversion's own knobs are forwarded; receiver_spacing and any
@@ -551,7 +553,7 @@ def run_em_inversion(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResu
 
     source = spec.inputs.get("data")
     if not isinstance(source, ArtifactRef):
-        raise ValueError("em.inversion requires inputs.data as an ArtifactRef.")
+        raise DataValidationError("em.inversion requires inputs.data as an ArtifactRef.", field="data")
     parameters = dict(spec.parameters)
     method = str(parameters.pop("method", "TDEM")).upper()
     moment = str(parameters.pop("moment", "HM"))
@@ -591,7 +593,7 @@ def run_em_line_inversion(spec: WorkflowSpec, context: RunContext) -> WorkflowRu
 
     source = spec.inputs.get("data")
     if not isinstance(source, ArtifactRef):
-        raise ValueError("em.line_inversion requires inputs.data as an ArtifactRef.")
+        raise DataValidationError("em.line_inversion requires inputs.data as an ArtifactRef.", field="data")
     parameters = dict(_materialize(spec.parameters, context))
     method = str(parameters.pop("method", "TDEM")).upper()
     geometry = dict(parameters.pop("geometry", {}))
@@ -614,11 +616,11 @@ def run_joint(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResult:
     parameters = dict(_materialize(spec.parameters, context))
     serialized_data = spec.inputs.get("data")
     if not isinstance(serialized_data, Mapping):
-        raise ValueError("joint_inversion.run requires inputs.data artifact mapping.")
+        raise DataValidationError("joint_inversion.run requires inputs.data artifact mapping.", field="data")
     loaded_data: Dict[str, Any] = {}
     for method, reference in serialized_data.items():
         if not isinstance(reference, ArtifactRef):
-            raise ValueError(f"Joint input {method!r} must be an ArtifactRef.")
+            raise DataValidationError("must be an ArtifactRef.", field=str(method))
         loaded_data[str(method)] = context.load_object(
             reference,
             lambda path, selected=str(method): load_joint_observations(selected, path),
@@ -657,7 +659,10 @@ def run_gravmag_process(spec: WorkflowSpec, context: RunContext) -> WorkflowRunR
     y = _load_array(spec.inputs.get("y"), context, name="y").ravel()
     values = _load_array(spec.inputs.get("values"), context, name="values").ravel()
     if not (x.size == y.size == values.size):
-        raise ValueError("gravmag.process requires x, y, and values of equal length.")
+        raise DataValidationError(
+            f"gravmag.process requires x, y, and values of equal length"
+            f" (got {len(x)}, {len(y)}, {len(values)})."
+        )
     parameters = dict(spec.parameters)
     qc = qc_products(x, y, values, **_keywords_for(qc_products, parameters))
     artifacts = []
@@ -834,14 +839,17 @@ def run_mt_process(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResult
     parameters = dict(spec.parameters)
     runs = _mt_runs(spec.inputs.get("recording"), context, parameters.pop("reader", None) or {})
     if not runs:
-        raise ValueError("mt.process needs a 'recording' input (an instrument's files or a runs container).")
+        raise DataValidationError(
+            "mt.process needs a 'recording' input (an instrument's files or a runs container).",
+            field="recording",
+        )
     # One stream of a recording that has several: every reader takes this, not
     # only those that can pick a rate as they read.
     rate = parameters.pop("sample_rate", None)
     if rate is not None:
         runs = [run for run in runs if float(run.sample_rate) == float(rate)]
         if not runs:
-            raise ValueError(f"the recording has no runs at {float(rate):g} Hz")
+            raise DataValidationError(f"the recording has no runs at {float(rate):g} Hz", field="sample_rate")
     remote = _mt_runs(spec.inputs.get("remote"), context, parameters.pop("remote_reader", None) or {})
     band_setup = spec.inputs.get("band_setup")
     if band_setup is not None:
@@ -910,7 +918,7 @@ def _tem_sounding(value: Any, context: RunContext, parameters: Mapping[str, Any]
                 continue
         table = np.asarray([r for r in rows if len(r) == 2], dtype=float)
         if table.size == 0:
-            raise ValueError(f"{path.name} has no rows of gate time and response")
+            raise DataValidationError("no rows of gate time and response", file=path)
         times, response = table[:, 0], table[:, 1]
     return {"data": {"times": times.ravel(), "response": response.ravel()},
             "geometry": dict(parameters.get("tem_geometry") or {}),

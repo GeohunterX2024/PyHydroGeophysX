@@ -34,6 +34,7 @@ from PySide6.QtCore import (
 )
 
 from PyHydroGeophysX._internal.optional_dependencies import BackendUnavailable
+from PyHydroGeophysX.errors import MEANINGS as _DOMAIN_MEANINGS, PHGXError, describe
 # Where a run's ``logs`` folder keeps everything its workflow process printed.
 from PyHydroGeophysX.qt_apps.run_records import LOG_ENCODING, OUTPUT_LOG_NAME
 from PyHydroGeophysX.workflows import (
@@ -48,6 +49,8 @@ from PyHydroGeophysX.workflows.objects import load_objects, objects_folder
 def _error_message(exc: Exception) -> str:
     if isinstance(exc, BackendUnavailable):
         return f"Backend unavailable: {exc}"
+    if isinstance(exc, PHGXError):
+        return describe(exc)
     return str(exc)
 
 
@@ -170,6 +173,10 @@ _PLAIN_CAUSES = (
     (re.compile(r"^PermissionError\b"), None,
      "A file could not be opened or written - it may be open in another program, "
      "or the folder may be read-only"),
+    # PyHydroGeophysX.errors: the workflow CLI prints these as one line, the
+    # message carrying its file, line and field and the hint.
+    *((re.compile(rf"^{name}\b"), None, meaning)
+      for name, (meaning, _zh) in _DOMAIN_MEANINGS.items()),
 )
 
 

@@ -12,6 +12,8 @@ import threading
 from typing import Any, Sequence
 import warnings
 
+from PyHydroGeophysX.errors import EXIT_DOMAIN_ERROR, BackendUnavailable, PHGXError
+
 from .codegen import generate_python
 from .models import RunContext
 from .objects import is_plain_data, objects_folder, save_objects
@@ -120,10 +122,12 @@ def _is_launcher(parent: Any, me: Any) -> bool:
     That one is only a launcher: it starts the environment's real interpreter
     as its child with the same arguments, and waits for it.
     """
+    import psutil
+
     try:
         return (os.path.basename(parent.exe()).lower().startswith("python")
                 and parent.cmdline()[1:] == me.cmdline()[1:])
-    except Exception:  # noqa: BLE001 - psutil.Error, or a process already gone
+    except (psutil.Error, OSError, IndexError):  # a process already gone, or unreadable
         return False
 
 
@@ -148,20 +152,22 @@ def _exit_with_parent() -> bool:
         return False
     try:
         import psutil
-
+    except ImportError:
+        return False
+    try:
         me = psutil.Process()
         parent = me.parent()
         if parent is not None and _is_launcher(parent, me):
             parent = parent.parent()
         if parent is None or not parent.is_running():
             return False
-    except Exception:  # noqa: BLE001 - no psutil, or no parent to watch
+    except (psutil.Error, OSError):  # no parent to watch
         return False
 
     def watch() -> None:
         try:
             parent.wait()
-        except Exception:  # noqa: BLE001 - cannot tell that it ended, so carry on
+        except (psutil.Error, OSError):  # cannot tell that it ended, so carry on
             return
         try:
             for child in me.children(recursive=True):
@@ -231,6 +237,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             sys.modules["pyarrow"] = None
     try:
         result = run_workflow(spec, context)
+    except (PHGXError, BackendUnavailable) as exc:
+        # One line, which is all a caller reading the last exception line gets.
+        hint = getattr(exc, "hint", "")
+        print(f"{type(exc).__name__}: {exc}" + (f" (hint: {hint})" if hint else ""), file=sys.stderr)
+        return EXIT_DOMAIN_ERROR
     finally:
         if block_pyarrow and previous_pyarrow is missing:
             sys.modules.pop("pyarrow", None)
