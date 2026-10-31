@@ -20,13 +20,10 @@ own; the numerics are in :mod:`PyHydroGeophysX.data_processing.mt`.
 from __future__ import annotations
 
 import shutil
-import warnings
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 from PySide6.QtCore import QCoreApplication, Qt, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -64,7 +61,8 @@ from PyHydroGeophysX.qt_apps.qt_utils import (
     set_rows_enabled,
 )
 from PyHydroGeophysX.qt_apps.widgets import length_units
-from PyHydroGeophysX.qt_apps.widgets.readout import navigation_toolbar
+from PyHydroGeophysX.qt_apps.modules.mt_qc import MTFrequencyQC
+from PyHydroGeophysX.qt_apps.widgets.figure_pane import FigurePane as _FigurePane
 from PyHydroGeophysX.qt_apps.widgets.run_controls import StopButton, progress_with_stop
 from PyHydroGeophysX.qt_apps.workers import ProcessWorkflowWorker, TaskWorker
 from PyHydroGeophysX.workflows import (
@@ -163,49 +161,6 @@ def _share(fraction: float) -> str:
     return f"{np.floor(percent):.0f} %" if percent >= 1 else f"{percent:.2g} %"
 
 
-class _FigurePane(QWidget):
-    """A matplotlib figure with the studio's navigation toolbar above it."""
-
-    def __init__(self, figsize=(8, 6), parent=None) -> None:
-        super().__init__(parent)
-        self.figure = Figure(figsize=figsize)
-        self.canvas = FigureCanvas(self.figure)
-        toolbar, readout = navigation_toolbar(self.canvas, self)
-        bar = QHBoxLayout()
-        bar.addWidget(toolbar)
-        bar.addWidget(readout, 1)
-        self.controls = QHBoxLayout()
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(self.controls)
-        layout.addLayout(bar)
-        layout.addWidget(self.canvas, 1)
-
-    def reset(self) -> Figure:
-        """An empty figure to draw on.
-
-        Clearing axes that share a log x axis makes matplotlib warn about the
-        limits it is discarding; nothing is drawn with them, so it is quiet here.
-        """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="Attempt to set non-positive")
-            self.figure.clear()
-        return self.figure
-
-    def message(self, text: str) -> None:
-        """Clear the figure and say why there is nothing to draw."""
-        self.reset()
-        self.figure.text(0.5, 0.5, text, ha="center", va="center", color="#6e6e73", wrap=True)
-        self.canvas.draw_idle()
-
-    def finish(self) -> None:
-        try:
-            self.figure.tight_layout()
-        except Exception:  # noqa: BLE001 - a crowded figure still draws
-            _logger.debug("_FigurePane.finish: a crowded figure still draws", exc_info=True)
-        self.canvas.draw_idle()
-
-
 def _site_label(tf: Any) -> str:
     station = tf.station or "site"
     return (f"{station} · {tf.n_frequencies} periods, "
@@ -295,6 +250,8 @@ class MTProcessingModule(BaseModule):
         self._series_pane.controls.addWidget(self._series_index)
         self._series_pane.controls.addWidget(self._series_when, 1)
         self._sounding_pane = _FigurePane((7, 7))
+        self._frequency_qc = MTFrequencyQC(self._draw_sounding)
+        self._sounding_pane.controls.addWidget(self._frequency_qc)
         self._dimension_pane = _FigurePane((7, 7))
         self._model_pane = _FigurePane((8, 6))
         self._profile_pane = _FigurePane((9, 5))
@@ -1378,6 +1335,7 @@ class MTProcessingModule(BaseModule):
         try:
             plot_mt_sounding(tf, components=components, axes=axes, predicted=predicted,
                              title=tf.station or "MT sounding", errors=self._show_errors.isChecked())
+            self._frequency_qc.attach(axes, tf)
         except Exception as exc:  # noqa: BLE001
             self._sounding_pane.message(QCoreApplication.translate("PHGX", "Cannot draw this sounding: {0}").format(exc))
             return
@@ -1642,6 +1600,7 @@ class MTProcessingModule(BaseModule):
                 "target_rms": float(self._target_rms.value()),
                 "error_floor": float(self._error_floor_1d.value()),
                 "static_shift": bool(self._static_shift.isChecked()),
+                "rejected_frequencies": self._frequency_qc.rejected_frequencies(site["tf"]),
             }
             tem = self._tem.text().strip()
             if tem:

@@ -40,7 +40,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from PyHydroGeophysX.datastore.qc import QCLog
+
 from .log_scale_axis import label_axis_in_physical_units
+from .qc_actions import QCActionBar
 from PyHydroGeophysX.qt_apps import i18n
 
 #: How each verdict is drawn, as verdict -> (colour, symbol, filled). Kept gates
@@ -127,7 +130,7 @@ class EMGateView(QWidget):
         self._legend = self._plot.addLegend(offset=(-10, 10), labelTextSize="8pt")
 
         self._table = QTableWidget(0, len(_COLUMNS))
-        self._table.setHorizontalHeaderLabels(list(_COLUMNS))
+        self._table.setHorizontalHeaderLabels([i18n.tr(c) for c in _COLUMNS])
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._table.setSortingEnabled(True)
@@ -141,17 +144,65 @@ class EMGateView(QWidget):
         split.setStretchFactor(0, 3)
         split.setStretchFactor(1, 2)
 
+        # Gates rejected by hand: by moment and centre time, kept per station.
+        self._qc_logs: Dict[str, QCLog] = {}
+        self._qc_log: Optional[QCLog] = None
+        self._qc_bar = QCActionBar(self._selected_gates, self, what="gates")
+        self._qc_bar.changed.connect(self._on_qc_changed)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(controls)
         layout.addWidget(split, stretch=1)
+        layout.addWidget(self._qc_bar)
 
     # -- population ----------------------------------------------------------
     def set_report(self, report: Optional[Dict[str, Any]]) -> None:
         """Show one station's gates, or clear when given nothing."""
         self._report = report
+        self._qc_log = self._log_for(report)
+        self._qc_bar.set_log(self._qc_log)
         self._fill_table()
         self._redraw()
+
+    # -- gates rejected by hand ------------------------------------------------
+    @staticmethod
+    def _gate_keys(report: Optional[Dict[str, Any]]) -> list:
+        """(moment, centre time in s) of every gate of the station, in table order before sorting."""
+        keys = []
+        for name, moment in ((report or {}).get("moments") or {}).items():
+            times = np.asarray(moment.get("times"), dtype=float).ravel()
+            keys += [(str(name), float(time)) for time in times]
+        return keys
+
+    def _log_for(self, report: Optional[Dict[str, Any]]) -> Optional[QCLog]:
+        keys = self._gate_keys(report)
+        if not keys:
+            return None
+        station = str((report or {}).get("station", (report or {}).get("sounding", "")))
+        log = self._qc_logs.get(station)
+        if log is None or list(log.keys) != keys:
+            log = self._qc_logs[station] = QCLog(keys, name="manual_gates")
+        return log
+
+    def _selected_gates(self) -> list:
+        if self._qc_log is None:
+            return []
+        position = {key: i for i, key in enumerate(self._qc_log.keys)}
+        rows = {index.row() for index in self._table.selectionModel().selectedRows()}
+        keys = [self._table.item(row, 0).data(Qt.UserRole) for row in rows if self._table.item(row, 0)]
+        return [position[tuple(key)] for key in keys if key is not None and tuple(key) in position]
+
+    def _on_qc_changed(self) -> None:
+        self._fill_table()
+        self._redraw()
+
+    def rejected_gates(self) -> Dict[str, list]:
+        """The current station's gates rejected by hand: moment -> centre times (s)."""
+        out: Dict[str, list] = {}
+        for moment, time in (self._qc_log.rejected() if self._qc_log is not None else []):
+            out.setdefault(moment, []).append(time)
+        return out
 
     def set_model(self, moments: Optional[Dict[str, Dict[str, Any]]]) -> None:
         """Overlay a modelled response, keyed by moment name.
@@ -385,16 +436,51 @@ class EMGateView(QWidget):
                     str(status[index]),
                 ))
         self._table.setRowCount(len(rows))
+        keys = list(self._qc_log.keys) if self._qc_log is not None else []
+        rejected = set(self._qc_log.rejected()) if self._qc_log is not None else set()
         for r, record in enumerate(rows):
-            verdict = str(record[-1])
-            colour = QColor(_VERDICT_STYLE.get(verdict, ("#333333",))[0])
+            key = keys[r] if r < len(keys) else None
+            by_hand = key in rejected
+            verdict = QCoreApplication.translate("PHGX", "rejected by hand") if by_hand else str(record[-1])
+            record = (*record[:-1], verdict)
+            colour = QColor("#8e8e93" if by_hand else _VERDICT_STYLE.get(verdict, ("#333333",))[0])
             for c, value in enumerate(record):
                 item = _SortingItem(_cell(c, value), value)
-                if verdict != "kept":
+                if by_hand or verdict != "kept":
                     item.setForeground(colour)
+                if c == 0 and key is not None:
+                    item.setData(Qt.UserRole, list(key))
                 self._table.setItem(r, c, item)
         self._table.horizontalHeader().setSortIndicator(-1, Qt.AscendingOrder)
         self._table.setSortingEnabled(True)
+
+
+def modelled_gates(result: Dict[str, Any]) -> Optional[Dict[str, Dict[str, Any]]]:
+    """A single-sounding result as the gate view wants it: moment -> times, pred.
+
+    A joint run already separates the moments. A single-moment run does not, so
+    the moment is taken from the result and defaults to the one a TEMcompany
+    project is read as when it holds only one. A frequency-domain result has no
+    gates and gets no overlay.
+
+    ``fit_mask`` travels with the response. Outlier rejection removes gates the
+    converged model cannot explain, after the loader's own selection has run, so
+    without it the view would draw a gate as used by a fit that discarded it.
+    """
+    if not result or "times" not in result and not result.get("moments"):
+        return None
+    if result.get("joint_moments") and result.get("moments"):
+        return {
+            str(name): {"times": item["times"], "pred": item["pred"],
+                        "fit_mask": item.get("fit_mask")}
+            for name, item in result["moments"].items()
+            if item and "times" in item and "pred" in item
+        }
+    if "times" in result and "pred" in result:
+        name = str(result.get("tem_moment") or result.get("moment") or "HM")
+        return {name: {"times": result["times"], "pred": result["pred"],
+                       "fit_mask": result.get("fit_mask")}}
+    return None
 
 
 def _label(name: str, labelled: Set[str]) -> Optional[str]:

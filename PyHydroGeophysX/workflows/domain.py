@@ -21,6 +21,7 @@ import numpy as np
 
 from PyHydroGeophysX.data_processing import run_inputs
 from PyHydroGeophysX.errors import DataValidationError
+from PyHydroGeophysX.workflows.qc_masks import blank_rejected_mt, drop_rejected_em
 
 from .models import ArtifactRef, RunContext, WorkflowRunResult, WorkflowSpec
 
@@ -564,6 +565,12 @@ def run_em_inversion(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResu
         lambda path: load_sounding(str(path), method, sounding=sounding, moment=moment,
                                    **sounding_options(geometry)),
     )
+    rejected = parameters.pop("rejected_gates", None)
+    removed = 0
+    if rejected:
+        # A copy: the loaded sounding is cached for other runs (context.load_object).
+        data, removed = drop_rejected_em(data, rejected)
+        context.progress(f"Left out {removed} values rejected by hand")
     if method == "FDEM":
         result = fdem_invert(data, geometry, parameters, log=context.progress)
     elif data.get("moments"):
@@ -572,6 +579,8 @@ def run_em_inversion(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResu
         )
     else:
         result = tdem_invert(data, geometry, parameters, log=context.progress)
+    if rejected:
+        result["qc_rejected"] = removed
     if (result.get("robust") or {}).get("enabled"):
         # The persisted single-sounding path needs the same weight audit as lines.
         result["data_paths"] = save_inversion(result, context.output_dir)
@@ -934,6 +943,9 @@ def run_mt_invert_1d(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResu
     if source is None:
         raise ValueError("mt.invert_1d needs a 'transfer_function' input (EDI, EMTF XML, Z- or J-file).")
     tf = mt.read_transfer_function(context.resolve_artifact(source))
+    tf, blanked = blank_rejected_mt(tf, parameters.pop("rejected_frequencies", None) or ())
+    if blanked:
+        context.progress(f"Left out {blanked} frequencies rejected by hand")
     tem = _tem_sounding(spec.inputs.get("tem"), context, parameters)
     options = _keywords_for(mt.occam1d, parameters)
     if parameters.get("period_range"):

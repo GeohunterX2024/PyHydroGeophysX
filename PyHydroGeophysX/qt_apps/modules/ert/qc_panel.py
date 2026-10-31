@@ -652,6 +652,8 @@ class _QCPanel:
             # Short enough for a narrow plot; the scale below names the quantity.
             QCoreApplication.translate("PHGX", "{0:,} readings, {1:.3g}–{2:.3g} Ω·m   ▼ electrodes").format(rhoa.size, rhoa.min(), rhoa.max())
         )
+        self._attach_box_selection()
+        self._draw_manual_rejections()
         self._pseudo_canvas.draw_idle()
         self._pseudo_toolbar.update()
         legend_values = np.power(10.0, np.linspace(float(lo), float(hi), 5))

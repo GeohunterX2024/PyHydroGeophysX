@@ -350,6 +350,7 @@ class _ImportPanel:
         # from the raw values, so say here what has been lost rather than
         # leaving the module looking loaded until an inversion asks for it.
         self._qc_mask = [True] * int(data.size()) if data is not None else []
+        self._reset_manual_qc()
         self._qc_report = None       # these data are unfiltered until Apply filter
         self._loaded_pairing = res.get("pairing")
         self._data_note = ""
@@ -1124,8 +1125,7 @@ class _ImportPanel:
             # the panel shows is what the filter did.
             qc = self._qc_settings()
             report: Dict[str, Any] = {}
-            data, keep, reasons = self._qc_survey(
-                pg.DataContainerERT(self._ert_data_full), qc, report)
+            data, keep, reasons = self._qc_survey_with_manual(qc, report)
             if self._pair_info is not None:
                 report["files"] = self._pair_record()
             if reasons:
@@ -1165,16 +1165,8 @@ class _ImportPanel:
         self._recip_inputs_changed()
         if self._ert_data_full is None:
             return
-        try:
-            import pygimli as pg
-            self._ert_data = pg.DataContainerERT(self._ert_data_full)
-        except Exception:  # noqa: BLE001
-            _logger.debug("ERTProcessingModule._reset_filter: ignored error", exc_info=True)
-            self._ert_data = self._ert_data_full
-        self._qc_mask = [True] * int(self._ert_data_full.size())
-        self._pseudo = self._pseudo_from_data(self._ert_data)
-        self._n_meas = int(self._ert_data.size())
-        self._refresh()
+        # Readings rejected by hand stay out; Restore on the pseudosection brings them back.
+        self._apply_manual_only()
         self.log("Filter reset.", "info")
 
     # -- electrodes ----------------------------------------------------------

@@ -64,13 +64,14 @@ from .common import (
 from .qc_panel import _QCPanel
 from .inversion_panel import _InversionPanel
 from .import_panel import _ImportPanel
+from .manual_qc import _ManualQC
 from .mesh_panel import _MeshPanel
 from .timelapse_panel import _TimelapsePanel
 from .results_panel import _ResultsPanel
 from .presenter import _Presenter
 
 
-class ERTProcessingModule(_QCPanel, _InversionPanel, _ImportPanel, _MeshPanel, _TimelapsePanel, _ResultsPanel, _Presenter, BaseModule):
+class ERTProcessingModule(_ManualQC, _QCPanel, _InversionPanel, _ImportPanel, _MeshPanel, _TimelapsePanel, _ResultsPanel, _Presenter, BaseModule):
     module_key = "ert_processing"
     module_title = "ERT Processing"
 
@@ -209,6 +210,7 @@ class ERTProcessingModule(_QCPanel, _InversionPanel, _ImportPanel, _MeshPanel, _
         pseudo_bar, self._pseudo_toolbar = toolbar_row(self._pseudo_canvas, self._pseudo_widget)
         pseudo_layout.addWidget(pseudo_bar)
         pseudo_layout.addWidget(self._pseudo_canvas, stretch=1)
+        pseudo_layout.addWidget(self._build_manual_qc())
 
         self._pseudo_legend = QWidget()
         # Reserve the legend's full text height; the canvas takes the remaining

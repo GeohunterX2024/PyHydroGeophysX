@@ -32,13 +32,13 @@
 # file is split below the limit. Raising one is reviewed like a baseline change.
 [file_length]
 "PyHydroGeophysX/qt_apps/agent/chat_panel.py" = { lines = 2391, reason = "M2.4: swallowed errors are logged (+6 lines)" }
-"PyHydroGeophysX/qt_apps/modules/em_processing.py" = { lines = 3419, reason = "M2.4: swallowed errors are logged (+6 lines)" }
+"PyHydroGeophysX/qt_apps/modules/em_processing.py" = { lines = 3375, reason = "M4.4: gate-view helper moved to em_gate_view.py (3419 -> 3375); still over the limit" }
 "PyHydroGeophysX/qt_apps/modules/geo_hydrology.py" = { lines = 1544, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py" = { lines = 2038, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/joint_inversion.py" = { lines = 1629, reason = "M2.4: swallowed errors are logged (+4 lines)" }
 "PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py" = { lines = 2255, reason = "M2.4: swallowed errors are logged (+5 lines)" }
 "PyHydroGeophysX/qt_apps/modules/model_viewer.py" = { lines = 1968, reason = "M3.5: renderers moved to model_viewer_render.py (2094 -> 1968); still over the limit" }
-"PyHydroGeophysX/qt_apps/modules/mt_processing.py" = { lines = 2206, reason = "M2.4: swallowed errors are logged (+5 lines)" }
+"PyHydroGeophysX/qt_apps/modules/mt_processing.py" = { lines = 2155, reason = "M4.4: FigurePane moved to widgets/figure_pane.py (2206 -> 2155); still over the limit" }
 "PyHydroGeophysX/qt_apps/modules/one_click.py" = { lines = 2300, reason = "M2.4: swallowed errors are logged (+4 lines)" }
 "PyHydroGeophysX/qt_apps/modules/project_map.py" = { lines = 1729, reason = "M2.4: swallowed errors are logged (+5 lines)" }
 "PyHydroGeophysX/qt_apps/modules/seismic_processing.py" = { lines = 3526, reason = "M2.4: swallowed errors are logged (+7 lines)" }

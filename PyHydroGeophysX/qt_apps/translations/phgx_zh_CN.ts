@@ -6461,6 +6461,10 @@ Remembered for this session and shared by every view of {3}; a figure exported f
       <translation>将时窗导出为 CSV</translation>
     </message>
     <message>
+      <source>rejected by hand</source>
+      <translation>人工剔除</translation>
+    </message>
+    <message>
       <source>Which survey line to section. Lines are sectioned one at a time because their along-line distances are not continuous with each other; 'All lines' chains them and marks the joins.</source>
       <extracomment>Colours shared with the acquisition-software convention: every sounding in black, the line being sectioned in red, its zero-distance end in blue. Smallest map extent along one axis, as a fraction of the other, so a survey run along a single easting or northing still draws as a map. Figure size the current layout was computed for, so a resize event that carries no change does not schedule the work again. Drawing can itself emit a resize event, and without this the two feed each other.</extracomment>
       <translation>要生成断面的测线。由于各测线的沿线距离彼此不连续，断面逐条生成；“全部测线”会将其首尾相接并标出接合处。</translation>
@@ -7505,6 +7509,79 @@ B：{1}
     <message>
       <source>This zone took no cell in the last mesh: it lies outside the inverted region, or zones lower in the list cover it.</source>
       <translation>在上次网格中此分区未包含任何单元：它位于反演区域之外，或被列表中靠下的分区覆盖。</translation>
+    </message>
+    <message>
+      <source>Box select</source>
+      <translation>框选</translation>
+    </message>
+    <message>
+      <source>Drag a box on the pseudosection to select readings, then Reject or Restore them.</source>
+      <translation>在拟断面上拖出矩形框选读数，然后剔除或恢复。</translation>
+    </message>
+    <message>
+      <source>Saved as dataset {0}, version {1}</source>
+      <translation>已保存为数据集 {0}，版本 {1}</translation>
+    </message>
+    <message>
+      <source>Select periods</source>
+      <translation>选择周期</translation>
+    </message>
+    <message>
+      <source>Drag across the curves to select periods, then Reject or Restore them.</source>
+      <translation>在曲线上横向拖动选择周期，然后剔除或恢复。</translation>
+    </message>
+    <message>
+      <source>Reason (kept in the record)</source>
+      <extracomment>Labels of the record's Action column, here so the translation catalog has them.</extracomment>
+      <translation>原因（记入记录）</translation>
+    </message>
+    <message>
+      <source>Reject selected</source>
+      <translation>剔除所选</translation>
+    </message>
+    <message>
+      <source>Restore selected</source>
+      <translation>恢复所选</translation>
+    </message>
+    <message>
+      <source>Record…</source>
+      <translation>记录…</translation>
+    </message>
+    <message>
+      <source>Leave the selected items out of processing and inversion; the decision is recorded.</source>
+      <translation>所选项不参与处理与反演；该决定会被记录。</translation>
+    </message>
+    <message>
+      <source>Use the selected items again; recorded too.</source>
+      <translation>重新使用所选项；同样会被记录。</translation>
+    </message>
+    <message>
+      <source>Every decision with its reason and time; export it, or save it with the data.</source>
+      <translation>列出每项决定及其原因和时间；可导出，或与数据一起保存。</translation>
+    </message>
+    <message>
+      <source>{0} of {1} rejected</source>
+      <translation>已剔除 {0}/{1}</translation>
+    </message>
+    <message>
+      <source>Select items first (drag a box, or pick rows).</source>
+      <translation>请先选择（拖框或选中表格行）。</translation>
+    </message>
+    <message>
+      <source>QC record</source>
+      <translation>质控记录</translation>
+    </message>
+    <message>
+      <source>Export CSV…</source>
+      <translation>导出 CSV…</translation>
+    </message>
+    <message>
+      <source>Save with the data</source>
+      <translation>与数据一起保存</translation>
+    </message>
+    <message>
+      <source>Export QC record</source>
+      <translation>导出质控记录</translation>
     </message>
     <message>
       <source>Workflow</source>
@@ -9909,6 +9986,26 @@ See seismic3d_input_format.md for details.</source>
     <message>
       <source>Choose a full folder path for the location, or use Browse…</source>
       <translation>请为位置选择完整的文件夹路径，或使用“浏览…”</translation>
+    </message>
+    <message>
+      <source>Restore</source>
+      <translation>恢复</translation>
+    </message>
+    <message>
+      <source>Action</source>
+      <translation>操作</translation>
+    </message>
+    <message>
+      <source>Items</source>
+      <translation>项数</translation>
+    </message>
+    <message>
+      <source>Reason</source>
+      <translation>原因</translation>
+    </message>
+    <message>
+      <source>Criterion</source>
+      <translation>判据</translation>
     </message>
     <message>
       <source>high misfit — check data errors / λ / geometry</source>

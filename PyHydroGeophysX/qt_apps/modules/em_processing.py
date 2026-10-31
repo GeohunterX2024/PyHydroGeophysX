@@ -59,7 +59,7 @@ from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.curve_viewer import CurveViewer
 from PyHydroGeophysX.qt_apps.widgets.em_overview_view import EMOverviewView
-from PyHydroGeophysX.qt_apps.widgets.em_gate_view import EMGateView
+from PyHydroGeophysX.qt_apps.widgets.em_gate_view import EMGateView, modelled_gates
 from PyHydroGeophysX.qt_apps.widgets.em_survey_view import (
     EMMetadataView,
     EMSignalNoiseView,
@@ -121,34 +121,6 @@ def _plain(value: Any) -> Any:
     emit and no parser accepts.
     """
     return json_safe(value)
-
-
-def _modelled_gates(result: Dict[str, Any]) -> Optional[Dict[str, Dict[str, Any]]]:
-    """A single-sounding result as the gate view wants it: moment -> times, pred.
-
-    A joint run already separates the moments. A single-moment run does not, so
-    the moment is taken from the result and defaults to the one a TEMcompany
-    project is read as when it holds only one. A frequency-domain result has no
-    gates and gets no overlay.
-
-    ``fit_mask`` travels with the response. Outlier rejection removes gates the
-    converged model cannot explain, after the loader's own selection has run, so
-    without it the view would draw a gate as used by a fit that discarded it.
-    """
-    if not result or "times" not in result and not result.get("moments"):
-        return None
-    if result.get("joint_moments") and result.get("moments"):
-        return {
-            str(name): {"times": item["times"], "pred": item["pred"],
-                        "fit_mask": item.get("fit_mask")}
-            for name, item in result["moments"].items()
-            if item and "times" in item and "pred" in item
-        }
-    if "times" in result and "pred" in result:
-        name = str(result.get("tem_moment") or result.get("moment") or "HM")
-        return {name: {"times": result["times"], "pred": result["pred"],
-                       "fit_mask": result.get("fit_mask")}}
-    return None
 
 
 def _plan_map_job(result: Dict[str, Any], folder: Path, source: Optional[Path], unit: str,
@@ -2357,6 +2329,8 @@ class EMProcessingModule(BaseModule):
                 "moment": self._tem_moment.currentText(),
                 "sounding": int(self._data.get("sounding", 0)),
                 "geometry": self._collect_geom(),
+                # Gates rejected by hand in the gate view, by moment and centre time.
+                "rejected_gates": self._gate_view.rejected_gates(),
             },
             metadata={"source": "qt"},
         )
@@ -2539,7 +2513,7 @@ class EMProcessingModule(BaseModule):
     def _on_inversion_ok(self, result: dict) -> None:
         self._clear_plan_maps()
         self._last_result = result
-        self._gate_view.set_model(_modelled_gates(result))
+        self._gate_view.set_model(modelled_gates(result))
         self._last_section = None   # the export button now writes this profile
         self._inv_export.setEnabled(True)
         png = self._render_inversion(result)

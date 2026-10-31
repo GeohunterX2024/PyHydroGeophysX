@@ -418,6 +418,8 @@ class _InversionPanel:
             qc_path,
             {
                 "keep": list(self._qc_mask or []),
+                # Readings rejected by hand on the pseudosection, with the reasons given.
+                "manual_qc": self._manual_qc_record(),
                 "source_measurements": int(self._ert_data_full.size())
                 if self._ert_data_full is not None else int(self._ert_data.size()),
                 "filtered_measurements": int(self._ert_data.size()),
