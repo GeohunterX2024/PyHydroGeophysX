@@ -6951,6 +6951,30 @@ Contours cannot reproduce the soft per-cell sensitivity fade, so they draw the w
       <translation>参数</translation>
     </message>
     <message>
+      <source>Export figure…</source>
+      <translation>导出图件…</translation>
+    </message>
+    <message>
+      <source>Save the section as a report figure: PDF (vector, fonts embedded) or 300 dpi PNG, with units, colour bar, scale bar and the mask's basis.</source>
+      <translation>将断面保存为报告图件：PDF（矢量，内嵌字体）或 300 dpi PNG，含单位、色标、比例尺及遮罩依据。</translation>
+    </message>
+    <message>
+      <source>Export figure</source>
+      <translation>导出图件</translation>
+    </message>
+    <message>
+      <source>PDF figure (*.pdf);;PNG image (*.png)</source>
+      <translation>PDF 图件 (*.pdf);;PNG 图像 (*.png)</translation>
+    </message>
+    <message>
+      <source>Could not export the figure: {0}</source>
+      <translation>无法导出图件：{0}</translation>
+    </message>
+    <message>
+      <source>Saved {0}</source>
+      <translation>已保存 {0}</translation>
+    </message>
+    <message>
       <source>Masked: {0}.</source>
       <translation>已遮罩：{0}。</translation>
     </message>

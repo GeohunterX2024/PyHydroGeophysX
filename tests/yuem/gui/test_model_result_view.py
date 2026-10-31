@@ -88,3 +88,21 @@ def test_every_model_workflow_shows_in_the_viewer(
     loaded = ModelResultV2.load(path)
     if loaded.display_mask()[0] is not None:
         assert view.caption().startswith("Masked:")
+
+
+def test_the_view_exports_a_report_figure(qtbot: Any, tmp_path: Path) -> None:
+    result = ModelResultV2(
+        method="TDEM",
+        geometry=LayeredGeometry(
+            thickness=np.array([5.0, 10.0]), n_soundings=3, positions=np.array([0.0, 10.0, 20.0])
+        ),
+        parameters={
+            "resistivity": Parameter("resistivity", np.linspace(10, 1000, 9), "ohm.m", log_scale=True)
+        },
+        doi=np.array([12.0, 3.0, 30.0]),
+    )
+    view = ModelResultView()
+    qtbot.addWidget(view)
+    view.set_result(result)
+    saved = Path(view.export_figure(str(tmp_path / "section.pdf")))
+    assert saved.read_bytes().startswith(b"%PDF")

@@ -14,7 +14,9 @@ from PySide6.QtCore import QCoreApplication
 from typing import Any
 
 import numpy as np
-from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QSpinBox, QVBoxLayout, QWidget
+from PySide6.QtCore import QCoreApplication
+from PySide6.QtWidgets import (
+    QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget)
 
 from PyHydroGeophysX.results.protocol import GridGeometry, LayeredGeometry, MeshGeometry, ModelResultV2
 from PyHydroGeophysX.qt_apps import i18n
@@ -55,6 +57,12 @@ class ModelResultView(QWidget):
         bar.addWidget(self._mask)
         bar.addWidget(self._slice)
         bar.addStretch(1)
+        self._export = QPushButton(QCoreApplication.translate("PHGX", "Export figure…"))
+        self._export.setToolTip(QCoreApplication.translate(
+            "PHGX", "Save the section as a report figure: PDF (vector, fonts embedded) or 300 dpi PNG, "
+            "with units, colour bar, scale bar and the mask's basis."))
+        self._export.clicked.connect(self._export_figure)
+        bar.addWidget(self._export)
         layout = QVBoxLayout(self)
         layout.addLayout(bar)
         layout.addWidget(self._canvas, stretch=1)
@@ -76,6 +84,31 @@ class ModelResultView(QWidget):
             self._slice.setValue(geometry.shape[2] - 1)
         self._mask.setEnabled(result.display_mask()[0] is not None)
         self._redraw()
+
+    def export_figure(self, path: str) -> str:
+        """Save the parameter on screen as a report figure (``visualization.styles``); returns the path."""
+        from PyHydroGeophysX.qt_apps import i18n
+        from PyHydroGeophysX.visualization.styles import save_publication, section_figure
+
+        if self._result is None:
+            raise ValueError("no result to export")
+        language = "zh" if i18n.resolve(i18n.chosen_language()) == "zh_CN" else "en"
+        figure = section_figure(self._result, str(self._parameter.currentData()), language=language,
+                                masked=self._mask.isChecked() and self._mask.isEnabled())
+        return str(save_publication(figure, path))
+
+    def _export_figure(self) -> None:
+        path, _ = QFileDialog.getSaveFileName(
+            self, QCoreApplication.translate("PHGX", "Export figure"), "",
+            QCoreApplication.translate("PHGX", "PDF figure (*.pdf);;PNG image (*.png)"))
+        if not path:
+            return
+        try:
+            saved = self.export_figure(path)
+        except (ValueError, OSError) as exc:
+            self._caption.setText(QCoreApplication.translate("PHGX", "Could not export the figure: {0}").format(exc))
+            return
+        self._caption.setText(QCoreApplication.translate("PHGX", "Saved {0}").format(saved))
 
     def caption(self) -> str:
         return self._caption.text()
