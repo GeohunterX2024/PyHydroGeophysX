@@ -73,6 +73,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _RECORDING_FILTER = ("MT time series (*.bin *.td_* *.ats *.z3d *.Z3D *.tbl *.TBL *.txt *.TXT);;"
                      "All files (*)")
@@ -199,7 +202,7 @@ class _FigurePane(QWidget):
         try:
             self.figure.tight_layout()
         except Exception:  # noqa: BLE001 - a crowded figure still draws
-            pass
+            _logger.debug("_FigurePane.finish: a crowded figure still draws", exc_info=True)
         self.canvas.draw_idle()
 
 
@@ -2188,6 +2191,7 @@ class MTProcessingModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("MTProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "Open a recording folder (Phoenix, Metronix, Zonge, LEMI) or add EDI / EMTF XML sites."
         dlg = QDialog(self); dlg.setWindowTitle("Magnetotelluric input formats")
         dlg.resize(760, 620); lay = QVBoxLayout(dlg)
@@ -2195,6 +2199,7 @@ class MTProcessingModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("MTProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)

@@ -8,6 +8,9 @@ from PySide6.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QDoubleSpin
 from PyHydroGeophysX.qt_apps.project_map import (
     ProjectMapStore, em_snapshot, mesh_snapshot, place_profile, grid_snapshot, point_snapshot,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def result_snapshot(page):
@@ -107,6 +110,7 @@ def result_snapshot(page):
         try:
             coverage = manager.coverage()
         except Exception:
+            _logger.debug("result_snapshot: ignored error", exc_info=True)
             coverage = None
         # What is on screen: a temperature-corrected model goes to the map as one.
         corrected = getattr(page, '_inv_corrected', None)

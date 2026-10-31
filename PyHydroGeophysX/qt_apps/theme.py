@@ -29,6 +29,9 @@ from typing import Dict, Optional, Tuple
 
 from PySide6.QtCore import QObject, QSettings, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPalette
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # -- the two palettes --------------------------------------------------------
 LIGHT: Dict[str, str] = {
@@ -215,6 +218,7 @@ def _saved_appearance() -> str:
     try:
         value = str(QSettings("PyHydroGeophysX", "Studio").value(_SETTING, "system"))
     except Exception:  # noqa: BLE001 - a missing setting is the default
+        _logger.debug("_saved_appearance: a missing setting is the default", exc_info=True)
         value = "system"
     return value if value in APPEARANCES else "system"
 
@@ -227,7 +231,7 @@ def _system_mode(app) -> str:
         if app.styleHints().colorScheme() == Qt.ColorScheme.Dark:
             return "dark"
     except Exception:  # noqa: BLE001 - an older Qt cannot say: light
-        pass
+        _logger.debug("_system_mode: an older Qt cannot say: light", exc_info=True)
     return "light"
 
 
@@ -263,6 +267,7 @@ def qtawesome_available() -> bool:
 
         return True
     except Exception:
+        _logger.debug("qtawesome_available: ignored error", exc_info=True)
         return False
 
 
@@ -281,6 +286,7 @@ def icon(name: str, color: Optional[str] = None) -> QIcon:
         # QApplication; never hand that to ``setIcon``.
         return result if isinstance(result, QIcon) else QIcon()
     except Exception:
+        _logger.debug("icon: ignored error", exc_info=True)
         return QIcon()
 
 
@@ -674,7 +680,7 @@ def apply_theme(app, appearance: Optional[str] = None) -> str:
         pg.setConfigOption("foreground", PALETTE["canvas_text"])
         pg.setConfigOption("antialias", True)
     except Exception:
-        pass
+        _logger.debug("apply_theme: ignored error", exc_info=True)
     apply_matplotlib_style()
     _restyle_open_plots(app)
     _follow_system(app)
@@ -682,7 +688,7 @@ def apply_theme(app, appearance: Optional[str] = None) -> str:
         for widget in app.allWidgets():
             widget.update()
     except Exception:  # noqa: BLE001 - a repaint is cosmetic
-        pass
+        _logger.debug("apply_theme: a repaint is cosmetic", exc_info=True)
     notifier().changed.emit(resolved)
     return resolved
 
@@ -694,7 +700,7 @@ def set_appearance(app, appearance: str) -> str:
     try:
         QSettings("PyHydroGeophysX", "Studio").setValue(_SETTING, appearance)
     except Exception:  # noqa: BLE001 - not remembered, still applied
-        pass
+        _logger.debug("set_appearance: not remembered, still applied", exc_info=True)
     return apply_theme(app, appearance)
 
 
@@ -707,7 +713,7 @@ def _follow_system(app) -> None:
             lambda _scheme: apply_theme(app, "system") if appearance() == "system" else None)
         _state["following"] = True
     except Exception:  # noqa: BLE001 - an older Qt cannot tell us
-        pass
+        _logger.debug("_follow_system: an older Qt cannot tell us", exc_info=True)
 
 
 def _restyle_open_plots(app) -> None:
@@ -715,13 +721,14 @@ def _restyle_open_plots(app) -> None:
     try:
         import pyqtgraph as pg
     except Exception:  # noqa: BLE001
+        _logger.debug("_restyle_open_plots: ignored error", exc_info=True)
         return
     try:
         for widget in app.allWidgets():
             if isinstance(widget, pg.GraphicsView):
                 widget.setBackground(PALETTE["canvas"])
     except Exception:  # noqa: BLE001 - a canvas tint is cosmetic
-        pass
+        _logger.debug("_restyle_open_plots: a canvas tint is cosmetic", exc_info=True)
 
 
 def apply_matplotlib_style() -> None:
@@ -736,6 +743,7 @@ def apply_matplotlib_style() -> None:
         import matplotlib as mpl
         from cycler import cycler
     except Exception:  # noqa: BLE001 - the studio runs without Matplotlib
+        _logger.debug("apply_matplotlib_style: the studio runs without Matplotlib", exc_info=True)
         return
     ink, soft = PALETTE["canvas_text"], "#6e6e73"
     mpl.rcParams.update({

@@ -21,6 +21,9 @@ from __future__ import annotations
 
 import math
 from typing import Sequence
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: Largest log10 tick this can raise 10 to. Past ``10**308`` a float overflows,
 #: and the exponent is printed instead of the value.
@@ -74,6 +77,7 @@ def label_axis_in_physical_units(axis, enabled: bool = True) -> None:
         try:
             return [_physical(value) for value in values]
         except Exception:  # noqa: BLE001 - see _physical: this runs inside paint
+            _logger.debug("label_axis_in_physical_units.tick_strings: see _physical: this runs inside paint", exc_info=True)
             return ["" for _ in values]
 
     axis.tickStrings = tick_strings

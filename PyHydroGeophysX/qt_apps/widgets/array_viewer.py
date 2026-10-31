@@ -26,6 +26,9 @@ from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.log_scale_axis import label_axis_in_physical_units
 from PyHydroGeophysX.qt_apps.widgets.readout import ReadoutLabel
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # Display arrays as image[row, col] (numpy convention) rather than the pyqtgraph
 # default of image[x, y]. This makes click -> [col, row] mapping correct.
@@ -100,7 +103,7 @@ class ArrayViewer(QWidget):
         try:
             self._hist.gradient.loadPreset("viridis")
         except Exception:
-            pass
+            _logger.debug("ArrayViewer.__init__: ignored error", exc_info=True)
         self._hist.axis.setLabel(self._value_label)
         self._glw.addItem(self._hist, row=0, col=1)
         # Dragging the colour bar's levels: the boxes follow while it moves; a
@@ -327,7 +330,7 @@ class ArrayViewer(QWidget):
             cmaps.apply_to_histogram(
                 self._hist, name, preset=name if name == _DEFAULT_MAP else None)
         except Exception:  # noqa: BLE001 - a colour map must never break the viewer
-            pass
+            _logger.debug("ArrayViewer._apply_colormap: a colour map must never break the viewer", exc_info=True)
 
     # -- interaction modes ---------------------------------------------------
     def set_pick_mode(self, enabled: bool) -> None:

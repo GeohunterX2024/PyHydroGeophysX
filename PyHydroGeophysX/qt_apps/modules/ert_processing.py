@@ -91,6 +91,9 @@ from PyHydroGeophysX.workflows import (
 from PyHydroGeophysX.inversion.lambda_search import (  # noqa: E402
     LAMBDA_BOUNDS as _LAMBDA_BOUNDS,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: The highest mesh quality offered, ert_mesh.MAX_MESH_QUALITY: Triangle
 #: never finishes much above it. Repeated here because ert_mesh pulls in
@@ -1365,6 +1368,7 @@ class ERTProcessingModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("ERTProcessingModule._show_format_help: ignored error", exc_info=True)
             text = ("Pick the instrument / format, then add one file per survey. "
                     "Name each file with its time, year first: "
                     "site_2026-01-12_05-50-38.dat.")
@@ -1374,6 +1378,7 @@ class ERTProcessingModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("ERTProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)
@@ -1421,7 +1426,7 @@ class ERTProcessingModule(BaseModule):
                         and float(np.nanmax(cov)) > float(np.nanmin(cov))):
                     coverage = cov
             except Exception:  # noqa: BLE001 - coverage is optional
-                pass
+                _logger.debug("ERTProcessingModule._show_single_model: coverage is optional", exc_info=True)
             self._model_view.show_field(
                 mgr.paraDomain, self._inv_corrected, kind="ert", coverage=coverage,
                 title=self._single_title()
@@ -2082,10 +2087,11 @@ class ERTProcessingModule(BaseModule):
                     return ""
                 return str(version("resipy"))
             except Exception:  # noqa: BLE001 - no metadata; ask the module
-                pass
+                _logger.debug("ERTProcessingModule._resipy_version: no metadata; ask the module", exc_info=True)
             try:
                 import resipy
             except Exception:  # noqa: BLE001 - an optional reader
+                _logger.debug("ERTProcessingModule._resipy_version: an optional reader", exc_info=True)
                 return ""
         for attribute in ("ResIPy_version", "__version__"):
             found = getattr(resipy, attribute, None)
@@ -2094,6 +2100,7 @@ class ERTProcessingModule(BaseModule):
         try:
             return str(version("resipy"))
         except Exception:  # noqa: BLE001
+            _logger.debug("ERTProcessingModule._resipy_version: ignored error", exc_info=True)
             return "yes"
 
     def _show_reader_status(self, reader: str = "", detail: str = "") -> None:
@@ -2408,7 +2415,7 @@ class ERTProcessingModule(BaseModule):
                 elif data.haveData("u") and data.haveData("i"):
                     data["rhoa"] = data["u"] / data["i"] * data["k"]
             except Exception:  # noqa: BLE001
-                pass
+                _logger.debug("ERTProcessingModule._load_pygimli: ignored error", exc_info=True)
         # PyGIMLi's reader takes no electrode file, so it is applied here - or
         # refused, as the instrument readers refuse one that does not fit.
         if electrode_file:
@@ -2512,6 +2519,7 @@ class ERTProcessingModule(BaseModule):
         try:
             import pygimli  # noqa: F401
         except Exception:  # noqa: BLE001
+            _logger.debug("ERTProcessingModule._container_failure_reason: ignored error", exc_info=True)
             return ("pygimli is not installed, so the file can be plotted but "
                     "not inverted.")
         observations = list(std.observations or [])
@@ -3083,6 +3091,7 @@ class ERTProcessingModule(BaseModule):
             import pygimli as pg
             self._ert_data = pg.DataContainerERT(self._ert_data_full)
         except Exception:  # noqa: BLE001
+            _logger.debug("ERTProcessingModule._reset_filter: ignored error", exc_info=True)
             self._ert_data = self._ert_data_full
         self._qc_mask = [True] * int(self._ert_data_full.size())
         self._pseudo = self._pseudo_from_data(self._ert_data)
@@ -6696,6 +6705,7 @@ class ERTProcessingModule(BaseModule):
                 cov = np.asarray(mgr.coverage(), dtype=float)
                 np.save(out / "coverage.npy", cov)
             except Exception:  # noqa: BLE001 - coverage is optional
+                _logger.debug("ERTProcessingModule._export_resistivity_model: coverage is optional", exc_info=True)
                 cov = None
             # The CSV is written before the PyGIMLi files because it is the one
             # a collaborator without PyGIMLi can actually open, and a .bms write
@@ -6835,6 +6845,7 @@ class ERTProcessingModule(BaseModule):
 
             return str(ERTLoaderAgent(api_key="")._detect_instrument_from_header(str(path)) or "")
         except Exception:  # noqa: BLE001 - nothing detected is no choice made
+            _logger.debug("ERTProcessingModule._instrument_from_header: nothing detected is no choice made", exc_info=True)
             return ""
 
     def _agent_set_instrument(self, instrument: str) -> bool:
@@ -7145,6 +7156,7 @@ class ERTProcessingModule(BaseModule):
             try:
                 coverage = self._inv_mgr.coverage()
             except Exception:  # noqa: BLE001 - coverage is optional in the bundle
+                _logger.debug("ERTProcessingModule.agent_handover: coverage is optional in the bundle", exc_info=True)
                 coverage = None
             sources = [summary["data_file"]] if summary.get("data_file") else []
         info.update(source_files=[str(Path(p).resolve()) for p in sources],

@@ -42,6 +42,9 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.petrophysics import temperature as temperature_model
 from PyHydroGeophysX.qt_apps import theme
+import logging
+
+_logger = logging.getLogger(__name__)
 
 __all__ = [
     "TemperatureOptions",
@@ -739,6 +742,7 @@ def run_correction(summary: Optional[Mapping[str, Any]], models: Any,
         raw = np.load(resolve(str(report.get("uncorrected_models") or "")),
                       allow_pickle=False)
     except Exception:  # noqa: BLE001 - missing or unreadable: say so, never guess
+        _logger.debug("run_correction: missing or unreadable: say so, never guess", exc_info=True)
         return None, dict(report)
     return np.asarray(raw, dtype=float), dict(report)
 

@@ -67,6 +67,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _FILE_FILTER = "Station data (*.csv *.txt *.dat);;All files (*)"
 
@@ -1238,6 +1241,7 @@ class GravMagProcessingModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("GravMagProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "Station file: three columns x, y, value (gravity mGal / magnetics nT)."
         dlg = QDialog(self); dlg.setWindowTitle("Gravity / Magnetics input format")
         dlg.resize(720, 600); lay = QVBoxLayout(dlg)
@@ -1245,6 +1249,7 @@ class GravMagProcessingModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("GravMagProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)

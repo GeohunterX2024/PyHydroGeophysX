@@ -37,6 +37,9 @@ from PyHydroGeophysX.visualization.ert_style import (
     ERT_RESISTIVITY_LABEL,
     ert_model_plot_kwargs,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def _array_key(array):
@@ -84,6 +87,7 @@ def _interpolate(mesh, values, centres, fine_count: int):
         fine = np.asarray(pg.interpolate(mesh, np.asarray(values, dtype=float), centres),
                           dtype=float)
     except Exception:  # noqa: BLE001 - smoothing is cosmetic, never fatal
+        _logger.debug("_interpolate: smoothing is cosmetic, never fatal", exc_info=True)
         return None
     return fine if fine.size == fine_count else None
 
@@ -461,6 +465,7 @@ class MeshResultView(QWidget):
             try:
                 grid = pygimli_to_pyvista(mesh)
             except Exception:  # noqa: BLE001 - the section view says what it can
+                _logger.debug("MeshResultView._draw_volume: the section view says what it can", exc_info=True)
                 return False
             grid.cell_data.remove("Marker")
             # VTK's own font has no Ω.
@@ -521,6 +526,7 @@ class MeshResultView(QWidget):
                     try:
                         cov = np.asarray(fn(), dtype=float)
                     except Exception:  # noqa: BLE001
+                        _logger.debug("MeshResultView._resolve_source: ignored error", exc_info=True)
                         continue
                     if cov.size == values.size and np.isfinite(cov).any():
                         mask = cov > thresh
@@ -533,6 +539,7 @@ class MeshResultView(QWidget):
                         with np.errstate(divide="ignore", invalid="ignore"):
                             field = np.where(raw > 0, np.log10(np.abs(raw)), np.nan)
                 except Exception:  # noqa: BLE001 - coverage is optional
+                    _logger.debug("MeshResultView._resolve_source: coverage is optional", exc_info=True)
                     field = None
                 return mgr.paraDomain, values, coverage, field
             values = np.asarray(mgr.model, dtype=float)
@@ -542,7 +549,7 @@ class MeshResultView(QWidget):
                 if cov.size and np.isfinite(cov).any() and float(np.nanmax(cov)) > float(np.nanmin(cov)):
                     coverage = cov
             except Exception:  # noqa: BLE001 - coverage is optional
-                pass
+                _logger.debug("MeshResultView._resolve_source: coverage is optional", exc_info=True)
             return mgr.paraDomain, values, coverage, coverage
         if self._mesh is not None and self._values is not None:
             field = self._coverage
@@ -567,6 +574,7 @@ class MeshResultView(QWidget):
             try:
                 fine, centres = self._cached(("fine mesh", step), lambda m=mesh: _refine(m))
             except Exception:  # noqa: BLE001 - smoothing is cosmetic, never fatal
+                _logger.debug("MeshResultView._smoothed: smoothing is cosmetic, never fatal", exc_info=True)
                 break
             count = fine.cellCount()
             fine_values = self._cached(
@@ -737,6 +745,7 @@ class MeshResultView(QWidget):
                 try:
                     pg.show(mesh, values, **draw_kw)
                 except Exception:  # noqa: BLE001 - coverage masking can still fail; retry plain
+                    _logger.debug("MeshResultView._redraw_now: coverage masking can still fail; retry plain", exc_info=True)
                     draw_kw.pop("coverage", None)
                     ax.clear()
                     pg.show(mesh, values, **draw_kw)
@@ -844,6 +853,7 @@ class MeshResultView(QWidget):
         try:
             add_alpha(mappable, mask)
         except Exception:  # noqa: BLE001 - draw from scratch instead
+            _logger.debug("MeshResultView._remask: draw from scratch instead", exc_info=True)
             return False
         return True
 
@@ -886,6 +896,7 @@ class MeshResultView(QWidget):
                 mappable.set_alpha(None)
             mappable.axes.set_title(self._title or "")
         except Exception:  # noqa: BLE001 - draw from scratch instead
+            _logger.debug("MeshResultView._revalue: draw from scratch instead", exc_info=True)
             return False
         return self._recolour(show_kw, drawn)
 
@@ -907,6 +918,7 @@ class MeshResultView(QWidget):
             if drawn.get("contour"):
                 self._set_contour_ticks(cbar, bool(drawn.get("log")))
         except Exception:  # noqa: BLE001 - draw from scratch instead
+            _logger.debug("MeshResultView._recolour: draw from scratch instead", exc_info=True)
             return False
         self._canvas.draw_idle()
         return True
@@ -925,10 +937,11 @@ class MeshResultView(QWidget):
             self._fig.set_layout_engine("constrained")
             self._fig.draw_without_rendering()
         except Exception:  # noqa: BLE001 - fall back rather than lose the figure
+            _logger.debug("MeshResultView._relayout: fall back rather than lose the figure", exc_info=True)
             try:
                 self._fig.tight_layout()
             except Exception:  # noqa: BLE001 - layout is cosmetic, never fatal
-                pass
+                _logger.debug("MeshResultView._relayout: layout is cosmetic, never fatal", exc_info=True)
 
     def _draw_contour(self, ax, mesh, values, coverage, show_kw, role: str = "model"):
         """Draw the model as filled contours on a regular grid.
@@ -970,6 +983,7 @@ class MeshResultView(QWidget):
         try:
             x, z, xi, zi, grid_x, grid_z, top = self._cached(("contour grid",), layout)
         except Exception:  # noqa: BLE001 - no geometry, no grid
+            _logger.debug("MeshResultView._draw_contour: no geometry, no grid", exc_info=True)
             return None
         field = np.asarray(values, dtype=float).ravel()
         if x.size != field.size:
@@ -1016,7 +1030,7 @@ class MeshResultView(QWidget):
 
                 pg.viewer.mpl.drawMeshBoundaries(ax, mesh, hideMesh=False)
             except Exception:  # noqa: BLE001 - the overlay is optional
-                pass
+                _logger.debug("MeshResultView._draw_contour: the overlay is optional", exc_info=True)
         ax.set_xlim(float(xi.min()), float(xi.max()))
         ax.set_ylim(float(zi.min()), float(np.nanmax(top)))
         return filled
@@ -1040,7 +1054,7 @@ class MeshResultView(QWidget):
                 formatter.set_scientific(False)
                 cbar.ax.yaxis.set_major_formatter(formatter)
         except Exception:  # noqa: BLE001 - ticks are cosmetic, never fatal
-            pass
+            _logger.debug("MeshResultView._set_contour_ticks: ticks are cosmetic, never fatal", exc_info=True)
 
     def _on_length_unit_changed(self, _unit: str) -> None:
         """Redraw the axes in the studio's new length unit."""
@@ -1073,6 +1087,7 @@ class MeshResultView(QWidget):
             return coverage_envelope_polygon(
                 mesh, mask, float(self._cov_threshold.value()))
         except Exception:  # noqa: BLE001 - the clip is cosmetic, never fatal
+            _logger.debug("MeshResultView._clip_polygon: the clip is cosmetic, never fatal", exc_info=True)
             return None
 
     # -- colour limits -------------------------------------------------------
@@ -1179,14 +1194,14 @@ class MeshResultView(QWidget):
             mgr.drawRayPaths(ax=ax, **style)
             return
         except Exception:  # noqa: BLE001 - fall back to plotting the paths myself
-            pass
+            _logger.debug("MeshResultView._draw_rays: fall back to plotting the paths myself", exc_info=True)
         try:
             for path in mgr.getRayPaths():
                 arr = np.asarray(path, dtype=float)
                 if arr.ndim == 2 and arr.shape[0] > 1:
                     ax.plot(arr[:, 0], arr[:, 1], **style)
         except Exception:  # noqa: BLE001 - the overlay is optional
-            pass
+            _logger.debug("MeshResultView._draw_rays: the overlay is optional", exc_info=True)
 
     def _describe_coverage(self, coverage, values) -> None:
         """Say how much of the section the data actually constrain."""

@@ -75,6 +75,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _INSTALL_MESSAGE = (
     "Interactive 3D preview needs <code>pyvista</code>, <code>pyvistaqt</code> and a "
@@ -295,7 +298,7 @@ class Mesh3DModule(BaseModule):
                 actor.mapper.lookup_table.cmap = cmaps.to_pyvista(name)
                 changed = True
             except Exception:  # noqa: BLE001 - an actor without a table is left alone
-                pass
+                _logger.debug("Mesh3DModule._on_colormap_changed: an actor without a table is left alone", exc_info=True)
         if changed:
             self._refresh_plotter()
 
@@ -1015,6 +1018,7 @@ class Mesh3DModule(BaseModule):
                 x = float(self._bh_table.item(i, 0).text())
                 y = float(self._bh_table.item(i, 1).text())
             except Exception:  # noqa: BLE001
+                _logger.debug("Mesh3DModule._read_boreholes: ignored error", exc_info=True)
                 x, y = i * 10.0, 0.0
             out.append((x, y))
         return out
@@ -1120,6 +1124,7 @@ class Mesh3DModule(BaseModule):
         try:
             return mesh3d_builder.zone_region(cfg or self._collect_config(), sensors)
         except Exception:  # noqa: BLE001 - settings mid-edit
+            _logger.debug("Mesh3DModule._zone_region: settings mid-edit", exc_info=True)
             return None
 
     @staticmethod
@@ -1206,7 +1211,7 @@ class Mesh3DModule(BaseModule):
             try:
                 self._plotter.remove_actor(actor, render=False)
             except Exception:  # noqa: BLE001 - gone with a cleared scene
-                pass
+                _logger.debug("Mesh3DModule._draw_zone_boxes: gone with a cleared scene", exc_info=True)
         self._zone_actors = []
         self._zone_view = None if region is None else (region, filled)
         if region is None:
@@ -1264,7 +1269,7 @@ class Mesh3DModule(BaseModule):
             try:
                 self._plotter.enable_depth_peeling()   # see-through surfaces in order
             except Exception:  # noqa: BLE001 - not every OpenGL has it; still drawn
-                pass
+                _logger.debug("Mesh3DModule._draw_zone_cells: not every OpenGL has it; still drawn", exc_info=True)
         return drawn
 
     @staticmethod
@@ -1790,7 +1795,7 @@ class Mesh3DModule(BaseModule):
                     pts, [str(int(n)) for n in sensors_df["n"]],
                     font_size=11, point_size=1, text_color="#222222", always_visible=True)
             except Exception:  # noqa: BLE001
-                pass
+                _logger.debug("Mesh3DModule._overlay_sensors: ignored error", exc_info=True)
 
     def _render_sensors(self, sensors_df, cfg: dict) -> None:
         if self._plotter is None:
@@ -1934,7 +1939,7 @@ class Mesh3DModule(BaseModule):
             try:
                 self._plotter.add_mesh(mesh.outline(), color="grey")
             except Exception:  # noqa: BLE001 - outline is cosmetic
-                pass
+                _logger.debug("Mesh3DModule.load_view_file: outline is cosmetic", exc_info=True)
             self._plotter.add_axes(); self._plotter.reset_camera()
             self._refresh_plotter()
             # A second repaint after pending resize/expose events prevents the

@@ -55,6 +55,9 @@ from PyHydroGeophysX.qt_apps.widgets.project_dialogs import SaveRunsDialog
 from PyHydroGeophysX.qt_apps.widgets import temperature_panel
 from PyHydroGeophysX.qt_apps.widgets.quality_view import InversionQualityView
 from PyHydroGeophysX.qt_apps.workers import TaskWorker
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 _RUN_ROLE = Qt.UserRole
@@ -160,7 +163,7 @@ def _module_title(module_key: str) -> str:
         if spec and len(spec) > 2 and spec[2]:
             return str(spec[2])
     except Exception:  # noqa: BLE001 - a label must never break the viewer
-        pass
+        _logger.debug("_module_title: a label must never break the viewer", exc_info=True)
     return str(module_key).replace("_", " ").title() or "Other"
 
 
@@ -171,6 +174,7 @@ def _group_key(module_key: str) -> str:
 
         return navigation_key_for(module_key)
     except Exception:  # noqa: BLE001 - grouping must never break the viewer
+        _logger.debug("_group_key: grouping must never break the viewer", exc_info=True)
         return str(module_key)
 
 

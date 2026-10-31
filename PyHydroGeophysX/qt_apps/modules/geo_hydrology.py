@@ -86,6 +86,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _PRODUCTS = [("water_content", "Water content"), ("porosity", "Porosity (where saturated)")]
 #: The steps the assistant names. Each opens the view and the panel the step is
@@ -665,6 +668,7 @@ class GeoHydrologyModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("GeoHydrologyModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
         dlg = QDialog(self)
         dlg.setWindowTitle("ERT → Water Content input format")
@@ -674,6 +678,7 @@ class GeoHydrologyModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("GeoHydrologyModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close_btn = QPushButton("Close"); close_btn.clicked.connect(dlg.accept)
@@ -826,6 +831,7 @@ class GeoHydrologyModule(BaseModule):
             height = {int(m): float(np.mean(z[self._markers == m]))
                       for m in np.unique(self._markers)}
         except Exception:  # noqa: BLE001 - marker order is still an order
+            _logger.debug("GeoHydrologyModule._layers_top_down: marker order is still an order", exc_info=True)
             return layers
         return sorted(layers, key=lambda layer: -height.get(int(layer["marker"]), 0.0))
 

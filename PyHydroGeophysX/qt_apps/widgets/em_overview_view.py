@@ -42,6 +42,9 @@ from PyHydroGeophysX.visualization.basemap import (
     basemap_image,
     fit_local_transform,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: Colours shared with the acquisition-software convention: every sounding in
 #: black, the line being sectioned in red, its zero-distance end in blue.
@@ -353,6 +356,7 @@ class EMOverviewView(QWidget):
             self._fig.savefig(target, dpi=160)
             return str(target)
         except Exception:  # noqa: BLE001 - export is a convenience, not the result
+            _logger.debug("EMOverviewView.save_figure: export is a convenience, not the result", exc_info=True)
             return None
 
     # -- helpers -------------------------------------------------------------

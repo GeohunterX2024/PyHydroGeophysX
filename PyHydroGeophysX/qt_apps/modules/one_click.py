@@ -18,6 +18,9 @@ from PyHydroGeophysX.qt_apps.widgets.ai_presence import (AgentHeader, AgentTimel
                                                           FinishCard, LiveCanvas, RunRoute,
                                                           SteerBar, usage_text)
 from PyHydroGeophysX.qt_apps.widgets import run_replay
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: How many times a module is offered the run's data before giving up on it.
 _OPEN_ATTEMPTS = 3
@@ -828,7 +831,7 @@ class OneClickModule(BaseModule):
             try:
                 glow(glow_state or state)
             except Exception:  # noqa: BLE001 - a display must not stop a run
-                pass
+                _logger.debug("OneClickModule._presence: a display must not stop a run", exc_info=True)
 
     def _show_catalog(self, catalog):
         from PyHydroGeophysX.agents.folder_catalog import ROLES, ROLE_LABELS
@@ -1266,6 +1269,7 @@ class OneClickModule(BaseModule):
                 # there is nothing to annotate until this has run.
                 show(module)
             except Exception:  # noqa: BLE001 - navigation must not stop a run
+                _logger.debug("OneClickModule._follow_along: navigation must not stop a run", exc_info=True)
                 return
             self._current_followed = module
             self.details.appendPlainText(f'-> showing {module} for: {step}')
@@ -1747,7 +1751,7 @@ class OneClickModule(BaseModule):
                 try:
                     show(self.module_key)
                 except Exception:  # noqa: BLE001 - navigation must not stop a run
-                    pass
+                    _logger.debug("OneClickModule._on_asked: navigation must not stop a run", exc_info=True)
             self.tabs.setCurrentWidget(self._live_tab)
             return
         self.pause_label.setText('<b>Waiting for you</b><br>' + prompt)

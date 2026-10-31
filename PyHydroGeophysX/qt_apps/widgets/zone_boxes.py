@@ -37,6 +37,9 @@ from PySide6.QtWidgets import (
 from PyHydroGeophysX.core._mesh_3d_builder import ZONE_MARKER_START, normalize_box_zones
 from PyHydroGeophysX.inversion.ert_zones import zone_colors
 from PyHydroGeophysX.qt_apps import theme
+import logging
+
+_logger = logging.getLogger(__name__)
 
 __all__ = ["ZoneBoxEditor", "clip_box"]
 
@@ -274,6 +277,7 @@ class ZoneBoxEditor(QGroupBox):
             try:
                 region = self._region_provider()
             except Exception:  # noqa: BLE001 - settings mid-edit; place it anyway
+                _logger.debug("ZoneBoxEditor._region: settings mid-edit; place it anyway", exc_info=True)
                 region = None
         return region or _DEFAULT_REGION
 

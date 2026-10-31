@@ -40,6 +40,9 @@ from PySide6.QtWidgets import (
 )
 
 from PyHydroGeophysX.qt_apps import theme
+import logging
+
+_logger = logging.getLogger(__name__)
 
 __all__ = [
     "APPARENT_RESISTIVITY", "ARRAY", "COVERAGE", "DENSITY", "DIVERGING",
@@ -246,13 +249,13 @@ def to_pyqtgraph(name: str):
         try:
             return pg.colormap.get("viridis")
         except Exception:  # noqa: BLE001 - fall through to matplotlib's definition
-            pass
+            _logger.debug("to_pyqtgraph: fall through to matplotlib's definition", exc_info=True)
     try:
         cmap = pg.colormap.getFromMatplotlib(name)
         if cmap is not None:
             return cmap
     except Exception:  # noqa: BLE001 - sample it instead
-        pass
+        _logger.debug("to_pyqtgraph: sample it instead", exc_info=True)
     samples = np.linspace(0.0, 1.0, 256)
     rgba = np.round(matplotlib_colormap(name)(samples) * 255.0).astype(np.ubyte)
     return pg.ColorMap(samples, rgba)
@@ -283,7 +286,7 @@ def apply_to_histogram(histogram: Any, name: str, *, preset: Optional[str] = Non
             gradient.showTicks(True)
             return
         except Exception:  # noqa: BLE001 - not a preset after all: set it in full
-            pass
+            _logger.debug("apply_to_histogram: not a preset after all: set it in full", exc_info=True)
     gradient.setColorMap(to_pyqtgraph(name))
     gradient.showTicks(False)
 

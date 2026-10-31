@@ -70,6 +70,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 try:
     from PyHydroGeophysX.data_processing.seismic import (
@@ -1183,7 +1186,7 @@ class SeismicProcessingModule(BaseModule):
             try:
                 return np.asarray(normalize_traces(disp, trace_axis=1), dtype=float)
             except Exception:
-                pass
+                _logger.debug("SeismicProcessingModule._normalize_traces: ignored error", exc_info=True)
         peak = np.nanmax(np.abs(disp), axis=0, keepdims=True)
         peak[peak == 0] = 1.0
         return disp / peak
@@ -1277,6 +1280,7 @@ class SeismicProcessingModule(BaseModule):
         try:
             xs = [float(h.source_x) for h in headers if np.isfinite(h.source_x)]
         except Exception:  # noqa: BLE001
+            _logger.debug("SeismicProcessingModule._shot_x_from_headers: ignored error", exc_info=True)
             return None
         if not xs:
             return None
@@ -1951,7 +1955,7 @@ class SeismicProcessingModule(BaseModule):
             if data is not None and int(data.size()) > 0 and data.haveData("t"):
                 return data
         except Exception:  # noqa: BLE001 - fall through to the table parser
-            pass
+            _logger.debug("SeismicProcessingModule._load_traveltime_container: fall through to the table parser", exc_info=True)
         # 2. Generic columnar text / CSV.
         arr = np.atleast_2d(np.asarray(io_utils.load_2d_array(p), dtype=float))
         if arr.shape[1] == 3:
@@ -2264,6 +2268,7 @@ class SeismicProcessingModule(BaseModule):
             try:
                 coverage = np.asarray(mgr.coverage(), dtype=float)
             except Exception:  # noqa: BLE001 - ray coverage is optional
+                _logger.debug("SeismicProcessingModule._export_velocity_model: ray coverage is optional", exc_info=True)
                 coverage = None
             export_model_csv(
                 out, mesh, velocity,
@@ -2391,6 +2396,7 @@ class SeismicProcessingModule(BaseModule):
             try:
                 cov = np.asarray(getattr(mgr, method)(), dtype=float)
             except Exception:  # noqa: BLE001 - the engine may not report coverage
+                _logger.debug("SeismicProcessingModule._model_velocity: the engine may not report coverage", exc_info=True)
                 continue
             if cov.size == values.size and (cov > threshold).any():
                 keep = cov > threshold
@@ -3231,6 +3237,7 @@ class SeismicProcessingModule(BaseModule):
             thr = 3.0 * scale
             return sorted(int(traces[i]) for i in range(len(traces)) if abs(resid[i] - med) > thr)
         except Exception:  # noqa: BLE001
+            _logger.debug("SeismicProcessingModule._suspect_pick_traces: ignored error", exc_info=True)
             return []
 
     def _agent_set_pick(self, args: Dict[str, Any]) -> Dict[str, Any]:

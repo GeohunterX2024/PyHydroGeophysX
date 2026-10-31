@@ -12,6 +12,9 @@ import pyqtgraph as pg
 from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QVBoxLayout, QWidget
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ZoomableImageView(QWidget):
@@ -37,6 +40,7 @@ class ZoomableImageView(QWidget):
 
             arr = mpimg.imread(str(path))  # (H, W) or (H, W, 3/4)
         except Exception:  # noqa: BLE001
+            _logger.debug("ZoomableImageView.set_image_file: ignored error", exc_info=True)
             return False
         arr = np.asarray(arr)
         if arr.ndim == 2:

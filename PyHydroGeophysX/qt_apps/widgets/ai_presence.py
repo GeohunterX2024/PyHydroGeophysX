@@ -62,6 +62,9 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QScrollArea,
 
 from PyHydroGeophysX.qt_apps import theme
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: What the agent is doing. One vocabulary for every widget in this module.
 IDLE, THINKING, WORKING, WAITING, DONE, FAILED = (
@@ -504,6 +507,7 @@ def module_title(key: str) -> str:
     try:
         from PyHydroGeophysX.qt_apps.modules import MODULE_SPECS
     except Exception:  # noqa: BLE001 - a name is cosmetic
+        _logger.debug("module_title: a name is cosmetic", exc_info=True)
         return str(key)
     spec = MODULE_SPECS.get(str(key))
     return spec[2] if spec else str(key)

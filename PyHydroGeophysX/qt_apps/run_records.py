@@ -18,6 +18,9 @@ from pathlib import Path
 import platform
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: Every line the page logged for the run, as the Log window showed it.
 RUN_LOG_NAME = "run_log.txt"
@@ -91,7 +94,7 @@ def run_documents(run_dir: Union[str, Path]) -> List[Dict[str, Any]]:
             with np.load(pairs, allow_pickle=False) as saved:
                 applied = bool(saved["applied"])
         except Exception:  # noqa: BLE001 - a damaged file only loses the label
-            pass
+            _logger.debug("run_documents: a damaged file only loses the label", exc_info=True)
     if (base / ERROR_MODEL_FIGURE_NAME).is_file():
         found.append({"artifact_id": "record:reciprocal_error_model", "kind": "figure",
                       "format": "png", "path": ERROR_MODEL_FIGURE_NAME,

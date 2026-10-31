@@ -84,6 +84,9 @@ from PyHydroGeophysX.agents.skills import (TOOL_NAME as SKILL_TOOL, index_text a
                                            run_tool as run_skill_tool,
                                            tool_spec as skill_tool_spec)
 from PyHydroGeophysX.agents.studio_tools import tool_specs
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _P = theme.PALETTE
 
@@ -528,6 +531,7 @@ class AssistantChatPanel(QWidget):
         try:
             self._vision = bool(self._provider.supports_vision())
         except Exception:  # noqa: BLE001 - an odd provider simply gets no vision
+            _logger.debug("AssistantChatPanel._refresh_capabilities: an odd provider simply gets no vision", exc_info=True)
             self._vision = False
         agent = assistant_registry.active()
         # Read once per assistant and model; a skill added on disk is seen on
@@ -1874,6 +1878,7 @@ class AssistantChatPanel(QWidget):
         try:
             ready = bool(provider.available()[0])
         except Exception:  # noqa: BLE001 - a provider that cannot say is not ready
+            _logger.debug("AssistantChatPanel._prewarm_provider: a provider that cannot say is not ready", exc_info=True)
             ready = False
         if last is not None and last[0] is provider and last[1] == ready:
             return
@@ -2053,7 +2058,7 @@ class AssistantChatPanel(QWidget):
                 try:
                     watch(self._on_job_failed)
                 except Exception:  # noqa: BLE001 - following the job is a courtesy
-                    pass
+                    _logger.debug("AssistantChatPanel._run_call: following the job is a courtesy", exc_info=True)
         self._answer_tool(call, result)
         self._render_tool_result(name, result)
         self._executed_in_turn = True
@@ -2363,6 +2368,7 @@ class AssistantChatPanel(QWidget):
         try:
             raw = base64.b64decode(data_b64)
         except Exception:  # noqa: BLE001
+            _logger.debug("AssistantChatPanel._render_image: ignored error", exc_info=True)
             return
         image = QImage()
         if not image.loadFromData(raw, "PNG"):

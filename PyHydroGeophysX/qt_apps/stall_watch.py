@@ -14,13 +14,14 @@ Off unless asked for. Set the threshold in milliseconds::
 
     PHGX_STALL_WATCH_MS=300
 
-Findings go to stderr immediately and to the studio log once the UI thread is
+Findings go to the application log (stderr when there is none) immediately and to the studio log once the UI thread is
 free again. ``PHGX_STALL_WATCH_FILE`` also appends them to a file, which survives
 a hard kill when the freeze never ends.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import threading
@@ -29,6 +30,8 @@ import traceback
 from typing import List, Optional
 
 from PySide6.QtCore import QObject, QTimer, Signal
+
+_logger = logging.getLogger(__name__)
 
 #: How often the main thread records a heartbeat, and how often it is checked.
 BEAT_INTERVAL_MS = 50
@@ -107,18 +110,16 @@ class StallWatcher(QObject):
         head = f"UI thread stalled for {seconds * 1000:.0f} ms. Main-thread stack:"
         body = "\n".join(stack)
         text = f"{head}\n{body}"
-        try:
-            print(f"[stall-watch] {text}", file=sys.stderr, flush=True)
-        except Exception:  # noqa: BLE001 - diagnostics must never raise
-            pass
+        # Logging never raises; with no log configured it writes to stderr.
+        _logger.warning("[stall-watch] %s", text)
         if self._path:
             try:
                 with open(self._path, "a", encoding="utf-8") as handle:
                     handle.write(f"\n=== {time.strftime('%H:%M:%S')} {text}\n")
-            except Exception:  # noqa: BLE001
-                pass
+            except OSError:
+                _logger.debug("cannot append to %s", self._path, exc_info=True)
         # Queued across the thread boundary, so it lands after the UI recovers.
-        self.stalled.emit(f"{head} see stderr for the stack "
+        self.stalled.emit(f"{head} see the application log for the stack "
                           f"({stack[-1].strip() if stack else 'no frames'})")
 
 

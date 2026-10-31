@@ -30,6 +30,9 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional
 import uuid
 
 from PyHydroGeophysX._internal.utils import json_safe
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 STORE_SCHEMA_VERSION = "1"
@@ -713,7 +716,7 @@ class ResultsStore:
             module_key = next((item.result_key for item in MODULE_DESCRIPTORS.values()
                                if workflow_id in item.workflow_ids), module_key)
         except Exception:  # noqa: BLE001 - the plain prefix will do
-            pass
+            _logger.debug("ResultsStore.recover_run: the plain prefix will do", exc_info=True)
         try:
             started = datetime.strptime(run_dir.name[:15], "%Y%m%d-%H%M%S").replace(
                 tzinfo=timezone.utc)

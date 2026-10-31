@@ -83,6 +83,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _METHODS = ["ERT", "SRT", "TDEM", "FDEM", "Gravity"]
 _METHOD_LABELS = {
@@ -991,6 +994,7 @@ class HydroGeophysicsModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("HydroGeophysicsModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
         dlg = QDialog(self)
         dlg.setWindowTitle("Hydro input data format")
@@ -1001,6 +1005,7 @@ class HydroGeophysicsModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001 - very old Qt without setMarkdown
+            _logger.debug("HydroGeophysicsModule._show_format_help: very old Qt without setMarkdown", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close_btn = QPushButton("Close")
@@ -1117,6 +1122,7 @@ class HydroGeophysicsModule(BaseModule):
         try:
             return inactive_cells(self._bot)
         except Exception:  # noqa: BLE001 - masking is cosmetic
+            _logger.debug("HydroGeophysicsModule._inactive_cells: masking is cosmetic", exc_info=True)
             return None
 
     def _safe_load(self, path, mmap: bool = False, text: bool = False):

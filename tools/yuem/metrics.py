@@ -16,6 +16,7 @@ rule of ADR 0003 on files changed since the upstream base.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import sys
@@ -54,12 +55,60 @@ DOWN_ONLY = (
     "global_np_random",
     "inprocess_worker_modules",
     "layer_exceptions",
+    "own_silent_broad_except",
 )
 UP_ONLY = ("tests", "logging_getlogger")
 LONG_FILE = 2000
 
 
 ALLOWLIST = ROOT / ".yuem" / "metrics_allowlist.toml"
+
+#: Names whose method calls in an ``except`` body count as reporting the error.
+_REPORTING_OBJECTS = frozenset({"_logger", "logger", "log", "logging", "warnings"})
+
+
+def _reports(handler: ast.ExceptHandler) -> bool:
+    """True when the handler re-raises, uses the exception, logs, or tells the user."""
+    for statement in handler.body:
+        for node in ast.walk(statement):
+            if isinstance(node, ast.Raise):
+                return True
+            if handler.name and isinstance(node, ast.Name) and node.id == handler.name:
+                return True
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "report_error":
+                    return True
+                if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+                    if func.value.id in _REPORTING_OBJECTS:
+                        return True
+                    if func.value.id == "self" and func.attr in {"log", "_log"}:
+                        return True
+    return False
+
+
+def silent_broad_excepts(text: str) -> int:
+    """``except Exception``/``except:`` handlers that swallow the error without a trace.
+
+    A broad handler is legitimate at a boundary (a Qt slot must not raise into
+    the event loop), but then it must leave a trace: re-raise, report the
+    exception, or log it. Plan M2 target for own code: zero.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return 0
+    count = 0
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+        kinds = node.type.elts if isinstance(node.type, ast.Tuple) else [node.type]
+        broad = node.type is None or any(
+            isinstance(kind, ast.Name) and kind.id in {"Exception", "BaseException"} for kind in kinds
+        )
+        if broad and not _reports(node):
+            count += 1
+    return count
 
 
 def _rel(path: Path) -> str:
@@ -71,7 +120,11 @@ def load_allowlist() -> dict[str, dict[str, str]]:
     if not ALLOWLIST.exists():
         return {}
     data = tomllib.loads(ALLOWLIST.read_text(encoding="utf-8"))
-    return {metric: {str(k): str(v) for k, v in files.items()} for metric, files in data.items()}
+    return {
+        metric: {str(k): str(v) for k, v in files.items()}
+        for metric, files in data.items()
+        if metric in PATTERNS
+    }
 
 
 def collect() -> dict[str, object]:
@@ -83,6 +136,7 @@ def collect() -> dict[str, object]:
     by_class: dict[str, dict[str, int]] = {}
     long_files: list[str] = []
     worker_modules: list[str] = []
+    silent = 0
     lines_total = 0
     for path in tracked_python_files(PACKAGE):
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -94,6 +148,8 @@ def collect() -> dict[str, object]:
             long_files.append(rel)
         if rel.startswith(f"{PACKAGE}/qt_apps/modules/") and WORKER_RE.search(text):
             worker_modules.append(rel)
+        if cls == "own" and rel not in allow.get("broad_except", {}):
+            silent += silent_broad_excepts(text)
         bucket = by_class.setdefault(cls, dict.fromkeys(PATTERNS, 0))
         for name, pattern in PATTERNS.items():
             hits = len(pattern.findall(text))
@@ -117,6 +173,7 @@ def collect() -> dict[str, object]:
         **totals,
         "files_over_2000": len(long_files),
         "inprocess_worker_modules": len(worker_modules),
+        "own_silent_broad_except": silent,
         "by_class": by_class,
         "allowlisted": {name: count for name, count in allowlisted.items() if count},
         "long_files": sorted(long_files),
@@ -151,6 +208,7 @@ def file_length_violations() -> list[str]:
     """Changed Python files that break the length rule of ADR 0003."""
     limit = ownership().max_file_lines
     base = upstream_ref()
+    ceilings = length_ceilings()
     problems: list[str] = []
     for rel in changed_files(base):
         path = ROOT / rel
@@ -159,12 +217,24 @@ def file_length_violations() -> list[str]:
         lines = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
         if lines <= limit:
             continue
+        ceiling = ceilings.get(rel)
+        if ceiling is not None and lines <= ceiling:
+            continue
         before = file_at(base, rel)
         if before is None:
             problems.append(f"{rel}: new file has {lines} lines (limit {limit})")
-        elif lines > len(before.splitlines()):
-            problems.append(f"{rel}: grew from {len(before.splitlines())} to {lines} lines (limit {limit})")
+        elif lines > max(len(before.splitlines()), ceiling or 0):
+            allowed = max(len(before.splitlines()), ceiling or 0)
+            problems.append(f"{rel}: grew from {allowed} to {lines} lines (limit {limit})")
     return problems
+
+
+def length_ceilings() -> dict[str, int]:
+    """[file_length] of the allowlist: legacy long files with a reviewed line ceiling."""
+    if not ALLOWLIST.exists():
+        return {}
+    table = tomllib.loads(ALLOWLIST.read_text(encoding="utf-8")).get("file_length", {})
+    return {str(rel): int(entry["lines"]) for rel, entry in table.items()}
 
 
 def _count(metrics: dict[str, object], name: str, default: int) -> int:

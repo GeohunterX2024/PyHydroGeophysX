@@ -84,6 +84,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: The steps the assistant names. Each opens the view and the panel the step is
 #: done in (see _go_to); the page itself does not page through them.
@@ -467,6 +470,7 @@ class Seismic3DModule(BaseModule):
         try:
             from PyHydroGeophysX.core.kriging_3d import GSTOOLS_AVAILABLE
         except Exception:  # noqa: BLE001
+            _logger.debug("Seismic3DModule._build_grid_group: ignored error", exc_info=True)
             GSTOOLS_AVAILABLE = False
         if not GSTOOLS_AVAILABLE:
             self._interp.model().item(self._interp.findData("kriging")).setEnabled(False)
@@ -862,6 +866,7 @@ class Seismic3DModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("Seismic3DModule._show_format_help: ignored error", exc_info=True)
             text = _INPUT_FORMAT_FALLBACK
         dlg = QDialog(self); dlg.setWindowTitle("Seismic → Structure input format")
         dlg.resize(760, 620); lay = QVBoxLayout(dlg)
@@ -869,6 +874,7 @@ class Seismic3DModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("Seismic3DModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close_btn = QPushButton("Close"); close_btn.clicked.connect(dlg.accept)

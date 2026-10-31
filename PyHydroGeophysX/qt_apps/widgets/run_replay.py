@@ -27,6 +27,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton,
                                QSlider)
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: The file a run's recording is saved as, in its output folder.
 FILE_NAME = "live_replay.json"
@@ -306,7 +309,7 @@ class ReplayPlayer(QObject):
         try:
             method(*args, **kwargs)
         except Exception:  # noqa: BLE001 - one call that no longer applies must not end a replay
-            pass
+            _logger.debug("ReplayPlayer._apply: one call that no longer applies must not end a replay", exc_info=True)
 
     def _announce(self) -> None:
         self.moved.emit(self._position, self.length(), self.real_time(self._position))

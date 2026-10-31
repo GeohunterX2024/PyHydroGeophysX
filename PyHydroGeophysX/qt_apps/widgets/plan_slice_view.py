@@ -22,6 +22,9 @@ from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout
 from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
 from PyHydroGeophysX.visualization.axis_units import set_length_axis, to_display_length
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class PlanSliceView(QWidget):
@@ -293,6 +296,7 @@ class PlanSliceView(QWidget):
                                           levels=levels, extend="both",
                                           cmap=cmap, norm=norm)
             except Exception:  # noqa: BLE001 - degenerate triangulation -> points only
+                _logger.debug("PlanSliceView._redraw: degenerate triangulation -> points only", exc_info=True)
                 mappable = None
         surface = mappable
         sc = ax.scatter(x[good], y[good], c=vals[good], cmap=cmap, norm=norm,

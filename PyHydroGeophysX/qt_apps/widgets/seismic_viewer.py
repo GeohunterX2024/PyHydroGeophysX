@@ -32,6 +32,9 @@ from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets.color_range import ColorRange
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout, group
 from PyHydroGeophysX.qt_apps.widgets.readout import ReadoutLabel
+import logging
+
+_logger = logging.getLogger(__name__)
 
 pg.setConfigOptions(imageAxisOrder="row-major")
 
@@ -110,7 +113,7 @@ def first_arrival_onsets(disp: np.ndarray, dt: Optional[float], ratio_thr: float
                     cand = np.where(ratio[lo:, j] > ratio_thr)[0]
                     onsets[j] = float(lo + int(cand[0])) if cand.size else float(trend[j])
         except Exception:
-            pass
+            _logger.debug("first_arrival_onsets: ignored error", exc_info=True)
     return onsets
 
 
@@ -525,6 +528,7 @@ class SeismicViewer(QWidget):
         try:
             path = pg_fn.arrayToQPath(fill_x, fill_y, connect="finite")
         except Exception:  # noqa: BLE001 - rare: fall back to a safe per-trace build
+            _logger.debug("SeismicViewer._draw_wiggle: rare: fall back to a safe per-trace build", exc_info=True)
             path = self._wiggle_fill_fallback(pos, base, t)
         self._fill_item.setPath(path)
 

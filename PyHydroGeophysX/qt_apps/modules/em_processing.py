@@ -77,6 +77,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _FILE_FILTER = (
     "EM data (*.csv *.txt *.dat *.xyz);;"
@@ -2239,6 +2242,7 @@ class EMProcessingModule(BaseModule):
         try:
             g = em_data.load_line_geometry(str(found))
         except Exception:  # noqa: BLE001 - a bad companion file just means manual load
+            _logger.debug("EMProcessingModule._maybe_auto_geometry: a bad companion file just means manual load", exc_info=True)
             return
         self._geom_positions = g["positions"]
         self._geom_heights = g["heights"] if g["has_heights"] else None
@@ -2970,6 +2974,7 @@ class EMProcessingModule(BaseModule):
         try:
             text = doc_path.read_text(encoding="utf-8")
         except Exception:  # noqa: BLE001
+            _logger.debug("EMProcessingModule._show_format_help: ignored error", exc_info=True)
             text = "EM sounding — FDEM: frequency, real, imag · TDEM: time, response."
         dlg = QDialog(self); dlg.setWindowTitle("EM sounding input format")
         dlg.resize(720, 600); lay = QVBoxLayout(dlg)
@@ -2977,6 +2982,7 @@ class EMProcessingModule(BaseModule):
         try:
             browser.setMarkdown(text)
         except Exception:  # noqa: BLE001
+            _logger.debug("EMProcessingModule._show_format_help: ignored error", exc_info=True)
             browser.setPlainText(text)
         lay.addWidget(browser)
         close = QPushButton("Close"); close.clicked.connect(dlg.accept); lay.addWidget(close)

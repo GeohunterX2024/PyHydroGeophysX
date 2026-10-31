@@ -16,6 +16,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from PyHydroGeophysX.qt_apps import io_utils
 from PyHydroGeophysX.qt_apps.results_store import ResultsStore, RunHandle
 from PyHydroGeophysX._internal.utils import utc_now as _utc_now
+import logging
+
+_logger = logging.getLogger(__name__)
 
 RESULT_FILENAME = "full_studio_result.json"
 APP_NAME = "PyHydroGeophysX Professional Studio"
@@ -297,7 +300,7 @@ class StudioState:
             try:
                 watcher()
             except Exception:  # noqa: BLE001 - an indicator must not break a run
-                pass
+                _logger.debug("StudioState._notify_runs_changed: an indicator must not break a run", exc_info=True)
 
     def finish_run(
         self, module_name: str, result: Any, operation_id: str = ""

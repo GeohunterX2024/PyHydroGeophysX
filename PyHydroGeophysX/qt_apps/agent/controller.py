@@ -24,6 +24,9 @@ from typing import Any, Callable, Dict, List, Optional
 from PySide6.QtCore import QObject, QTimer
 
 from PyHydroGeophysX.qt_apps.agent import capture as capture_mod
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: One-line purpose per module so the agent can route a task to the right one.
 MODULE_PURPOSES: Dict[str, str] = {
@@ -119,6 +122,7 @@ def _page_failure(page: Any) -> str:
     try:
         return _state_failure((page.agent_describe() or {}).get("state"))
     except Exception:  # noqa: BLE001 - a page that cannot say is taken as fine
+        _logger.debug("_page_failure: a page that cannot say is taken as fine", exc_info=True)
         return ""
 
 
@@ -426,6 +430,7 @@ class StudioController(QObject):
             try:
                 state = (page.agent_describe() or {}).get("state")
             except Exception:  # noqa: BLE001
+                _logger.debug("StudioController._answer_when_idle.done: ignored error", exc_info=True)
                 state = None
             answer = dict(result)
             status = str(answer.get("status") or "").lower()
@@ -734,6 +739,7 @@ class StudioController(QObject):
         try:
             return capture_mod.view_names(page)
         except Exception:  # noqa: BLE001 - describing a module must not fail on this
+            _logger.debug("StudioController._view_names: describing a module must not fail on this", exc_info=True)
             return [capture_mod.PAGE_VIEW]
 
     def _capture_view(self, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -772,6 +778,7 @@ class StudioController(QObject):
         try:
             context = getter(view)
         except Exception:  # noqa: BLE001 - context is a bonus, never a failure
+            _logger.debug("StudioController._view_context: context is a bonus, never a failure", exc_info=True)
             return None
         return context if isinstance(context, dict) and context else None
 
@@ -795,6 +802,7 @@ class StudioController(QObject):
         try:
             context = st.context_summary()
         except Exception:  # noqa: BLE001
+            _logger.debug("StudioController._get_state: ignored error", exc_info=True)
             context = {}
         return {
             "status": "ok",

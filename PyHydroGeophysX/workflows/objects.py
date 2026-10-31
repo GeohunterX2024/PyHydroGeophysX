@@ -30,6 +30,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Tuple
 
 import numpy as np
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: Manifest layout; a studio reading a newer one says so instead of guessing.
 OBJECTS_SCHEMA = 1
@@ -177,6 +180,7 @@ class _Writer:
                 item = getattr(value, name, None)
                 return item() if callable(item) else item
             except Exception:  # noqa: BLE001 - a part the manager cannot give
+                _logger.debug("_Writer.manager.part: a part the manager cannot give", exc_info=True)
                 return None
 
         response = part("response")
@@ -190,6 +194,7 @@ class _Writer:
                 if item is not None:
                     parts[key] = self.encode_new(np.asarray(item, dtype=float), f"{stem}.{key}")
             except Exception:  # noqa: BLE001 - left out; the page does without
+                _logger.debug("_Writer.manager: left out; the page does without", exc_info=True)
                 continue
         rays = part("getRayPaths")
         if rays:
@@ -197,13 +202,13 @@ class _Writer:
                 parts["ray_paths"] = self.encode(
                     [np.asarray(path, dtype=float) for path in rays], f"{stem}.rays")
             except Exception:  # noqa: BLE001
-                pass
+                _logger.debug("_Writer.manager: ignored error", exc_info=True)
         data = getattr(value, "data", None)
         if _pg_class(data).startswith("DataContainer"):
             try:
                 parts["data"] = self.encode_new(data, f"{stem}.data")
             except Exception:  # noqa: BLE001
-                pass
+                _logger.debug("_Writer.manager: ignored error", exc_info=True)
         return {"kind": "manager", "class": type(value).__name__, "parts": parts}
 
 

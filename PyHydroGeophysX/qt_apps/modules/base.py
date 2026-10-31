@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import html
+import logging
 import os
 import re
 import time
@@ -15,6 +16,8 @@ from PySide6.QtCore import QEvent, QObject, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QPlainTextEdit,
                                QVBoxLayout, QWidget)
+
+_logger = logging.getLogger(__name__)
 
 LogFn = Callable[..., None]
 #: One offer in a module's export menu: what it writes, and how to write it.
@@ -30,6 +33,14 @@ FIGURE_SUFFIXES = (".png", ".jpg", ".jpeg", ".svg")
 _THUMBNAILS: "OrderedDict[Tuple[str, int, int, int], QPixmap]" = OrderedDict()
 #: Enough for several runs' strips; one entry is at most a few hundred KB.
 _THUMBNAIL_LIMIT = 32
+#: Page log levels (``BaseModule.log``) as logging levels; others are INFO.
+_LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "warning": logging.WARNING,
+    "warn": logging.WARNING,
+    "error": logging.ERROR,
+    "critical": logging.CRITICAL,
+}
 
 #: The activity of a page whose running workers say nothing more specific.
 GENERIC_ACTIVITY = "Working…"
@@ -64,7 +75,7 @@ def report_error(page: Any, message: Any) -> None:
         try:
             callback(page, str(message))
         except Exception:  # noqa: BLE001 - a watcher must not break the page
-            pass
+            _logger.debug("report_error: a watcher must not break the page", exc_info=True)
 
 
 def _reports_progress(worker: Any) -> bool:
@@ -367,6 +378,7 @@ def _assistant_name() -> str:
 
         return html.escape(active().name)
     except Exception:  # noqa: BLE001 - a label must not fail
+        _logger.debug("_assistant_name: a label must not fail", exc_info=True)
         return "The assistant"
 
 
@@ -543,17 +555,20 @@ class BaseModule(QWidget):
         return ""
 
     def log(self, message: str, level: str = "info") -> None:
+        logging.getLogger(type(self).__module__).log(
+            _LOG_LEVELS.get(str(level).lower(), logging.INFO), "%s", message
+        )
         try:
             self._log_fn(message, level)
         except Exception:
-            pass
+            _logger.debug("BaseModule.log: ignored error", exc_info=True)
         self._keep_log_line(message, level)
         # Whoever follows the page's work - the assistant, for a job it started.
         for listener in list(getattr(self, "log_listeners", ())):
             try:
                 listener(message, level)
             except Exception:  # noqa: BLE001 - a listener must not break the page
-                pass
+                _logger.debug("BaseModule.log: a listener must not break the page", exc_info=True)
         if str(level).lower() in ("error", "critical"):
             report_error(self, message)
 
@@ -665,6 +680,7 @@ class BaseModule(QWidget):
             path = Path(handle.logs_dir) / RUN_LOG_NAME
             run_id = handle.run_id
         except Exception:  # noqa: BLE001 - a state without run folders (tests)
+            _logger.debug("BaseModule._open_run_log: a state without run folders (tests)", exc_info=True)
             return
         record = RunLog(path, f"Log of run {run_id} ({self.module_title}, {operation_id})")
         for entry in self._turn_log:
@@ -705,7 +721,7 @@ class BaseModule(QWidget):
                 title=f"Settings of run {handle.run_id} ({self.module_title})",
                 outcome=outcome)
         except Exception:  # noqa: BLE001 - a record, never a reason to fail a run
-            pass
+            _logger.debug("BaseModule._write_run_settings: a record, never a reason to fail a run", exc_info=True)
 
     def _keep_log_line(self, message: Any, level: str) -> None:
         """Hand a logged line to the open run logs, and to the turn's lines."""
@@ -744,7 +760,7 @@ class BaseModule(QWidget):
             try:
                 return active(self.module_key, operation_id) is handle
             except Exception:  # noqa: BLE001 - fall back to the record's status
-                pass
+                _logger.debug("BaseModule._run_still_open: fall back to the record's status", exc_info=True)
         return getattr(getattr(handle, "record", None), "status", "running") == "running"
 
     def _watch_run_logs(self) -> None:
@@ -798,7 +814,7 @@ class BaseModule(QWidget):
                     and store.get_run(record.run_id) is record:
                 store.update_run(record.run_id)
         except Exception:  # noqa: BLE001 - the warnings stay in the run log regardless
-            pass
+            _logger.debug("BaseModule._keep_run_warnings: the warnings stay in the run log regardless", exc_info=True)
 
     def stop_button(self, what: str = "The inversion"):
         """A Stop button for this page's runs, to sit beside the run's progress bar.
@@ -943,7 +959,7 @@ class BaseModule(QWidget):
                     worker.quit()
                     worker.wait(wait_ms)
             except Exception:  # noqa: BLE001 - shutdown best effort
-                pass
+                _logger.debug("BaseModule.stop_workers: shutdown best effort", exc_info=True)
         if had_workers:
             self.state.cancel_module_runs(
                 self.module_key, "Studio closed during computation"

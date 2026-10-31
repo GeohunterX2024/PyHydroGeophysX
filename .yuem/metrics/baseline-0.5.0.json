@@ -1,15 +1,16 @@
 {
-  "python_lines": 189125,
-  "tests": 244,
-  "test_files": 14,
-  "broad_except": 805,
-  "print_calls": 310,
-  "suppressions": 713,
-  "logging_getlogger": 2,
+  "python_lines": 189792,
+  "tests": 257,
+  "test_files": 16,
+  "broad_except": 800,
+  "print_calls": 299,
+  "suppressions": 708,
+  "logging_getlogger": 48,
   "os_environ": 23,
   "global_np_random": 0,
   "files_over_2000": 17,
   "inprocess_worker_modules": 10,
+  "own_silent_broad_except": 0,
   "by_class": {
     "follow": {
       "broad_except": 234,
@@ -20,11 +21,11 @@
       "global_np_random": 0
     },
     "own": {
-      "broad_except": 369,
-      "print_calls": 11,
-      "suppressions": 435,
-      "logging_getlogger": 1,
-      "os_environ": 13,
+      "broad_except": 364,
+      "print_calls": 0,
+      "suppressions": 430,
+      "logging_getlogger": 47,
+      "os_environ": 17,
       "global_np_random": 0
     },
     "frozen": {
@@ -38,7 +39,7 @@
   },
   "allowlisted": {
     "broad_except": 8,
-    "print_calls": 13,
+    "print_calls": 24,
     "suppressions": 8,
     "global_np_random": 1
   },

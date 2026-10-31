@@ -27,6 +27,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from PySide6.QtCore import QBuffer, QByteArray, Qt
 from PySide6.QtWidgets import QWidget
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #: Longest edge kept in a captured image, in pixels.
 MAX_EDGE_PX = int(os.getenv("PHGX_AGENT_CAPTURE_MAX_PX", "1400"))
@@ -57,6 +60,7 @@ def _is_visible(widget: QWidget) -> bool:
     try:
         return bool(widget.isVisible() and widget.width() > 8 and widget.height() > 8)
     except Exception:  # noqa: BLE001 - a half-constructed widget is simply not capturable
+        _logger.debug("_is_visible: a half-constructed widget is simply not capturable", exc_info=True)
         return False
 
 
@@ -72,6 +76,7 @@ def discover_views(page: QWidget) -> List[Dict[str, Any]]:
         try:
             mapping = declared() or {}
         except Exception:  # noqa: BLE001
+            _logger.debug("discover_views: ignored error", exc_info=True)
             mapping = {}
         if isinstance(mapping, dict):
             found = [{"name": str(k), "widget": w, "visible": _is_visible(w)}
@@ -128,13 +133,13 @@ def _render(widget: QWidget) -> bytes:
         try:
             return _figure_png(fig)
         except Exception:  # noqa: BLE001 - fall through to the widget grab
-            pass
+            _logger.debug("_render: fall through to the widget grab", exc_info=True)
     plotter = getattr(widget, "_plotter", None)
     if plotter is not None and hasattr(plotter, "screenshot"):
         try:
             return _plotter_png(plotter)
         except Exception:  # noqa: BLE001
-            pass
+            _logger.debug("_render: ignored error", exc_info=True)
     return _pixmap_png(widget.grab())
 
 

@@ -47,6 +47,9 @@ from PyHydroGeophysX.qt_apps.widgets.array_viewer import ArrayViewer
 from PyHydroGeophysX.qt_apps.widgets.log_panel import LogPanel
 from PyHydroGeophysX.qt_apps.widgets.project_dialogs import NewProjectDialog, SaveRunsDialog
 from PyHydroGeophysX.qt_apps.widgets.project_tree import ProjectTree
+import logging
+
+_logger = logging.getLogger(__name__)
 
 WINDOW_TITLE = "PyHydroGeophysX Professional Studio"
 
@@ -84,7 +87,7 @@ def _stop_page_workers(pages) -> None:
         try:
             page.stop_workers()
         except Exception:  # noqa: BLE001 - shutdown is best effort
-            pass
+            _logger.debug("_stop_page_workers: shutdown is best effort", exc_info=True)
 
 
 class PyHydroGeophysXStudio(QMainWindow):
@@ -975,7 +978,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             try:
                 viewer.refresh()
             except Exception:  # noqa: BLE001 - refreshing a view is best effort
-                pass
+                _logger.debug("PyHydroGeophysXStudio._refresh_model_viewer: refreshing a view is best effort", exc_info=True)
 
     def _resolve_unsaved_runs(self, reason: str,
                               stop_running: Optional[Callable[[], None]] = None) -> bool:
@@ -1309,5 +1312,5 @@ class PyHydroGeophysXStudio(QMainWindow):
         try:
             self._save_window_settings()
         except Exception:  # noqa: BLE001 - persistence is best effort
-            pass
+            _logger.debug("PyHydroGeophysXStudio.closeEvent: persistence is best effort", exc_info=True)
         super().closeEvent(event)

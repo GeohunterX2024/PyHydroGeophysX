@@ -26,7 +26,7 @@
 3. 快速层测试：`pytest -m "not slow and not golden and not numerical"`。
 4. import-linter 分层契约（M2.2 起）。
 5. 棘轮：`python tools/yuem/metrics.py --check`。
-6. 新增或改动的 Python 文件不得超过 1500 行（存量超长文件只要求不变长）。
+6. 新增或改动的 Python 文件不得超过 1500 行（存量超长文件只要求不变长）。横切的可靠性改造（例如 M2.4 给吞掉的异常加日志）不可避免地让存量超长文件增加几行时，在 `.yuem/metrics_allowlist.toml` 的 `[file_length]` 中登记该文件的行数上限并写明理由；上限只降不升，文件拆到 1500 行以内后删除条目。新增条目与基线变更同等审查。
 7. 补丁台账：`python tools/yuem/patch_ledger.py --check`。
 8. `CHANGELOG-YUEM.md` 有对应条目。
 
@@ -36,8 +36,10 @@
 
 `metrics.py` 统计下列指标并与 `.yuem/metrics/baseline-0.5.0.json` 比较：
 
-- 只降不升：宽泛异常捕获、`print(`、`noqa` 与 `type: ignore`、超过 2000 行的文件数、`os.environ` 读取、全局 `np.random` 调用。
-- 只升不降：测试函数数量。
+- 只降不升：宽泛异常捕获、`print(`、`noqa` 与 `type: ignore`、超过 2000 行的文件数、`os.environ` 读取、全局 `np.random` 调用、进程内计算模块数、分层例外数、own 代码中的静默宽泛捕获（`own_silent_broad_except`）。
+- 只升不降：测试函数数量、`logging.getLogger` 使用数。
+
+静默宽泛捕获指 `except Exception`（或裸 `except`）的处理块既不重新抛出、不引用异常对象，也不写日志或告知用户。界面代码中的宽泛捕获有其道理（Qt 槽函数里的异常不能冒到事件循环），但必须留下痕迹；该指标在 M2 降为 0 后保持为 0，由 AST 统计（`metrics.silent_broad_excepts`）。
 
 改善后用 `metrics.py --update-baseline --reason "<原因>"` 下调基线，原因写入 `.yuem/metrics/CHANGES.md`。基线不允许上调；确需上调（例如同步上游带入新代码）时，同样记录原因，并在合入时由负责人确认。
 

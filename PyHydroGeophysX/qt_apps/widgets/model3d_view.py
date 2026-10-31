@@ -36,6 +36,9 @@ from PyHydroGeophysX.qt_apps.widgets.readout import toolbar_row
 from PyHydroGeophysX.visualization.axis_units import (
     set_length_axis, set_section_axes, to_display_length)
 from PyHydroGeophysX.visualization.pyvista_compat import try_import_pyvista
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def _recolour_actors(actors, name: str) -> int:
@@ -50,7 +53,7 @@ def _recolour_actors(actors, name: str) -> int:
             actor.mapper.lookup_table.cmap = cmaps.to_pyvista(name)
             changed += 1
         except Exception:  # noqa: BLE001 - an actor without a table is left alone
-            pass
+            _logger.debug("_recolour_actors: an actor without a table is left alone", exc_info=True)
     return changed
 
 
@@ -66,7 +69,7 @@ def _rescale_actors(actors, clim) -> int:
             actor.mapper.scalar_range = tuple(float(v) for v in clim)
             changed += 1
         except Exception:  # noqa: BLE001 - an actor without a mapper is left alone
-            pass
+            _logger.debug("_rescale_actors: an actor without a mapper is left alone", exc_info=True)
     return changed
 
 
@@ -325,7 +328,7 @@ class VTKVolumeView(QWidget):
                 self._clip_state = (tuple(planes[0].GetNormal()), tuple(planes[0].GetOrigin()))
             self._plotter.clear_plane_widgets()
         except Exception:  # noqa: BLE001 - absent on older PyVista releases
-            pass
+            _logger.debug("VTKVolumeView._redraw: absent on older PyVista releases", exc_info=True)
         self._plotter.clear()
         kwargs = {
             "scalars": self._scalar,
@@ -369,6 +372,7 @@ class VTKVolumeView(QWidget):
             else:
                 actor = self._plotter.add_mesh(self._mesh, **kwargs)
         except Exception:  # noqa: BLE001 - clip widgets can fail on some VTK builds
+            _logger.debug("VTKVolumeView._redraw: clip widgets can fail on some VTK builds", exc_info=True)
             actor = self._plotter.add_mesh(self._mesh, **kwargs)
         self._actors = [actor] if self._scalar else []
         try:
@@ -377,11 +381,11 @@ class VTKVolumeView(QWidget):
             for bar in self._plotter.scalar_bars.values():
                 bar.SetTextPositionToPrecedeScalarBar()
         except Exception:  # noqa: BLE001 - cosmetic
-            pass
+            _logger.debug("VTKVolumeView._redraw: cosmetic", exc_info=True)
         try:
             self._plotter.add_mesh(self._mesh.outline(), color="grey")
         except Exception:  # noqa: BLE001 - outline is cosmetic
-            pass
+            _logger.debug("VTKVolumeView._redraw: outline is cosmetic", exc_info=True)
         self._plotter.add_axes()
         self._plotter.reset_camera()
         if camera is not None:
@@ -426,7 +430,7 @@ class VTKVolumeView(QWidget):
                     show_message=False, show_point=False, left_clicking=False)
                 self._info.setText(self._info.text() + ' · right-click a mesh point to inspect values')
             except Exception:
-                pass
+                _logger.debug("VTKVolumeView._add_sections: ignored error", exc_info=True)
         else:
             if self._notice:
                 self._notice.hide()
@@ -457,7 +461,7 @@ class VTKVolumeView(QWidget):
                 interactor.update()
             self._plotter.render()
         except Exception:  # noqa: BLE001 - refresh is best-effort
-            pass
+            _logger.debug("VTKVolumeView._refresh: refresh is best-effort", exc_info=True)
 
     def showEvent(self, event) -> None:  # noqa: N802 - Qt override
         """Render once the view is on screen."""
@@ -498,6 +502,7 @@ class VTKVolumeView(QWidget):
             auto = (tuple(float(v) for v in limits[:2]) if limits
                     else _finite_range(self._mesh[self._scalar], positive=positive))
         except Exception:  # noqa: BLE001 - a field PyVista cannot hand back as numbers
+            _logger.debug("VTKVolumeView._colour_limits: a field PyVista cannot hand back as numbers", exc_info=True)
             auto = None
         if auto is None:
             return None
@@ -572,6 +577,7 @@ class Model3DView(QWidget):
                 layout.addWidget(self._plotter.interactor, stretch=1)
                 self._mode = "pyvista"
             except Exception as exc:  # noqa: BLE001 - GL failure -> matplotlib fallback
+                _logger.debug("Model3DView.__init__: GL failure -> matplotlib fallback", exc_info=True)
                 self._plotter = None
                 self._build_mpl(layout)
         else:
@@ -595,7 +601,7 @@ class Model3DView(QWidget):
         try:
             self._plotter.render()
         except Exception:  # noqa: BLE001 - a repaint is best-effort
-            pass
+            _logger.debug("Model3DView._render: a repaint is best-effort", exc_info=True)
 
     # -- matplotlib fallback -------------------------------------------------
     def _build_mpl(self, layout: QVBoxLayout) -> None:
@@ -710,12 +716,13 @@ class Model3DView(QWidget):
             else:
                 actor = self._plotter.add_mesh(grid, **kw)
         except Exception:  # noqa: BLE001 - clip widget can fail; show the plain volume
+            _logger.debug("Model3DView._redraw_pv: clip widget can fail; show the plain volume", exc_info=True)
             actor = self._plotter.add_mesh(grid, **kw)
         self._actors = [actor]
         try:
             self._plotter.add_mesh(grid.outline(), color="grey")
         except Exception:  # noqa: BLE001
-            pass
+            _logger.debug("Model3DView._redraw_pv: ignored error", exc_info=True)
         self._plotter.add_axes()
         self._plotter.reset_camera()
 
@@ -902,6 +909,6 @@ class Model3DView(QWidget):
                 try:
                     self._plotter.render()
                 except Exception:  # noqa: BLE001 - a repaint is best-effort
-                    pass
+                    _logger.debug("Model3DView._on_colormap_changed: a repaint is best-effort", exc_info=True)
         elif not self._recolour_mpl():
             self._redraw_mpl()

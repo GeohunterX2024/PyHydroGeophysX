@@ -69,6 +69,9 @@ from PyHydroGeophysX.workflows import (
     WorkflowSpec,
     export_workflow_bundle,
 )
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _STEPS = ["Methods", "Data", "Compatibility", "Parameters", "Run", "Results"]
 _ICONS = ["fa5s.project-diagram", "fa5s.database", "fa5s.check-double",
@@ -1289,6 +1292,7 @@ class JointInversionModule(BaseModule):
                     set_section_axes(axis, mesh=mesh, xlabel="Profile distance",
                                      elevation_name="Elevation / z")
                 except Exception:
+                    _logger.debug("JointInversionModule._plot_models: ignored error", exc_info=True)
                     axis.plot(values); axis.set_xlabel("Cell index")
                 axis.set_title(f"{method} joint model")
         elif result.methods == ("Gravity", "Magnetics"):

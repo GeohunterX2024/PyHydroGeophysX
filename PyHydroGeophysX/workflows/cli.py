@@ -12,6 +12,7 @@ import threading
 from typing import Any, Sequence
 import warnings
 
+from PyHydroGeophysX._internal.logging_setup import run_log
 from PyHydroGeophysX.errors import EXIT_DOMAIN_ERROR, BackendUnavailable, PHGXError
 
 from .codegen import generate_python
@@ -236,7 +237,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if previous_pyarrow is missing:
             sys.modules["pyarrow"] = None
     try:
-        result = run_workflow(spec, context)
+        with run_log(context.output_dir):
+            result = run_workflow(spec, context)
     except (PHGXError, BackendUnavailable) as exc:
         # One line, which is all a caller reading the last exception line gets.
         hint = getattr(exc, "hint", "")

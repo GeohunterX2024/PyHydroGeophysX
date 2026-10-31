@@ -14,6 +14,9 @@ from __future__ import annotations
 import argparse
 import sys
 from typing import Optional, Sequence
+import logging
+
+_logger = logging.getLogger(__name__)
 
 _DIAGNOSTIC_STREAM = None
 
@@ -29,9 +32,15 @@ def _install_native_diagnostics():
     from pathlib import Path
     import tempfile
 
+    from PyHydroGeophysX._internal.logging_setup import app_log_dir
+
     try:
-        root = Path(tempfile.gettempdir()) / 'PyHydroGeophysX' / 'diagnostics'
-        root.mkdir(parents=True, exist_ok=True)
+        try:
+            root = app_log_dir() / 'diagnostics'
+            root.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            root = Path(tempfile.gettempdir()) / 'PyHydroGeophysX' / 'diagnostics'
+            root.mkdir(parents=True, exist_ok=True)
         path = root / f'studio-{datetime.now():%Y%m%d-%H%M%S}-{os.getpid()}.log'
         stream = path.open('a', encoding='utf-8', buffering=1)
         _DIAGNOSTIC_STREAM = stream
@@ -76,7 +85,7 @@ def _install_excepthook(show_dialog: bool) -> None:
                      f"({frames[-1].name})" if frames else "")
             report_error(None, f"Unexpected error{where}: {exc_type.__name__}: {exc_value}")
         except Exception:
-            pass
+            _logger.debug("_install_excepthook._hook: ignored error", exc_info=True)
         if show_dialog:
             try:
                 from PySide6.QtWidgets import QApplication, QMessageBox
@@ -92,7 +101,7 @@ def _install_excepthook(show_dialog: bool) -> None:
                     box.setDetailedText(text)
                     box.exec()
             except Exception:
-                pass
+                _logger.debug("_install_excepthook._hook: ignored error", exc_info=True)
 
     sys.excepthook = _hook
 
@@ -142,6 +151,11 @@ def _parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
 def main(argv: Optional[Sequence[str]] = None, *, assistant: Optional[str] = None) -> int:
     args = _parse_args(argv)
     _install_native_diagnostics()
+    from PyHydroGeophysX._internal.logging_setup import configure_app_logging
+
+    # What upstream code prints, and the tracebacks written to stderr, reach
+    # the application log too (a windowed Studio has no console to show them).
+    configure_app_logging(capture_output=True)
 
     # This is a PySide6 app; tell qtpy-based libraries (e.g. pyvistaqt) to use
     # PySide6 too, so they do not bind to a PyQt5 install and clash with our

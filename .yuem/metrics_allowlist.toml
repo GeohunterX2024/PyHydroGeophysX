@@ -9,6 +9,11 @@
 [print_calls]
 "PyHydroGeophysX/workflows/cli.py" = "command-line front end: stdout and stderr are its output"
 "PyHydroGeophysX/doctor.py" = "command-line front end: prints the self-check report"
+"PyHydroGeophysX/qt_apps/em_probe.py" = "probe subprocess: its one JSON line on stdout is the answer the Studio reads"
+"PyHydroGeophysX/qt_apps/adtlert_probe.py" = "probe subprocess: its one JSON line on stdout is the answer the Studio reads"
+"PyHydroGeophysX/qt_apps/agent/one_click_runner.py" = "runner subprocess: JSON-lines events on stdout are its protocol with the Studio"
+"PyHydroGeophysX/qt_apps/agent/selftest.py" = "command-line front end: prints the PASS/FAIL report"
+"PyHydroGeophysX/workflows/codegen.py" = "the print is in the template of the generated script, a command-line front end"
 
 [broad_except]
 "PyHydroGeophysX/doctor.py" = "diagnostic boundary: a failing check is the finding and is reported, never raised"
@@ -21,3 +26,21 @@
 
 [global_np_random]
 "PyHydroGeophysX/inversion/joint_gravity_magnetics.py" = "seeds SimPEG < 0.23 directives that draw from the legacy global RNG; the state is saved before and restored after (newer SimPEG gets the seed on the directive itself)"
+
+# Legacy files over the length limit (ADR 0003, rule 6) whose reviewed ceiling is
+# above their upstream length. A ceiling may only fall; the entry goes once the
+# file is split below the limit. Raising one is reviewed like a baseline change.
+[file_length]
+"PyHydroGeophysX/qt_apps/agent/chat_panel.py" = { lines = 2391, reason = "M2.4: swallowed errors are logged (+6 lines)" }
+"PyHydroGeophysX/qt_apps/modules/em_processing.py" = { lines = 3419, reason = "M2.4: swallowed errors are logged (+6 lines)" }
+"PyHydroGeophysX/qt_apps/modules/ert_processing.py" = { lines = 7705, reason = "M2.4: swallowed errors are logged (+12 lines) until the M4.5 split into qt_apps/modules/ert/" }
+"PyHydroGeophysX/qt_apps/modules/geo_hydrology.py" = { lines = 1544, reason = "M2.4: swallowed errors are logged (+6 lines)" }
+"PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py" = { lines = 2038, reason = "M2.4: swallowed errors are logged (+6 lines)" }
+"PyHydroGeophysX/qt_apps/modules/joint_inversion.py" = { lines = 1629, reason = "M2.4: swallowed errors are logged (+4 lines)" }
+"PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py" = { lines = 2255, reason = "M2.4: swallowed errors are logged (+5 lines)" }
+"PyHydroGeophysX/qt_apps/modules/model_viewer.py" = { lines = 2094, reason = "M2.4: swallowed errors are logged (+4 lines)" }
+"PyHydroGeophysX/qt_apps/modules/mt_processing.py" = { lines = 2206, reason = "M2.4: swallowed errors are logged (+5 lines)" }
+"PyHydroGeophysX/qt_apps/modules/one_click.py" = { lines = 2300, reason = "M2.4: swallowed errors are logged (+4 lines)" }
+"PyHydroGeophysX/qt_apps/modules/project_map.py" = { lines = 1729, reason = "M2.4: swallowed errors are logged (+5 lines)" }
+"PyHydroGeophysX/qt_apps/modules/seismic_processing.py" = { lines = 3526, reason = "M2.4: swallowed errors are logged (+7 lines)" }
+"PyHydroGeophysX/qt_apps/widgets/ai_presence.py" = { lines = 1863, reason = "M2.4: swallowed errors are logged (+4 lines)" }

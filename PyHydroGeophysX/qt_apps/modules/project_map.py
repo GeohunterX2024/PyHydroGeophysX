@@ -28,6 +28,9 @@ from PyHydroGeophysX.visualization.axis_units import (
     set_length_axis, set_section_axes, to_display_length)
 from PyHydroGeophysX.visualization.basemap import TILE_SOURCES, basemap_image
 from PyHydroGeophysX.qt_apps import theme
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 COLORS = {'ERT': '#ff9500', 'EM': '#30b0c7', 'Seismic': '#af52de',
@@ -1175,6 +1178,7 @@ class ProjectMapModule(BaseModule):
         try:
             _data, order = wells_data(arrays)
         except Exception:  # noqa: BLE001 - an unreadable payload still shows the wells
+            _logger.debug("ProjectMapModule._draw_wells: an unreadable payload still shows the wells", exc_info=True)
             order = [str(k + 1) for k in range(len(xy))]
         ink = COLORS['Boreholes']
         points = self._ax.scatter(xy[:, 0], xy[:, 1], s=44 if chosen else 30, marker='o',
@@ -1511,6 +1515,7 @@ class ProjectMapModule(BaseModule):
             try:
                 data, order = wells_data(self._data(entry))
             except Exception:  # noqa: BLE001
+                _logger.debug("ProjectMapModule._agent_compare_well: ignored error", exc_info=True)
                 continue
             if str(well) not in order:
                 continue
@@ -1542,7 +1547,7 @@ class ProjectMapModule(BaseModule):
                 try:
                     wells += wells_data(self._data(entry))[1]
                 except Exception:  # noqa: BLE001
-                    pass
+                    _logger.debug("ProjectMapModule._agent_compare_well: ignored error", exc_info=True)
         return {'status': 'failed', 'error': f'No well {well!r} on the map.', 'wells': wells,
                 'hint': 'Add wells from the Boreholes page (Add wells to the Map).'}
 
