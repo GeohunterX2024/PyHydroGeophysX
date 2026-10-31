@@ -1,0 +1,106 @@
+# Code ownership for the YUEM soft fork of PyHydroGeophysX.
+#
+# Every tracked path falls in exactly one class; the most specific prefix wins.
+#   own     - maintained here; upstream changes are ported by hand when useful.
+#   follow  - tracks upstream; local edits are minimal and each one is logged
+#             in .yuem/PATCHES.md (tools/yuem/patch_ledger.py enforces it).
+#   shared  - repository-level files both sides edit; every local edit is
+#             logged in .yuem/PATCHES.md like a follow path.
+#   frozen  - kept exactly as upstream ships it; no local edits at all.
+# Paths are POSIX, relative to the repository root. A trailing "/" marks a
+# directory prefix; anything else is an exact file.
+
+[meta]
+upstream = "https://github.com/geohang/PyHydroGeophysX"
+base_commit = "16930bb6b50d20973a38bdc0890c1d1a876b77d3"
+default_class = "follow"
+
+own = [
+    "PyHydroGeophysX/qt_apps/",
+    "PyHydroGeophysX/workflows/",
+    "PyHydroGeophysX/plugins.py",
+    "PyHydroGeophysX/errors.py",
+    "PyHydroGeophysX/datastore/",
+    "PyHydroGeophysX/results/",
+    "PyHydroGeophysX/doctor.py",
+    "PyHydroGeophysX/_internal/logging_setup.py",
+    "PyHydroGeophysX/_internal/provenance.py",
+    "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/visualization/styles/",
+    "packaging/",
+    ".github/workflows/yuem-ci.yml",
+    ".pre-commit-config.yaml",
+    ".importlinter",
+    "uv.lock",
+    "tools/yuem/",
+    "tests/yuem/",
+    "docs/yuem/",
+    ".yuem/",
+    "CHANGELOG-YUEM.md",
+]
+
+follow = [
+    "PyHydroGeophysX/__init__.py",
+    "PyHydroGeophysX/_internal/",
+    "PyHydroGeophysX/_deprecations.py",
+    "PyHydroGeophysX/_optional_dependencies.py",
+    "PyHydroGeophysX/_utils.py",
+    "PyHydroGeophysX/analysis/",
+    "PyHydroGeophysX/assimilation/",
+    "PyHydroGeophysX/core/",
+    "PyHydroGeophysX/data_access/",
+    "PyHydroGeophysX/data_processing/",
+    "PyHydroGeophysX/forward/",
+    "PyHydroGeophysX/Geophy_modular/",
+    "PyHydroGeophysX/Hydro_modular/",
+    "PyHydroGeophysX/inversion/",
+    "PyHydroGeophysX/model_input/",
+    "PyHydroGeophysX/model_output/",
+    "PyHydroGeophysX/petrophysics/",
+    "PyHydroGeophysX/solvers/",
+    "PyHydroGeophysX/uncertainty/",
+    "PyHydroGeophysX/visualization/",
+    "PyHydroGeophysX/em1d.py",
+    "PyHydroGeophysX/gravmag.py",
+    "PyHydroGeophysX/gui.py",
+    "PyHydroGeophysX/gui_mesh3d.py",
+    "PyHydroGeophysX/joint_api.py",
+    "PyHydroGeophysX/table_io.py",
+    "PyHydroGeophysX/start_studio.bat",
+    "PyHydroGeophysX/start_studio.sh",
+    "PyHydroGeophysX/start_webapp.bat",
+    "PyHydroGeophysX/start_webapp.sh",
+    "PyHydroGeophysX/logo.png",
+    "tests/",
+    "examples/",
+    "docs/",
+    "tools/",
+    ".github/",
+]
+
+shared = [
+    "pyproject.toml",
+    "setup.py",
+    ".gitignore",
+    ".gitattributes",
+    ".rgignore",
+    "MANIFEST.in",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSE",
+    "environment.yml",
+    "requirements.txt",
+    "requirements-dev.txt",
+    "requirements-desktop.txt",
+]
+
+frozen = [
+    "PyHydroGeophysX/agents/",
+    "PyHydroGeophysX/llm/",
+    "PyHydroGeophysX/mcp_server.py",
+    "examples/app_geophysics_workflow.py",
+    "examples/app_mesh3d.py",
+    "examples/aquah_web.py",
+]
