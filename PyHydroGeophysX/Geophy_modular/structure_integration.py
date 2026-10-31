@@ -85,6 +85,43 @@ DEFAULT_KRIGING = {
 }
 
 
+def render_volume_png(volume: str, surface: str, shot: str) -> None:
+    """Render the velocity volume and the bedrock surface to ``shot`` (PNG)."""
+    _ensure_vtk_matplotlib_shim()
+    import pyvista as pv
+
+    pv.OFF_SCREEN = True
+    grid = pv.read(volume)
+    arrays = np.load(surface)
+    plotter = pv.Plotter(off_screen=True, window_size=(900, 650))
+    plotter.add_mesh(grid.outline(), color="grey")
+    plotter.add_mesh(grid, scalars="Velocity", cmap="turbo", opacity=0.35,
+                     scalar_bar_args={"title": "Velocity (m/s)"})
+    plotter.add_mesh(pv.StructuredGrid(arrays["xx"], arrays["yy"], arrays["z"]),
+                     color="saddlebrown")
+    plotter.add_axes(); plotter.view_isometric()
+    plotter.screenshot(shot); plotter.close()
+
+
+def _render_in_child(volume: Path, surface: Path, shot: Path) -> str:
+    """Run :func:`render_volume_png` in a child process; why it failed, or ''."""
+    import subprocess
+    import sys
+
+    code = ("import sys; from PyHydroGeophysX.Geophy_modular.structure_integration "
+            "import render_volume_png; render_volume_png(*sys.argv[1:])")
+    try:
+        done = subprocess.run([sys.executable, "-c", code, str(volume), str(surface), str(shot)],
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=300, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return str(exc)
+    if done.returncode == 0 and shot.is_file():
+        return ""
+    lines = (done.stderr or "").strip().splitlines()
+    return f"exit code {done.returncode}" + (f" ({lines[-1]})" if lines else "")
+
+
 def _ensure_vtk_matplotlib_shim() -> None:
     """Stub the optional ``vtkmodules.vtkRenderingMatplotlib`` module when absent.
 
@@ -506,24 +543,20 @@ def build_3d_model(
         np.save(ap, arr); data_paths.append(str(ap))
 
     # 4. Optional pyvista off-screen render (best-effort; needs a GL context).
-    try:
-        if grid is None:
-            raise RuntimeError("pyvista is not installed")
-        _ensure_vtk_matplotlib_shim()
-        import pyvista as pv
-        pv.OFF_SCREEN = True
-        plotter = pv.Plotter(off_screen=True, window_size=(900, 650))
-        plotter.add_mesh(grid.outline(), color="grey")
-        plotter.add_mesh(grid, scalars="Velocity", cmap="turbo", opacity=0.35,
-                         scalar_bar_args={"title": "Velocity (m/s)"})
-        isurf = pv.StructuredGrid(xx, yy, iface_surface)
-        plotter.add_mesh(isurf, color="saddlebrown")
-        plotter.add_axes(); plotter.view_isometric()
-        shot = out_dir / "volume_3d.png"
-        plotter.screenshot(str(shot)); plotter.close()
-        figure_paths.append(str(shot))
-    except Exception as exc:  # noqa: BLE001 - 3D GL render is best-effort
-        log(f"  pyvista 3D render skipped: {exc}")
+    # Without one VTK can crash the process rather than raise (a Windows
+    # machine without a GPU driver), so the render runs in a child process.
+    shot = out_dir / "volume_3d.png"
+    if vtk_path is None:
+        log("  pyvista 3D render skipped: pyvista is not installed")
+    else:
+        surface = out_dir / "_interface_surface.npz"
+        np.savez(surface, xx=xx, yy=yy, z=iface_surface)
+        problem = _render_in_child(vtk_path, surface, shot)
+        surface.unlink(missing_ok=True)
+        if problem:
+            log(f"  pyvista 3D render skipped: {problem}")
+        else:
+            figure_paths.append(str(shot))
 
     config = build_seismic3d_config(context, params)
     config_path = out_dir / "seismic3d_config.json"

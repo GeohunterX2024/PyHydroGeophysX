@@ -87,6 +87,7 @@
 
 ### 修复（可回馈上游）
 
+- 三维地震建模的可选 pyvista 离屏渲染在没有 OpenGL 的 Windows 上会让 VTK 崩溃、连带结束整个工作流，改为在子进程中渲染，失败只跳过这张图（F-22，台账 P-0009）。
 - Windows 中文路径（F-16）：pgcore 的 Windows 轮子以 msvcrt 按系统代码页打开路径，工程目录含中文时 pyGIMLi 读写全部失败。新增 `_internal/native_paths.pygimli_path`（Windows 上非 ASCII 路径改用 8.3 短路径），62 处 `pg.load`、`ert.load`、`tt.load`、`DataContainer` 读文件、`Mesh.save`、`DataContainer.save`、`exportVTK` 调用改用它；上游 `ansi_safe` 在中文系统（代码页 936）上把中文路径误判为可直接打开，改为只认 ASCII（台账 P-0008）。冒烟测试在 Windows 上不再把 `ert3d.forward`、`seismic3d.build` 标为预期失败。
 - 三维 ERT 几何因子（F-09）：`create_3d_ert_data_container` 用的 pyGIMLi 解析几何因子以 z = 0 为地表，电极在 100 m 高程的地面排列被当成埋深 100 m，k 与三维正演合成数据（`ert3d.forward`、Studio 三维正演）的视电阻率约为真值 2 倍；地面排列且电极不在 z = 0 时改用以电极处为地表的半空间公式，与按文件导入的数据共用 `_internal/ert_factors.py`，井中排列不变（台账 P-0007）。数值验证新增 V-ERT-04。带地形时仍有约 ±10% 的残差，来自 pyGIMLi 奇异性消除按水平地表计算一次场，记为 F-15。
 - 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。
