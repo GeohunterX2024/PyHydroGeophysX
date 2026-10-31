@@ -130,6 +130,8 @@ PLURAL_SUFFIXES: dict[str, tuple[str, ...]] = {
 }
 #: Marks a line whose texts stay as written (a language's own name, say).
 AS_WRITTEN = "i18n: as written"
+#: Marks a module that holds its texts in every language itself (``qt_apps/standards.py``).
+OWN_LANGUAGE = "i18n: own language"
 _WORDS = re.compile(r"[A-Za-z]{2,}")
 _PLACEHOLDER = re.compile(r"\{\d+(?:![rsa])?(?::[^{}]*)?\}")
 
@@ -527,7 +529,10 @@ def table_texts(path: Path) -> list[str]:
     looks them up at run time. Identifiers, icon names, paths and lower-case
     keys are left out.
     """
-    tree = ast.parse(path.read_text(encoding="utf-8"))
+    source = path.read_text(encoding="utf-8")
+    if OWN_LANGUAGE in source:
+        return []
+    tree = ast.parse(source)
     texts: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.Tuple, ast.List)):

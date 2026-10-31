@@ -95,3 +95,16 @@ def test_the_studio_starts_without_font_warnings(tmp_path: Path) -> None:
     )
     assert done.returncode == 0, done.stderr[-2000:]
     assert "missing font family" not in done.stderr
+
+
+def test_parameters_name_their_standard(qtbot: Any, state: StudioState) -> None:
+    from PyHydroGeophysX.qt_apps.standards import ANNOTATIONS, STANDARDS
+
+    for key, controls in ANNOTATIONS.items():
+        page = build_module(key, state, lambda *_args: None)
+        qtbot.addWidget(page)
+        for attribute, (codes, _zh, _en) in controls.items():
+            assert all(code in STANDARDS for code in codes)
+            widget = getattr(page, attribute)
+            assert f"Standard: {codes[0]}" in widget.toolTip(), (key, attribute)
+        page.stop_workers(wait_ms=5000)

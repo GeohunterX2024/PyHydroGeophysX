@@ -1820,6 +1820,7 @@
  "Stacking velocity (m/s)": "叠加速度 (m/s)",
  "Stacking…": "正在叠加…",
  "Stacks the {0} shots loaded on the Gather tab, with the geophones and shot positions set there (geophones every {1:g} m).": "叠加“道集”选项卡中载入的 {0} 炮，使用该处设置的检波器和炮点位置（检波器间距 {1:g} m）。",
+ "Standard": "规程",
  "Standard direct": "标准直接法",
  "Start": "开始",
  "Start X at distance {0:g} m": "X 起点位于距离 {0:g} m 处",

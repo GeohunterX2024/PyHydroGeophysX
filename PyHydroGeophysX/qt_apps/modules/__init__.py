@@ -78,7 +78,12 @@ def build_module(key: str, state: Any, log: LogFn) -> BaseModule:
     try:
         mod = importlib.import_module(page_module_path(submodule))
         cls = getattr(mod, class_name)
-        return cls(state, log)
+        page = cls(state, log)
+        # The industry standard behind a parameter, in its tooltip (docs/yuem/standards.md).
+        from PyHydroGeophysX.qt_apps.standards import annotate
+
+        annotate(page, key)
+        return page
     except Exception as exc:  # noqa: BLE001 - we want to catch everything here
         log(f"Failed to load module '{key}': {exc}", "error")
         log(traceback.format_exc(), "debug")

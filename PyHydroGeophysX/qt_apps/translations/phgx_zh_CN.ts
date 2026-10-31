@@ -7584,6 +7584,11 @@ B：{1}
       <translation>导出质控记录</translation>
     </message>
     <message>
+      <source>Standard</source>
+      <extracomment>Code -&gt; (Chinese title, English title), as published. Page key -&gt; control attribute -&gt; (standards, subject in Chinese, subject in English).</extracomment>
+      <translation>规程</translation>
+    </message>
+    <message>
       <source>Workflow</source>
       <translation>工作流</translation>
     </message>
