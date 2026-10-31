@@ -21,7 +21,7 @@
   "environment": {
     "schema": "phgx-provenance-v1",
     "phgx_version": "0.5.0+yuem.1",
-    "git": "v0.5.0-35-g8d327d5",
+    "git": "v0.5.0-60-g4920557-dirty",
     "frozen": false,
     "python": {
       "version": "3.12.6",

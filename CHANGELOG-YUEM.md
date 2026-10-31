@@ -34,7 +34,7 @@
 - 数值验证集 `tests/yuem/verification/`（标记 `numerical`）14 例：ERT 均匀半空间、两层 Wenner（镜像级数）、三维逐单元模型；SRT 两层折射；TDEM 中心回线（Ward & Hohmann）；FDEM 半空间与三层（empymod，Anderson 801 点滤波器）；MT 半空间与三层（Wait 递推）；重力棱柱（Bouguer 板）与球体/立方体（点质量）；磁性球体（极点偶极子）；Waxman-Smits 正反变换往返。`tools/yuem/verification_report.py` 生成 `docs/yuem/verification.md`。
 - 回归金标准 `tests/yuem/golden/`（标记 `golden`）10 例：ERT 单次与时移反演、SRT、FDEM 单点、TEM LCI 剖面、MT Occam 1D、MT 处理、重力反演、FDEM+TDEM 联合、重力处理；提取产物、指标与内存模型中的全部数值数组比对；容差按实测的运行间可重复性设定（SRT 因 pyGIMLi 射线追踪约 1e-4 波动取 1e-3，其余 1e-6 至 1e-10）。`tools/yuem/golden.py --update --reason` 更新并记入 `tests/yuem/golden/CHANGES.md`。
 - 随机数确定性：全局 `np.random` 调用由 9 处降为 0（保留的一处为兼容旧版 SimPEG 的设种并保存/恢复全局状态，入白名单）；`kriging_3d` 的变差函数搜索与训练/验证划分接受 `random_seed`。
-- 覆盖率基线 `tools/yuem/coverage.py --record` → `.yuem/metrics/coverage-baseline.json`：全部测试层，含子进程中的工作流运行；全包 37.0%，核心算法路径（data_processing、forward、inversion）49.1%。
+- 覆盖率基线 `tools/yuem/coverage_baseline.py --record` → `.yuem/metrics/coverage-baseline.json`：全部测试层，含子进程中的工作流运行；全包 37.0%，核心算法路径（data_processing、forward、inversion）49.1%。
 - 新增 `docs/yuem/findings.md`：改造过程中发现的问题、根因、影响与处理状态。
 - 溯源的 BLAS 识别在 threadpoolctl 看不到 Apple Accelerate 时回退到 NumPy 构建配置。
 - 棘轮白名单 `.yuem/metrics_allowlist.toml`：只收边界代码（CLI 前端、诊断边界），逐文件写明理由，命中数单独报告。
@@ -74,6 +74,7 @@
 
 ### 发行与持续（M5）
 
+- 金标准跨平台：重力两例的测点改为偏离规则网格至多 0.5 m 并重新录制（规则网格上 Delaunay 三角剖分不唯一，Linux 与 macOS 网格化结果相差最大 51%，F-19）；金标准失败时列出每个数组的最大绝对差与相对差。`tools/yuem/coverage.py` 改名为 `coverage_baseline.py`：直接运行 `tools/yuem/` 下的脚本时，它会遮蔽 coverage 包，使导入 SimPEG 失败。
 - CI 首轮实跑暴露的问题：Linux 各测试层补装 Qt 运行库（pytest-qt 启动即导入 Qt）与 Gmsh；E4D 网格冒烟在没有 TetGen/Gmsh 的机器上跳过并说明原因；数据库原始文件校验的提示统一用记录中的 POSIX 路径（Windows 上曾显示反斜杠）；Windows 上 pyGIMLi 无法打开中文路径记为 F-16，相关两个冒烟用例在 Windows 上标为预期失败；Linux GUI 层退出时中止（F-17）的原因是助手面板在测试中联网下载 Codex CLI、退出时下载线程仍在运行，GUI 测试会话改为指向不存在的 CLI 路径，不再联网；Windows 上 pgcore 自带的 OpenBLAS 不受 threadpoolctl 控制（F-18），`--threads` 改为同时在导入前设置 `OMP_NUM_THREADS`、`OPENBLAS_NUM_THREADS`、`MKL_NUM_THREADS`。
 - 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。
 - 签名与公证（M5.1）：`build_macos_dmg.sh` 设 `PHGX_SIGN_IDENTITY` 时由内到外以 Developer ID 签名（hardened runtime、时间戳、`packaging/macos/entitlements.plist`），再设 `PHGX_NOTARY_PROFILE` 时签名镜像、`notarytool` 公证、`stapler` 装订并以 `spctl` 核验；未设时保持 ad-hoc 签名，镜像内安装说明随之切换。当前无 Apple Developer 账号与 Windows 证书，按 ad-hoc 发布并在说明中注明。

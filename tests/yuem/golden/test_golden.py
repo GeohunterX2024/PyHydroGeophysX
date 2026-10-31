@@ -33,7 +33,16 @@ def test_golden(case: GoldenCase, workspace: Workspace) -> None:
         expected = {key: archive[key] for key in archive.files}
     actual = compute(case, workspace)
     assert sorted(actual) == sorted(expected), "the set of outputs changed"
-    for key, value in expected.items():
-        np.testing.assert_allclose(
-            actual[key], value, rtol=case.rtol, atol=case.atol, err_msg=f"{case.name}: {key}"
-        )
+    report = []
+    for key, value in sorted(expected.items()):
+        got = np.asarray(actual[key], dtype=float)
+        want = np.asarray(value, dtype=float)
+        if got.shape != want.shape:
+            report.append(f"{key}: shape {got.shape} != {want.shape}")
+            continue
+        if np.allclose(got, want, rtol=case.rtol, atol=case.atol, equal_nan=True):
+            continue
+        diff = np.abs(got - want)
+        rel = diff / np.maximum(np.abs(want), np.finfo(float).tiny)
+        report.append(f"{key}: max abs {np.nanmax(diff):.3e}, max rel {np.nanmax(rel):.3e}")
+    assert not report, f"{case.name} (rtol {case.rtol:g}, atol {case.atol:g}):\n" + "\n".join(report)

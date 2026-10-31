@@ -1,8 +1,8 @@
 """Measure test coverage of PyHydroGeophysX and record the baseline (plan M1.8).
 
-    python tools/yuem/coverage.py                 # every tier; print the summary
-    python tools/yuem/coverage.py --record        # also write .yuem/metrics/coverage-baseline.json
-    python tools/yuem/coverage.py -m "not slow"   # a subset of the tiers
+    python tools/yuem/coverage_baseline.py                 # every tier; print the summary
+    python tools/yuem/coverage_baseline.py --record        # also write .yuem/metrics/coverage-baseline.json
+    python tools/yuem/coverage_baseline.py -m "not slow"   # a subset of the tiers
 
 Subprocess runs (the workflow smoke tests) are measured through coverage's
 startup hook. Per-package figures make the target of the plan measurable: 80 %

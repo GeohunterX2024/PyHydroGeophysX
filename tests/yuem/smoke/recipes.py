@@ -67,7 +67,12 @@ def builder(workflow_id: str) -> Callable[[Builder], Builder]:
 
 def _gravity_stations(ws: Workspace, n: int = 7) -> dict[str, ArtifactRef]:
     xs, ys = np.meshgrid(np.linspace(-60.0, 60.0, n), np.linspace(-60.0, 60.0, n))
-    x, y = xs.ravel(), ys.ravel()
+    # Off a perfect grid: four stations on one circle leave the Delaunay
+    # triangulation of a gridding ambiguous, and rounding then decides it
+    # differently on each platform (docs/yuem/findings.md F-19).
+    rng = np.random.default_rng(11)
+    x = xs.ravel() + rng.uniform(-0.5, 0.5, xs.size)
+    y = ys.ravel() + rng.uniform(-0.5, 0.5, ys.size)
     r2 = x**2 + y**2 + 25.0**2
     values = 0.05 * 25.0 / r2**1.5 * 1.0e4
     return {
