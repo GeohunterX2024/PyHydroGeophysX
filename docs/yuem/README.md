@@ -26,7 +26,7 @@ source .venv/bin/activate
 git switch yuem/main && git switch -c yuem/M1-<主题>   # 功能分支
 # ……修改……
 tools/yuem/gates.sh            # 快速门禁：格式、静态检查、类型、快速测试、棘轮、台账
-tools/yuem/gates.sh --full     # 合入前：再加 gui、numerical、golden 三层
+tools/yuem/gates.sh --full     # 合入前：再加 gui、slow、numerical、golden 四层
 ```
 
 提交信息用英文祈使句，说明“做了什么、为什么”。合入 `yuem/main` 和推送 `origin` 前须经项目负责人确认。
@@ -48,6 +48,7 @@ tools/yuem/gates.sh --full     # 合入前：再加 gui、numerical、golden 三
 | `golden` | 回归金标准，`tests/yuem/golden/` | 合入前 |
 | `network` | 需要网络 | 手动 |
 | `packaging` | 需要打包产物 | 发行前 |
+| `benchmark` | 关键工作流计时，`tests/yuem/perf/` | 每周（CI）与发行前，经 `tools/yuem/perf.py` |
 
 数值验证报告由 `python tools/yuem/verification_report.py` 生成到 `docs/yuem/verification.md`。
 
@@ -72,7 +73,24 @@ tools/yuem/build_macos_dmg.sh           # 本机 macOS arm64 DMG，含自检和�
 
 Full 打包环境见 `packaging/conda/`。
 
-## 8. 环境自检
+## 8. 专题文档
+
+| 文档 | 内容 |
+|---|---|
+| `docs/yuem/plugins.md` | 插件：页面、工作流、读取器的注册与入口点 |
+| `docs/yuem/compute_isolation.md` | 哪些计算在子进程中运行，判据与清单 |
+| `docs/yuem/datastore.md` | 工程数据库 `phgx-dataset-v1`：结构、版本与外链、原始文件、适配器 |
+| `docs/yuem/qc.md` | 质控：剔除、恢复、记录 |
+| `docs/yuem/i18n.md` | 界面中文化与字体：约定与维护流程 |
+| `docs/yuem/standards.md` | 各方法参数与行业规程的对应 |
+| `docs/yuem/verification.md` | 数值验证报告（自动生成） |
+| `docs/yuem/findings.md` | 改造中发现的问题与处理状态 |
+| `docs/yuem/release_checklist.md` | 发布清单：门禁、打包、签名公证、发布 |
+| `docs/yuem/upstream_prs.md` | 回馈上游的候选 PR |
+
+上游同步：`tools/yuem/sync_upstream.sh`（每月，记入 `.yuem/SYNC_LOG.md`）。
+
+## 9. 环境自检
 
 ```bash
 phgx-doctor              # 0 正常，1 有警告，2 有错误
