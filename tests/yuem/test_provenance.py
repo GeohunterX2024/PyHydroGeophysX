@@ -82,8 +82,8 @@ def test_every_workflow_result_carries_full_provenance(tmp_path: Path) -> None:
     provenance = result.to_dict()["provenance"]
     assert provenance["workflow_id"] == "gravmag.forward_bodies"
     assert provenance["seed"] is None
-    assert set(provenance["inputs"]) == {"x", "y"}
-    assert all(value.startswith("sha256:") for value in provenance["inputs"].values())
+    assert set(provenance["input_checksums"]) == {"x", "y"}
+    assert all(value.startswith("sha256:") for value in provenance["input_checksums"].values())
     assert provenance["parameters_digest"] == parameters_digest(spec.to_dict())
     assert provenance["environment"]["phgx_version"] == PyHydroGeophysX.__version__
 
@@ -108,3 +108,15 @@ def test_results_store_stamps_runs_computed_in_process(tmp_path: Path) -> None:
     handle = store.begin_run(module_key="gravmag_processing", operation_id="gravmag.process", label="t")
     record = store.finish_run(handle, {"status": "ok", "summary": {"n": 1}})
     assert record.provenance["environment"]["phgx_version"] == PyHydroGeophysX.__version__
+
+
+def test_handler_provenance_keys_are_kept(tmp_path: Path) -> None:
+    """A handler's own provenance (e.g. SRT records its input artifacts) survives."""
+    from PyHydroGeophysX.workflows.models import WorkflowRunResult
+    from PyHydroGeophysX.workflows.runner import _with_provenance
+
+    spec = _gravity_spec(tmp_path)
+    result = WorkflowRunResult(status="ok", provenance={"inputs": {"traveltime": {"path": "t.dat"}}})
+    _with_provenance(result, spec)
+    assert result.provenance["inputs"] == {"traveltime": {"path": "t.dat"}}
+    assert set(result.provenance["input_checksums"]) == {"x", "y"}

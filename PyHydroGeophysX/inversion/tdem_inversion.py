@@ -25,6 +25,8 @@ from simpeg import (
 )
 from simpeg.utils import mkvc
 
+from PyHydroGeophysX._internal.simpeg_compat import cg_keywords
+
 from ..visualization.axis_units import set_length_axis
 
 
@@ -274,8 +276,8 @@ class TDEMInversion:
         opt = optimization.ProjectedGNCG(
             maxIter=self.parameters['max_iterations'],
             maxIterLS=20,
-            maxIterCG=self.parameters['cg_maxiter'],
-            tolCG=1e-3
+            **cg_keywords(optimization.ProjectedGNCG,
+                          maxiter=self.parameters['cg_maxiter'], rtol=1e-3)
         )
         
         # Inverse problem

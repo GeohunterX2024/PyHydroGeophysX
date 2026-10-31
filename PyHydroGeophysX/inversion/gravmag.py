@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
 
+from PyHydroGeophysX._internal.simpeg_compat import cg_keywords
+
 from PyHydroGeophysX._internal.optional_dependencies import BackendUnavailable
 from PyHydroGeophysX._internal.utils import noop as _noop
 from PyHydroGeophysX.data_processing import table_io
@@ -210,7 +212,7 @@ def invert_gravmag(x, y, value, kind: str, *, z: Optional[np.ndarray] = None,
         data=data.Data(survey, dobs=value, standard_deviation=std), simulation=sim)
     reg = regularization.WeightedLeastSquares(mesh, active_cells=actv)
     opt = optimization.ProjectedGNCG(maxIter=int(max_iterations), lower=lower, upper=upper,
-                                     maxIterCG=20, tolCG=1e-3)
+                                     **cg_keywords(optimization.ProjectedGNCG, maxiter=20, rtol=1e-3))
     beta_report: Dict[str, Any] = {"solver": str(solver)}
     if str(solver).lower() == "linear":
         # Potential-field sensitivities do not depend on the model, so this is a

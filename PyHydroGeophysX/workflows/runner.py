@@ -19,7 +19,10 @@ def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec) -> None:
     provenance.setdefault("workflow_id", spec.workflow_id)
     provenance.setdefault("schema_version", spec.schema_version)
     provenance["seed"] = spec.seed
-    provenance["inputs"] = {ref.artifact_id: ref.checksum for ref in iter_artifact_refs(spec.inputs)}
+    # Not "inputs": some handlers record their input artifacts under that key.
+    provenance["input_checksums"] = {
+        ref.artifact_id: ref.checksum for ref in iter_artifact_refs(spec.inputs)
+    }
     provenance["parameters_digest"] = parameters_digest(spec.to_dict())
     provenance["environment"] = collect_environment()
     result.provenance = provenance

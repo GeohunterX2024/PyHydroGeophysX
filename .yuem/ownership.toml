@@ -27,6 +27,7 @@ own = [
     "PyHydroGeophysX/_internal/logging_setup.py",
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/_internal/simpeg_compat.py",
     "PyHydroGeophysX/visualization/styles/",
     "packaging/",
     ".github/workflows/yuem-ci.yml",
@@ -122,6 +123,7 @@ strict = [
     "PyHydroGeophysX/_internal/logging_setup.py",
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/_internal/simpeg_compat.py",
     "PyHydroGeophysX/visualization/styles/",
 ]
 # Subset type-checked with mypy --strict (tests are excluded).
@@ -135,6 +137,7 @@ typed = [
     "PyHydroGeophysX/_internal/logging_setup.py",
     "PyHydroGeophysX/_internal/provenance.py",
     "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/_internal/simpeg_compat.py",
     "PyHydroGeophysX/visualization/styles/",
 ]
 # New or edited Python files may not exceed this many lines; existing longer

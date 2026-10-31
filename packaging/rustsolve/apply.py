@@ -96,6 +96,10 @@ def cmd_install(args):
         else:
             what = "added"
             dest.parent.mkdir(parents=True, exist_ok=True)
+        # conda hard-links package files from its cache into every environment;
+        # writing through the link would change the cached pgcore for all of them.
+        if dest.exists():
+            dest.unlink()
         shutil.copyfile(src, dest)
         if os.name != "nt":
             os.chmod(dest, 0o755)
