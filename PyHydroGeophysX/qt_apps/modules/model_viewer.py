@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import Counter
-import csv
 from datetime import datetime
 import gc
 from html import escape
@@ -28,7 +27,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QSpinBox,
     QSplitter,
     QStyledItemDelegate,
     QTabWidget,
@@ -43,13 +41,13 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.qt_apps.artifact_renderers import select_renderer
 from PyHydroGeophysX.qt_apps.modules.base import BaseModule, LogFn
+from PyHydroGeophysX.qt_apps.modules.model_viewer_render import (
+    close_array_resource, curve_file_view, model_result_view, numpy_view, table_view)
 from PyHydroGeophysX.qt_apps.qt_utils import ContentWidthScrollArea
 from PyHydroGeophysX.qt_apps.results_store import (
     ResultsStore, RunRecord, is_placeholder_label, run_title, short_run_id)
 from PyHydroGeophysX.qt_apps.run_records import run_documents
 from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
-from PyHydroGeophysX.qt_apps.widgets.array_viewer import ArrayViewer
-from PyHydroGeophysX.qt_apps.widgets.curve_viewer import CurveViewer
 from PyHydroGeophysX.qt_apps.widgets.image_view import ZoomableImageView
 from PyHydroGeophysX.qt_apps.widgets.project_dialogs import SaveRunsDialog
 from PyHydroGeophysX.qt_apps.widgets import temperature_panel
@@ -131,17 +129,6 @@ def _human_size(size: int) -> str:
             return f"{value:.1f} {suffix}" if suffix != "B" else f"{int(value)} B"
         value /= 1024.0
     return f"{size} B"
-
-
-def _close_array_resource(resource: Any) -> None:
-    try:
-        mmap = getattr(resource, "_mmap", None)
-        if mmap is not None:
-            mmap.close()
-        elif hasattr(resource, "close"):
-            resource.close()
-    except (OSError, ValueError):
-        pass
 
 
 def _module_title(module_key: str) -> str:
@@ -1207,7 +1194,8 @@ class ModelViewerModule(BaseModule):
                 "label": label + ("s" if "models" in bundle else ""),
                 "metadata": {"bundle": bundle},
             })
-        return bundles + artifacts
+        models = [a for a in artifacts if a.get("kind") == "model_result_v2"]
+        return bundles + models + [a for a in artifacts if a.get("kind") != "model_result_v2"]
 
     def _populate_artifacts(self, record: RunRecord) -> None:
         assert self._store is not None
@@ -1285,7 +1273,7 @@ class ModelViewerModule(BaseModule):
                 widget.deleteLater()
                 retired.append(widget)
         for resource in self._visual_resources:
-            _close_array_resource(resource)
+            close_array_resource(resource)
         self._visual_resources.clear()
         if message:
             label = QLabel(message)
@@ -1315,7 +1303,9 @@ class ModelViewerModule(BaseModule):
             if renderer in {"array", "array_stack", "curve"} and path.suffix.lower() in {".npy", ".npz"}:
                 self._render_numpy(path, renderer, artifact)
             elif renderer == "curve":
-                self._render_curve_file(path)
+                self._replace_visual(curve_file_view(path))
+            elif renderer == "model_result":
+                self._replace_visual(model_result_view(path))
             elif renderer == "image":
                 view = ZoomableImageView()
                 if not view.set_image_file(path):
@@ -1344,7 +1334,7 @@ class ModelViewerModule(BaseModule):
             elif renderer == "mesh":
                 self._render_mesh_file(path)
             elif renderer == "table":
-                self._render_table(path)
+                self._replace_visual(table_view(path))
             elif renderer == "json":
                 text = QTextEdit(); text.setReadOnly(True)
                 text.setPlainText(json.dumps(json.loads(path.read_text(encoding="utf-8")), indent=2))
@@ -1398,127 +1388,11 @@ class ModelViewerModule(BaseModule):
         except Exception as exc:
             self._clear_visual(f'Could not compare these models: {exc}')
 
-    def _render_numpy(
-        self,
-        path: Path,
-        renderer: str,
-        artifact: Optional[Dict[str, Any]] = None,
-    ) -> None:
+    def _render_numpy(self, path: Path, renderer: str, artifact: Optional[Dict[str, Any]] = None) -> None:
         artifact = dict(artifact or {})
         title, value_label, log_scale = _artifact_plot_options(artifact, path)
-        loaded = np.load(
-            path,
-            allow_pickle=False,
-            mmap_mode="r" if path.suffix.lower() == ".npy" else None,
-        )
-        keep_open = False
-        try:
-            if isinstance(loaded, np.lib.npyio.NpzFile):
-                names = [
-                    name for name in loaded.files
-                    if np.asarray(loaded[name]).dtype.kind in "fiu"
-                ]
-                if not names:
-                    raise ValueError("NPZ contains no numeric arrays.")
-                metadata = artifact.get("metadata")
-                metadata = dict(metadata) if isinstance(metadata, dict) else {}
-                requested = str(metadata.get("array_key") or "")
-                chosen = requested if requested in names else names[0]
-                array = np.array(loaded[chosen], copy=True)
-                loaded.close()
-            else:
-                array = loaded
-            # Keep semantic dispatch from the artifact (notably a 2-D curve
-            # table).  Shape only upgrades/downgrades the generic array modes.
-            if renderer == "array" and array.ndim >= 3:
-                renderer = "array_stack"
-            elif renderer == "array_stack" and array.ndim < 3:
-                renderer = "curve" if array.ndim == 1 else "array"
-            if renderer == "curve" or array.ndim == 1:
-                values = np.array(array, copy=True)
-                view = CurveViewer()
-                if values.ndim == 2 and min(values.shape) >= 2:
-                    # A compact 2 x N / 3 x N array normally stores x and one
-                    # or two series by row; a tall N x K array stores columns.
-                    if values.shape[0] <= 4 and values.shape[1] > 2 * values.shape[0]:
-                        values = values.T
-                    x = values[:, 0]
-                    for column in range(1, values.shape[1]):
-                        view.add_curve(x, values[:, column], f"{value_label} {column}")
-                else:
-                    values = values.ravel()
-                    view.add_curve(np.arange(values.size), values, value_label)
-                self._replace_visual(view); return
-            if array.ndim == 2:
-                values = np.array(array, copy=True)
-                view = ArrayViewer(colormaps=self._colormaps()); view.set_array(
-                    values,
-                    log=log_scale,
-                    value_label=value_label,
-                    title=title,
-                )
-                self._replace_visual(view); return
-            if array.ndim >= 3:
-                host = QWidget(); layout = QVBoxLayout(host)
-                controls = QHBoxLayout(); step = QSpinBox()
-                step.setRange(0, array.shape[0] - 1)
-                controls.addWidget(QLabel("Step / slice:")); controls.addWidget(step); controls.addStretch(1)
-                view = ArrayViewer(colormaps=self._colormaps())
-                sample = np.asarray(array).ravel()[::max(1, array.size // 250_000)]
-                if log_scale:
-                    with np.errstate(divide="ignore", invalid="ignore"):
-                        sample = np.log10(np.where(sample > 0, sample, np.nan))
-                finite = sample[np.isfinite(sample)]
-                limits = None
-                if finite.size:
-                    lo, hi = np.percentile(finite, [2, 98])
-                    if hi <= lo:
-                        half_span = 0.5 if log_scale else max(abs(float(lo)) * 0.05, 0.5)
-                        lo, hi = float(lo) - half_span, float(hi) + half_span
-                    limits = (float(lo), float(hi))
-                def show_slice(value: int) -> None:
-                    # Copy only the visible slice: the widget never owns a view
-                    # of the file mapping, so Delete Run can close it first.
-                    view.set_array(
-                        np.array(array[value], copy=True),
-                        autoscale=limits is None,
-                        log=log_scale,
-                        value_label=value_label,
-                        title=f"{title} — slice {value + 1}",
-                    )
-                    if limits is not None:
-                        view.set_levels(*limits)
-                step.valueChanged.connect(show_slice); show_slice(0)
-                layout.addLayout(controls); layout.addWidget(view, stretch=1)
-                self._replace_visual(host, resources=[loaded])
-                keep_open = True
-                return
-            raise ValueError(f"Unsupported array shape {array.shape}.")
-        finally:
-            if not keep_open:
-                _close_array_resource(loaded)
-
-    def _render_curve_file(self, path: Path) -> None:
-        values = np.genfromtxt(path, delimiter="," if path.suffix.lower() == ".csv" else None,
-                               names=True, dtype=float, encoding="utf-8")
-        names = list(values.dtype.names or [])
-        if len(names) < 2:
-            raise ValueError("Curve table needs at least two numeric columns.")
-        view = CurveViewer()
-        for name in names[1:]:
-            view.add_curve(np.asarray(values[names[0]]), np.asarray(values[name]), name)
-        self._replace_visual(view)
-
-    def _render_table(self, path: Path) -> None:
-        delimiter = "\t" if path.suffix.lower() == ".tsv" else ","
-        with path.open("r", encoding="utf-8", errors="replace", newline="") as stream:
-            rows = list(csv.reader(stream, delimiter=delimiter))[:5000]
-        columns = max((len(row) for row in rows), default=0)
-        table = QTableWidget(len(rows), columns)
-        for row_index, row in enumerate(rows):
-            for col, value in enumerate(row):
-                table.setItem(row_index, col, QTableWidgetItem(value))
-        self._replace_visual(table)
+        view, resources = numpy_view(path, renderer, artifact, title, value_label, log_scale, self._colormaps())
+        self._replace_visual(view, resources=resources)
 
     def _render_mesh_file(self, path: Path) -> None:
         """Show a standalone PyGIMLi mesh, coloured by its region markers.

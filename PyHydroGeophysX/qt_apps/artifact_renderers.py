@@ -23,6 +23,9 @@ def select_renderer(
         fmt = Path(str(artifact.get("path") or "")).suffix.lower().lstrip(".")
     if "model_bundle" in kind or kind in {"pygimli_bundle", "mesh_model_bundle"}:
         return "mesh_bundle"
+    # Any inverted model through the one result protocol (results.protocol).
+    if kind == "model_result_v2":
+        return "model_result"
     # An ERT run's reciprocal pairs, drawn as the ERT page's Reciprocal errors
     # tab draws them rather than as a bare array.
     if kind == "reciprocal_error_pairs":

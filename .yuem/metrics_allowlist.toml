@@ -38,7 +38,7 @@
 "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py" = { lines = 2038, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/joint_inversion.py" = { lines = 1629, reason = "M2.4: swallowed errors are logged (+4 lines)" }
 "PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py" = { lines = 2255, reason = "M2.4: swallowed errors are logged (+5 lines)" }
-"PyHydroGeophysX/qt_apps/modules/model_viewer.py" = { lines = 2094, reason = "M2.4: swallowed errors are logged (+4 lines)" }
+"PyHydroGeophysX/qt_apps/modules/model_viewer.py" = { lines = 1968, reason = "M3.5: renderers moved to model_viewer_render.py (2094 -> 1968); still over the limit" }
 "PyHydroGeophysX/qt_apps/modules/mt_processing.py" = { lines = 2206, reason = "M2.4: swallowed errors are logged (+5 lines)" }
 "PyHydroGeophysX/qt_apps/modules/one_click.py" = { lines = 2300, reason = "M2.4: swallowed errors are logged (+4 lines)" }
 "PyHydroGeophysX/qt_apps/modules/project_map.py" = { lines = 1729, reason = "M2.4: swallowed errors are logged (+5 lines)" }

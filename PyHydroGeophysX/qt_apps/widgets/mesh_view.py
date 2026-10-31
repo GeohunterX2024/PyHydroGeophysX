@@ -193,7 +193,9 @@ class MeshResultView(QWidget):
         self._mask_low = QCheckBox("Hide below")
         self._mask_low.setToolTip(
             "Blank the cells whose coverage falls under the threshold, rather than "
-            "letting poorly constrained cells read as real structure.")
+            "letting poorly constrained cells read as real structure. On by default; "
+            "the line under the plot states the cut.")
+        self._mask_low.setChecked(True)
         self._mask_low.toggled.connect(self._redraw)
 
         # Blanking cells can only cut on cell boundaries, and an inversion mesh has

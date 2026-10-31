@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Mapping
 
 from PyHydroGeophysX._internal.provenance import collect_environment, parameters_digest
 
-from .models import RunContext, WorkflowRunResult, WorkflowSpec, iter_artifact_refs
+from .models import ArtifactRef, RunContext, WorkflowRunResult, WorkflowSpec, iter_artifact_refs
 from .registry import get_workflow
+
+_logger = logging.getLogger(__name__)
+
+#: File every model-producing workflow leaves in its output folder (plan M3.5).
+MODEL_RESULT_NAME = "model_result.phgx.h5"
 
 
 def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec, runtime: RunContext) -> None:
@@ -27,6 +33,29 @@ def _with_provenance(result: WorkflowRunResult, spec: WorkflowSpec, runtime: Run
     provenance["environment"] = collect_environment()
     provenance["threads"] = runtime.threads
     result.provenance = provenance
+
+
+def _attach_model_result(result: WorkflowRunResult, spec: WorkflowSpec, runtime: RunContext) -> None:
+    """Save the result as ModelResultV2 beside the others and register it as an artifact.
+
+    Viewers read every model through this one protocol. A model the adapter
+    cannot convert is logged and left out; the run itself has succeeded.
+    """
+    from PyHydroGeophysX.results.adapters import MODEL_WORKFLOWS, from_workflow_result
+
+    if spec.workflow_id not in MODEL_WORKFLOWS or not result.objects:
+        return
+    try:
+        converted = from_workflow_result(spec.workflow_id, result)
+        converted.provenance["seed"] = spec.seed
+        path = converted.save(runtime.output_dir / MODEL_RESULT_NAME)
+    except (KeyError, TypeError, ValueError, AttributeError, OSError, RuntimeError):
+        _logger.warning("could not save %s as ModelResultV2", spec.workflow_id, exc_info=True)
+        return
+    result.artifacts.append(
+        ArtifactRef.from_path(path, artifact_id=f"{spec.workflow_id}:model_result", kind="model_result_v2",
+                              format="h5", base_dir=runtime.project_root)
+    )
 
 
 def run_workflow(
@@ -61,6 +90,7 @@ def run_workflow(
             f"Workflow {spec.workflow_id!r} returned {type(result).__name__}; "
             "handlers must return WorkflowRunResult."
         )
+    _attach_model_result(result, spec, runtime)
     _with_provenance(result, spec, runtime)
     result.to_dict()
     runtime.progress(f"Finished {spec.workflow_id}: {result.status}")
