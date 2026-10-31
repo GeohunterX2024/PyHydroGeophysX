@@ -22,6 +22,7 @@ from typing import Any, Dict
 from PyHydroGeophysX.errors import DataValidationError
 
 from .models import ArtifactRef, RunContext, WorkflowRunResult, WorkflowSpec
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 #: What ``ert.mesh_build`` is built around.
 MESH_BUILD_KINDS = ("single", "timelapse", "mesh")
@@ -96,7 +97,7 @@ def run_ert_e4d_mesh(spec: WorkflowSpec, context: RunContext) -> WorkflowRunResu
     context.progress(f"Building the mesh {config_path.name} describes")
     built = build_e4d_mesh(read_e4d_config(config_path), context.output_dir, name=name)
     target = Path(context.output_dir) / f"{name}.bms"
-    built["mesh"].save(str(target))
+    built["mesh"].save(pygimli_path(str(target), create=True))
     return WorkflowRunResult(
         status="completed",
         summary={"mesher": str(built["mesher"]), "mesh_path": str(target), "cells": int(built["mesh"].cellCount())},

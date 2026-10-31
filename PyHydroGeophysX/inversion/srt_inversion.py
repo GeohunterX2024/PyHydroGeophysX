@@ -28,6 +28,7 @@ from .ert_inversion import (
 )
 from .metrics import metrics_from_manager
 from .model_result import RayPathModelResult as _SRTModelResult
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class _SRTEngine:
@@ -165,9 +166,9 @@ def run_srt_manager_inversion(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     try:
-        data = tt.load(str(source))
+        data = tt.load(pygimli_path(str(source)))
     except Exception:  # noqa: BLE001 - retain the legacy fallback
-        data = pg.DataContainer(str(source), "s g")
+        data = pg.DataContainer(pygimli_path(str(source)), "s g")
     if data is None or int(data.size()) == 0:
         raise ValueError(f"No travel-time measurements found in {source}.")
     log(f"Inverting {int(data.size())} travel times…")
@@ -204,7 +205,7 @@ def run_srt_manager_inversion(
     try:
         mesh["velocity"] = velocity
         vtk_path = str(out / "velocity_model.vtk")
-        mesh.exportVTK(vtk_path)
+        mesh.exportVTK(pygimli_path(vtk_path, create=True))
     except Exception:  # noqa: BLE001 - VTK remains a best-effort artifact
         vtk_path = ""
     return {
@@ -310,7 +311,7 @@ def _run_srt_pipeline(data, out: Path, *, lam, max_iterations, plateau_tolerance
     try:
         mesh["velocity"] = velocity
         vtk_path = str(out / "velocity_model.vtk")
-        mesh.exportVTK(vtk_path)
+        mesh.exportVTK(pygimli_path(vtk_path, create=True))
     except Exception:  # noqa: BLE001 - VTK remains a best-effort artifact
         vtk_path = ""
 
@@ -379,7 +380,7 @@ class SRTInversion(InversionBase):
         # An already-loaded container is accepted so a caller re-running at
         # several lambdas does not have to round-trip through a file.
         data = data_file if isinstance(data_file, pg.DataContainer) \
-            else tt.load(str(data_file))
+            else tt.load(pygimli_path(str(data_file)))
         if not isinstance(data, pg.DataContainer):
             raise TypeError("Loaded SRT data must be a PyGIMLi DataContainer.")
         required_fields = ("s", "g", "t")

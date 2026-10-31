@@ -19,6 +19,7 @@ from scipy.sparse.linalg import lsqr
 from .base import InversionBase
 from .cross_constraints import StructuralConstraint
 from ..solvers.linear_solvers import _SPD_METHODS, StackedSystem, generalized_solver
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 @dataclass
@@ -147,7 +148,7 @@ class JointERTSRTInversion(InversionBase):
     @staticmethod
     def _load_ert_data(data: Union[str, PathLike, pg.DataContainer]) -> pg.DataContainer:
         if isinstance(data, (str, PathLike)):
-            loaded = ert.load(str(data))
+            loaded = ert.load(pygimli_path(str(data)))
         else:
             loaded = data
 
@@ -158,7 +159,7 @@ class JointERTSRTInversion(InversionBase):
     @staticmethod
     def _load_srt_data(data: Union[str, PathLike, pg.DataContainer]) -> pg.DataContainer:
         if isinstance(data, (str, PathLike)):
-            loaded = tt.load(str(data))
+            loaded = tt.load(pygimli_path(str(data)))
         else:
             loaded = data
 

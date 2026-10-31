@@ -20,6 +20,7 @@ from PyHydroGeophysX._internal.optional_dependencies import BackendUnavailable
 from PyHydroGeophysX._internal.utils import noop as _noop, utc_now as _utc_now
 from PyHydroGeophysX.data_processing import ert_io as ert_load
 from PyHydroGeophysX.visualization import ert_style as ert_plot_style
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 LogFn = Callable[[str], None]
 
@@ -681,7 +682,7 @@ def _export_vtks(out: Path, mesh: Any, models: np.ndarray,
                 step_mesh = pg.Mesh(mesh)
                 for name, values in fields.items():
                     step_mesh[name] = values
-                step_mesh.exportVTK(str(sp))
+                step_mesh.exportVTK(pygimli_path(str(sp), create=True))
                 if i == 0:
                     template = _VTKTemplate.from_reference(sp.read_bytes(), fields)
             step_paths.append(str(sp))
@@ -700,7 +701,7 @@ def _export_vtks(out: Path, mesh: Any, models: np.ndarray,
         for i in range(n_time):
             combined_mesh[f"resistivity_t{i}"] = models[:, i]
         vtk = out / "timelapse_resistivity.vtk"
-        combined_mesh.exportVTK(str(vtk))
+        combined_mesh.exportVTK(pygimli_path(str(vtk), create=True))
         combined = str(vtk)
     except Exception as exc:  # noqa: BLE001
         log(f"VTK export skipped: {exc}")
@@ -975,7 +976,7 @@ def run_timelapse_ert(
             for index, position in enumerate(placed if placed is not None else ()):
                 data.setSensorPosition(index, pygimli.Pos(*(float(v) for v in position)))
         for name, data in zip(basenames, containers):
-            data.save(os.path.join(clean_dir, name))
+            data.save(pygimli_path(os.path.join(clean_dir, name), create=True))
     # The smoothness stops at the zone outlines for every engine: the in-house
     # one and PyGIMLi read the marked edges, ADTLERT turns them into units.
     decoupled_edges = 0
@@ -1281,7 +1282,7 @@ def run_timelapse_ert(
         data_paths.append(str(out / "survey_times.csv"))
     mesh_path = out / "timelapse_mesh.bms"
     try:
-        res_mesh.save(str(mesh_path)); data_paths.append(str(mesh_path))
+        res_mesh.save(pygimli_path(str(mesh_path), create=True)); data_paths.append(str(mesh_path))
     except Exception as exc:  # noqa: BLE001
         mesh_path = None
         log(f"Mesh export skipped: {exc}")

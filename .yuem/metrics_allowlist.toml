@@ -31,6 +31,9 @@
 # above their upstream length. A ceiling may only fall; the entry goes once the
 # file is split below the limit. Raising one is reviewed like a baseline change.
 [file_length]
+"PyHydroGeophysX/core/mesh_3d.py" = { lines = 1588, reason = "F-16: PyGIMLi paths made openable on Windows (+1 import line)" }
+"PyHydroGeophysX/data_processing/ert_data_agent.py" = { lines = 3276, reason = "F-16: PyGIMLi paths made openable on Windows (+1 import line)" }
+"PyHydroGeophysX/inversion/ert_inversion.py" = { lines = 2801, reason = "F-16: PyGIMLi paths made openable on Windows (+1 import line)" }
 "PyHydroGeophysX/qt_apps/agent/chat_panel.py" = { lines = 2391, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/em_processing.py" = { lines = 3375, reason = "M4.4: gate-view helper moved to em_gate_view.py (3419 -> 3375); still over the limit" }
 "PyHydroGeophysX/qt_apps/modules/geo_hydrology.py" = { lines = 1544, reason = "M2.4: swallowed errors are logged (+6 lines)" }

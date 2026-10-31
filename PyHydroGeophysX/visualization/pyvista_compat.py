@@ -10,6 +10,7 @@ import os
 import sys
 import types
 from typing import Any, Optional, Tuple
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 def ensure_vtk_matplotlib_shim() -> None:
@@ -45,7 +46,7 @@ def pygimli_to_pyvista(mesh: Any) -> Any:
     folder = tempfile.mkdtemp(prefix="phgx_mesh_")
     try:
         path = os.path.join(folder, "mesh.vtk")
-        mesh.exportVTK(path)
+        mesh.exportVTK(pygimli_path(path, create=True))
         grid = pv.read(path)
     finally:
         shutil.rmtree(folder, ignore_errors=True)

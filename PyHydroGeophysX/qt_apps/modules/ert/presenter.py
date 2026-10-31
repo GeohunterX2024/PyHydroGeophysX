@@ -20,6 +20,7 @@ from .common import (
     survey_timing,
     theme,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class _Presenter:
@@ -418,7 +419,7 @@ class _Presenter:
         np.save(folder / "resmodel.npy", models)
         if coverage is not None:
             np.save(folder / "all_coverage.npy", np.asarray(coverage, dtype=float))
-        mesh.save(str(folder / "mesh_res.bms"))
+        mesh.save(pygimli_path(str(folder / "mesh_res.bms"), create=True))
         (folder / "handover.json").write_text(json.dumps(info, indent=2, default=str),
                                               encoding="utf-8")
         return {**info, "model_dir": str(folder)}

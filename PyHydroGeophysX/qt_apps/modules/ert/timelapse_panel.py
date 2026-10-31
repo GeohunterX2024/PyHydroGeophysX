@@ -36,6 +36,7 @@ from .common import (
     survey_timing,
     theme,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class _TimelapsePanel:
@@ -789,7 +790,7 @@ class _TimelapsePanel:
                     f"{Path(source).name}, and a time-lapse step needs at least four. "
                     "Loosen the Data QC thresholds, or Reset them.")
             target = staging / f"step_{index:04d}.dat"
-            data.save(str(target))
+            data.save(pygimli_path(str(target), create=True))
             out_files.append(str(target))
             steps.append({"file": Path(source).name, "kept": kept, "total": total,
                           "cut": list(reasons), "qc": ert_records.step_summary(report)})

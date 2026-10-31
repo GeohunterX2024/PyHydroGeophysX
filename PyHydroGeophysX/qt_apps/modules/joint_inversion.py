@@ -70,6 +70,7 @@ from PyHydroGeophysX.workflows import (
     export_workflow_bundle,
 )
 import logging
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 _logger = logging.getLogger(__name__)
 
@@ -420,10 +421,10 @@ class JointInversionModule(BaseModule):
         try:
             if method == "ERT":
                 from pygimli.physics import ert
-                payload = ert.load(path)
+                payload = ert.load(pygimli_path(path))
             elif method == "SRT":
                 import pygimli.physics.traveltime as tt
-                payload = tt.load(path)
+                payload = tt.load(pygimli_path(path))
             elif method in {"Gravity", "Magnetics"}:
                 table = io_utils.load_xyz_table(path, min_cols=3)
                 payload = {
@@ -476,8 +477,8 @@ class JointInversionModule(BaseModule):
                 srt_path = root / "Seismic" / "srtfieldline2.dat"
                 from pygimli.physics import ert
                 import pygimli.physics.traveltime as tt
-                self._data["ERT"] = ert.load(str(ert_path))
-                self._data["SRT"] = tt.load(str(srt_path))
+                self._data["ERT"] = ert.load(pygimli_path(str(ert_path)))
+                self._data["SRT"] = tt.load(pygimli_path(str(srt_path)))
                 self._paths.update({"ERT": str(ert_path), "SRT": str(srt_path)})
             elif pair == ("FDEM", "TDEM"):
                 f_path = root / "EM" / "joint_synthetic_fdem.csv"

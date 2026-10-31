@@ -20,6 +20,7 @@ from ..solvers.linear_solvers import (
 from .base import InversionBase, TimeLapseInversionResult
 from .temporal_weights import DEFAULT_LIMIT as DEFAULT_TEMPORAL_LIMIT
 from .temporal_weights import temporal_weights
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 #: The solver 0.3.0 used for this inversion's model update (solvers.solver)
 #: stopped these iterative least-squares methods at 2000 iterations, and
@@ -330,7 +331,7 @@ class TimeLapseERTInversion(InversionBase):
             raise ValueError("Number of data files must match number of measurement times")
         
         # Load first dataset to initialize base class
-        data = ert.load(data_files[0])
+        data = ert.load(pygimli_path(data_files[0]))
         
         # Call parent initializer with first dataset
         super().__init__(data, mesh, **kwargs)
@@ -426,7 +427,7 @@ class TimeLapseERTInversion(InversionBase):
         
         for i, fname in enumerate(self.data_files):
             # Load data
-            dataert = ert.load(fname)
+            dataert = ert.load(pygimli_path(fname))
             self.datasets.append(dataert)
             
             # Handle geometric factors

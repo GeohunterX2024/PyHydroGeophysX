@@ -4,6 +4,7 @@ import os
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 # ---------------------------------------------------------------------------
 # 2-D mesh export (unstructured triangular / quad mesh)
@@ -55,9 +56,9 @@ def export_mesh_to_vtk(
                         f"Cell data '{name}' has {arr.size} values but mesh has {n_cells} cells."
                     )
                 export[name] = arr
-            export.exportVTK(filename)
+            export.exportVTK(pygimli_path(filename, create=True))
             return filename
-        mesh.exportVTK(filename)
+        mesh.exportVTK(pygimli_path(filename, create=True))
 
     # If extra cell data requested, append it
     if cell_data:

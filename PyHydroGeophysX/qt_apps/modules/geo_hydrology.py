@@ -87,6 +87,7 @@ from PyHydroGeophysX.workflows import (
     export_workflow_bundle,
 )
 import logging
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 _logger = logging.getLogger(__name__)
 
@@ -763,7 +764,7 @@ class GeoHydrologyModule(BaseModule):
         try:
             import pygimli as pg
 
-            self._mesh = pg.load(str(files["mesh"]))
+            self._mesh = pg.load(pygimli_path(str(files["mesh"])))
             polygons = [np.array([[n.pos()[0], n.pos()[1]] for n in cell.nodes()])
                         for cell in self._mesh.cells()]
         except Exception as exc:  # noqa: BLE001 - pyGIMLi missing or the mesh unreadable

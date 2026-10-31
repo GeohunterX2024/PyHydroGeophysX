@@ -24,6 +24,7 @@ from .ert_inversion import (
 from .time_lapse import TimeLapseERTInversion, _voltage_error
 from .temporal_weights import DEFAULT_LIMIT as _TEMPORAL_LIMIT
 from .temporal_weights import temporal_weights
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class _ADTLERTWindowProgress:
@@ -279,7 +280,7 @@ def _process_window(start_idx: int, print_lock, data_dir: str, ert_files: List[s
     # PyGIMLi meshes cannot be pickled. Parallel callers therefore pass a
     # temporary mesh filename and each worker loads its own local instance.
     if isinstance(mesh, (str, os.PathLike)):
-        mesh = pg.load(str(mesh))
+        mesh = pg.load(pygimli_path(str(mesh)))
     
     def emit(message: str) -> None:
         if print_lock is not None:
@@ -329,7 +330,7 @@ def _process_window(start_idx: int, print_lock, data_dir: str, ert_files: List[s
         # Run inversion
         window_result = inversion.run()
         if result_mesh_path is not None and window_result.mesh is not None:
-            window_result.mesh.save(result_mesh_path)
+            window_result.mesh.save(pygimli_path(result_mesh_path, create=True))
         
         # Extract relevant information for the result dictionary
         result_dict = {
@@ -433,9 +434,9 @@ class WindowedTimeLapseERTInversion:
         # Keep the first survey's measurement scheme, and add the other sensor
         # positions for meshing only. Each forward operator still uses its own
         # survey's electrodes and readings.
-        combined = pg.DataContainerERT(ert.load(paths[0]))
+        combined = pg.DataContainerERT(ert.load(pygimli_path(paths[0])))
         for path in paths[1:]:
-            data = ert.load(path)
+            data = ert.load(pygimli_path(path))
             for position in data.sensorPositions():
                 combined.createSensor(position)
         combined.sortSensorsX()
@@ -457,7 +458,7 @@ class WindowedTimeLapseERTInversion:
 
     def _load_adtlert_series(self):
         paths = [os.path.join(self.data_dir, name) for name in self.ert_files]
-        datasets = [ert.load(path) for path in paths]
+        datasets = [ert.load(pygimli_path(path)) for path in paths]
         from PyHydroGeophysX.data_processing.ert_io import align_timelapse_abmn
         datasets = align_timelapse_abmn(datasets)
         reference_sensors, reference_abmn = self._survey_arrays(datasets[0])
@@ -538,7 +539,7 @@ class WindowedTimeLapseERTInversion:
 
         datasets, observed, relative_errors = self._load_adtlert_series()
         if isinstance(self.mesh, (str, os.PathLike)):
-            mesh = pg.load(str(self.mesh))
+            mesh = pg.load(pygimli_path(str(self.mesh)))
         elif self.mesh is None:
             mesh = ert.ERTManager(datasets[0]).createMesh(
                 data=datasets[0],
@@ -749,7 +750,7 @@ class WindowedTimeLapseERTInversion:
                     handle = tempfile.NamedTemporaryFile(suffix=".bms", delete=False)
                     mesh_file = handle.name
                     handle.close()
-                    shared_mesh.save(mesh_file)
+                    shared_mesh.save(pygimli_path(mesh_file, create=True))
                 else:
                     mesh_file = str(shared_mesh)
 
@@ -812,7 +813,7 @@ class WindowedTimeLapseERTInversion:
             result_by_start = dict(window_results)
             temp_mesh = window_results[0][1]['mesh']
             if temp_mesh is None and result_mesh_file is not None:
-                temp_mesh = pg.load(result_mesh_file)
+                temp_mesh = pg.load(pygimli_path(result_mesh_file))
             all_models = []
             all_coverage = []
 

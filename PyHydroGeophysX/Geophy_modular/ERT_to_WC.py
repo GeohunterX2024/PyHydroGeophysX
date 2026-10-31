@@ -37,6 +37,7 @@ from PyHydroGeophysX._internal.deprecations import legacy_names as _legacy_names
 from PyHydroGeophysX._internal.optional_dependencies import BackendUnavailable
 from PyHydroGeophysX._internal.utils import noop as _noop, utc_now as _utc_now
 from PyHydroGeophysX.Geophy_modular.ert_to_wc_model import ERTtoWC, plot_time_series
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 #: 0.3.0 imported resistivity_to_saturation2 here under this name, so it takes
 #: rhos, n and sigma_sur - unlike petrophysics.resistivity_to_saturation, which
@@ -229,7 +230,7 @@ def derive_markers_from_interface(
     order = np.argsort(iface[:, 0])
     ix, iz = iface[order, 0], iface[order, 1]
 
-    mesh = pg.load(str(files["mesh"]))
+    mesh = pg.load(pygimli_path(str(files["mesh"])))
     centers = np.asarray(mesh.cellCenters(), dtype=float)
     cx, cz = centers[:, 0], centers[:, 1]
     iface_z = np.interp(cx, ix, iz)  # clamps outside the interface x-range
@@ -498,7 +499,7 @@ def run_ert_to_wc(
         raise ValueError(f"Missing required file(s) in {data_dir}: {', '.join(missing)}.")
 
     log(f"Loading inverted model from {data_dir}")
-    mesh = pg.load(str(files["mesh"]))
+    mesh = pg.load(pygimli_path(str(files["mesh"])))
     resistivity = _load_resistivity(files["resistivity"])
     n_cells, n_time = resistivity.shape
     if mesh.cellCount() != n_cells:

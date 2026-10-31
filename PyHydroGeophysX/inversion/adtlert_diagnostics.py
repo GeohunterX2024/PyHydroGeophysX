@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 STAGES = ("runtime", "single", "timelapse")
 
@@ -36,7 +37,7 @@ def check_stage(stage):
                                 scheme=scheme, noiseLevel=0., verbose=False)
             data["err"] = np.full(data.size(), .03)
             path = Path(temporary) / f"step_{i}.dat"
-            data.save(str(path))
+            data.save(pygimli_path(str(path), create=True))
             datasets.append(data)
             paths.append(path.name)
         mesh = mt.createMesh(mt.createParaMeshPLC(datasets[0].sensorPositions(),

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import pygimli as pg
 import pygimli.meshtools as mt
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 try:
     from pygimli.meshtools import readGmsh
@@ -732,9 +733,9 @@ class Mesh3DCreator:
         if save_formats:
             base_name = msh_file.replace('.msh', '')
             if 'bms' in save_formats:
-                mesh.save(f'{base_name}.bms')
+                mesh.save(pygimli_path(f'{base_name}.bms', create=True))
             if 'vtk' in save_formats:
-                mesh.exportVTK(f'{base_name}.vtk')
+                mesh.exportVTK(pygimli_path(f'{base_name}.vtk', create=True))
         
         return mesh
     
@@ -1341,7 +1342,7 @@ class Mesh3DCreator:
         else:
             # Convert PyGIMLi mesh to VTK file temporarily
             temp_vtk = os.path.join(self.mesh_directory, '_temp_viz.vtk')
-            mesh_or_path.exportVTK(temp_vtk)
+            mesh_or_path.exportVTK(pygimli_path(temp_vtk, create=True))
             mesh = pv.read(temp_vtk)
         
         plotter = pv.Plotter(**kwargs)

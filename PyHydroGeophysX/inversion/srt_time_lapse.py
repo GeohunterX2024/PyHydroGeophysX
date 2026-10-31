@@ -17,6 +17,7 @@ from ..solvers.linear_solvers import generalized_solver
 from .base import InversionBase, TimeLapseInversionResult
 from .temporal_weights import DEFAULT_LIMIT as DEFAULT_TEMPORAL_LIMIT
 from .temporal_weights import temporal_weights
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +43,7 @@ class TimeLapseSRTInversion(InversionBase):
         if len(data_files) < 2:
             raise ValueError("TimeLapseSRTInversion requires at least two datasets.")
 
-        first_data = pg.load(data_files[0])
+        first_data = pg.load(pygimli_path(data_files[0]))
         if not isinstance(first_data, pg.DataContainer):
             raise TypeError("Loaded SRT data must be a PyGIMLi DataContainer.")
 
@@ -256,7 +257,7 @@ class TimeLapseSRTInversion(InversionBase):
 
     def setup(self) -> None:
         if self.mesh is None:
-            temp_data = pg.load(self.data_files[0])
+            temp_data = pg.load(pygimli_path(self.data_files[0]))
             temp_mgr = TravelTimeManager()
             self.mesh = temp_mgr.createMesh(
                 temp_data,
@@ -273,7 +274,7 @@ class TimeLapseSRTInversion(InversionBase):
         wd_blocks = []
 
         for data_file in self.data_files:
-            data = pg.load(data_file)
+            data = pg.load(pygimli_path(data_file))
             if not isinstance(data, pg.DataContainer):
                 raise TypeError(f"Loaded SRT data is not a DataContainer: {data_file}")
             self.datasets.append(data)

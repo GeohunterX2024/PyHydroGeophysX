@@ -33,6 +33,7 @@ from PyHydroGeophysX.data_processing.ert_formats import (
     parse_tx0,
     reciprocal_errors,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 # =============================================================================
 # ERT Data Loading
@@ -1410,13 +1411,13 @@ def _load_ert_pygimli(
 
     try:
         with no_invalid_data_file():
-            data = pg.load(str(data_file_path))
+            data = pg.load(pygimli_path(str(data_file_path)))
     except Exception as e:
         # Try loading as unified data format
         try:
             from pygimli.physics import ert as pgert
             with no_invalid_data_file():
-                data = pgert.load(str(data_file_path))
+                data = pgert.load(pygimli_path(str(data_file_path)))
         except Exception:
             raise ValueError(f"Could not load ERT data file with PyGIMLi: {e}")
     
@@ -2927,7 +2928,7 @@ def export_for_inversion(
             import pygimli as pg
             import pygimli.physics.ert as ert_pg
 
-            data = ert_pg.load(str(path))
+            data = ert_pg.load(pygimli_path(str(path)))
             if data.size() == 0:
                 raise RuntimeError("Exported file loaded but contains 0 measurements.")
             required_fields = ("a", "b", "m", "n", "r")

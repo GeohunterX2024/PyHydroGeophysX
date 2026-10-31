@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Mapping, Tuple
 
 import numpy as np
 import logging
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 _logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class _Writer:
             return {"kind": "pg_vector", "class": pg_class, "array": described}
         if pg_class.startswith("DataContainer"):
             path, name = self.path(stem, ".dat")
-            value.save(str(path))
+            value.save(pygimli_path(str(path), create=True))
             tokens = [token for token in value.dataMap().keys() if value.isSensorIndex(token)]
             return {"kind": "pg_data", "class": pg_class, "file": name,
                     "sensor_tokens": sorted(tokens)}

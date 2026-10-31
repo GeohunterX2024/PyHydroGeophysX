@@ -21,6 +21,7 @@ import numpy as np
 
 from PyHydroGeophysX.data_processing import table_io as io_utils
 from PyHydroGeophysX._internal.optional_dependencies import BackendUnavailable
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 def run_ert3d_forward(
@@ -117,13 +118,13 @@ def run_ert3d_forward(
 
     out = io_utils.ensure_dir(Path(output_dir) / "ert3d_forward")
     dat_path = out / "synthetic_3d_ert.dat"
-    data.save(str(dat_path))
+    data.save(pygimli_path(str(dat_path), create=True))
     say(f"Saved synthetic data to {dat_path}")
 
     vtk_path: Optional[Path] = out / "forward_3d_resistivity.vtk"
     try:
         mesh["resistivity"] = res
-        mesh.exportVTK(str(vtk_path))
+        mesh.exportVTK(pygimli_path(str(vtk_path), create=True))
     except Exception:  # noqa: BLE001 - VTK export is optional
         vtk_path = None
 

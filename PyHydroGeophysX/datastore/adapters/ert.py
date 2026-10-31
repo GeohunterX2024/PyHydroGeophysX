@@ -14,6 +14,8 @@ from typing import Any
 
 import numpy as np
 
+from PyHydroGeophysX._internal.native_paths import pygimli_path
+
 from ..dataset import Dataset
 
 KIND = "pygimli.DataContainerERT"
@@ -110,7 +112,7 @@ def read_file(path: str | Path, raw_files: list[dict[str, Any]] | None = None) -
     """Read an ERT file with pyGIMLi and wrap it."""
     import pygimli as pg
 
-    return from_data_container(pg.DataContainerERT(str(path)), raw_files=raw_files)
+    return from_data_container(pg.DataContainerERT(pygimli_path(str(path))), raw_files=raw_files)
 
 
 __all__ = ["KIND", "from_data_container", "read_file", "to_data_container"]

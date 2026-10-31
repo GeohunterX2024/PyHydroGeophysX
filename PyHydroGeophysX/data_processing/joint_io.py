@@ -15,6 +15,7 @@ from typing import Any, Dict
 import numpy as np
 
 from PyHydroGeophysX.data_processing.run_inputs import pack as _pack, unpack as _unpack
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 def save_joint_observations(
@@ -30,7 +31,7 @@ def save_joint_observations(
         target = target.with_suffix(".dat")
         if not hasattr(payload, "save"):
             raise TypeError(f"{normalized} observations must provide DataContainer.save().")
-        payload.save(str(target))
+        payload.save(pygimli_path(str(target), create=True))
         return target
 
     target = target.with_suffix(".npz")
@@ -55,11 +56,11 @@ def load_joint_observations(method: str, source: str | Path) -> Any:
     if normalized == "ERT":
         from pygimli.physics import ert
 
-        return ert.load(str(path))
+        return ert.load(pygimli_path(str(path)))
     if normalized == "SRT":
         import pygimli.physics.traveltime as tt
 
-        return tt.load(str(path))
+        return tt.load(pygimli_path(str(path)))
     with np.load(path, allow_pickle=False) as archive:
         manifest = json.loads(str(archive["__manifest__"].item()))
         if str(manifest.get("method", "")).upper() != normalized:

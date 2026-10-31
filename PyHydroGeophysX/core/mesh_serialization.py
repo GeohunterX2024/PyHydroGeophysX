@@ -23,14 +23,19 @@ def ansi_safe(text: str) -> bool:
     "No such file or directory" even though the directory is present. A localized
     OneDrive folder is the usual way to hit this: `C:\\Users\\me\\OneDrive\\文档`
     is unrepresentable whenever the machine's codepage is a Western one.
+
+    The string PyGIMLi receives holds the path's UTF-8 bytes, so a character
+    the codepage can encode differently - Chinese under GBK (936) - is misread
+    as well: only ASCII is safe, unless the codepage is UTF-8 itself.
     """
+    if text.isascii():
+        return True
     try:
-        text.encode("mbcs")          # Windows only; the ANSI codepage
-    except UnicodeEncodeError:
-        return False
-    except LookupError:
-        return True                  # not Windows, so narrow paths are UTF-8
-    return True
+        import ctypes
+
+        return ctypes.windll.kernel32.GetACP() == 65001
+    except AttributeError:           # not Windows, so narrow paths are UTF-8
+        return True
 
 
 def via_ascii_path(run: Callable[[str], None], target: Path, *, mode: str) -> Path:

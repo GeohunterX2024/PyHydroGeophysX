@@ -6,6 +6,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 import pygimli as pg
 from pygimli.physics import ert
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 # ---------------------------------------------------------------------------
@@ -368,7 +369,7 @@ class ERTForwardModeling:
         
         # Save data if a path is provided
         if save_path is not None:
-            synth_data.save(save_path)
+            synth_data.save(pygimli_path(save_path, create=True))
         
         return synth_data, grid
 

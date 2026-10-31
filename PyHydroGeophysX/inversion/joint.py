@@ -22,6 +22,7 @@ from PyHydroGeophysX.inversion.joint_api import (
     split_joint_soundings,
     validate_profile_interface,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 def _data_for(request: JointInversionRequest, method: str) -> Any:
@@ -290,7 +291,7 @@ def _run_ert_srt(request: JointInversionRequest) -> JointInversionResult:
                     sequential["resistivity_model"], dtype=float
                 )
                 vtk_path = sequential_out / "constrained_ert_model.vtk"
-                mesh.exportVTK(str(vtk_path))
+                mesh.exportVTK(pygimli_path(str(vtk_path), create=True))
                 result.artifacts["vtk"] = str(vtk_path)
         except Exception as exc:
             result.warnings.append(f"Could not export constrained ERT VTK: {exc}")
@@ -338,12 +339,12 @@ def _run_ert_srt(request: JointInversionRequest) -> JointInversionResult:
     out.mkdir(parents=True, exist_ok=True)
     try:
         mesh_path = out / "joint_mesh.bms"
-        joint.mesh.save(str(mesh_path))
+        joint.mesh.save(pygimli_path(str(mesh_path), create=True))
         result.artifacts["mesh"] = str(mesh_path)
         joint.mesh["joint_ert_resistivity"] = np.asarray(joint.ert_resistivity, dtype=float)
         joint.mesh["joint_srt_velocity"] = np.asarray(joint.srt_velocity, dtype=float)
         vtk_path = out / "joint_models.vtk"
-        joint.mesh.exportVTK(str(vtk_path))
+        joint.mesh.exportVTK(pygimli_path(str(vtk_path), create=True))
         result.artifacts["vtk"] = str(vtk_path)
     except Exception as exc:
         result.warnings.append(f"Could not save joint mesh: {exc}")

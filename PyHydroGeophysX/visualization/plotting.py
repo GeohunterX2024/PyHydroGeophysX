@@ -14,6 +14,7 @@ from .axis_units import (
     set_section_axes,
     vertical_axis,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -652,7 +653,7 @@ def _convert_pygimli_to_simpeg(data_obj):
 
     # Load if path
     if isinstance(data_obj, (str, os.PathLike)):
-        data_obj = pgert.load(str(data_obj))
+        data_obj = pgert.load(pygimli_path(str(data_obj)))
 
     # Extract electrode positions
     xx = np.asarray(pg.x(data_obj.sensorPositions()))

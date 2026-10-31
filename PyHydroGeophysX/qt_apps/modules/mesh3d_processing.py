@@ -118,6 +118,7 @@ _E4D_FROM_STEPS = "No configuration loaded: the layout is built from steps 1, 3 
 from PyHydroGeophysX.visualization.pyvista_compat import (  # noqa: E402
     try_import_pyvista as _try_import_pyvista,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class Mesh3DModule(BaseModule):
@@ -1821,7 +1822,7 @@ class Mesh3DModule(BaseModule):
             import tempfile
 
             tmp = Path(tempfile.mkdtemp()) / "mesh3d_view.vtk"
-            mesh.exportVTK(str(tmp))
+            mesh.exportVTK(pygimli_path(str(tmp), create=True))
             pv_mesh = self._pv.read(str(tmp))
             self._plotter.clear()
             scalars = None
@@ -1951,7 +1952,7 @@ class Mesh3DModule(BaseModule):
             import tempfile
 
             tmp = Path(tempfile.mkdtemp()) / "mesh3d_clip.vtk"
-            self._mesh.exportVTK(str(tmp))
+            self._mesh.exportVTK(pygimli_path(str(tmp), create=True))
             pv_mesh = self._pv.read(str(tmp))
             self._plotter.clear()
             cmap = self._colormap.set_target(cmaps.MESH_REGIONS, "coolwarm")

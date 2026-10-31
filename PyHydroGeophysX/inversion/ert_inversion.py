@@ -33,6 +33,7 @@ from .ert_mesh import (  # noqa: F401 - re-exported, see below
     mark_zone_interfaces,
     mesh_preview,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 # ``LAMBDA_BOUNDS`` and ``search_lambda_for_chi2`` live in
 # :mod:`PyHydroGeophysX.inversion.lambda_search` because the potential-field and
@@ -2213,7 +2214,7 @@ class ERTInversion(InversionBase):
         # Load ERT data. An already-loaded container is accepted so that callers
         # who have applied their own error model or QC filter (the auto-lambda
         # pipeline does both) do not have to round-trip through a file.
-        data = data_file if isinstance(data_file, pg.DataContainer) else ert.load(data_file)
+        data = data_file if isinstance(data_file, pg.DataContainer) else ert.load(pygimli_path(data_file))
 
         # Compute geometric factors numerically from electrode positions
         # This ensures accurate K values based on actual electrode geometry

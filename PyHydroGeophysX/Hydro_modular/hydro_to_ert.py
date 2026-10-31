@@ -9,6 +9,7 @@ from typing import Tuple, Optional, Dict, Any, Union, List
 from PyHydroGeophysX.core.interpolation import ProfileInterpolator
 from PyHydroGeophysX.forward.ert_forward import check_resistivity_model
 from PyHydroGeophysX.petrophysics.resistivity_models import water_content_to_resistivity
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 def hydro_to_ert(
@@ -193,6 +194,6 @@ def hydro_to_ert(
 
     # The synthetic data are written when a path is given.
     if save_path is not None:
-        synth_data.save(str(save_path))
+        synth_data.save(pygimli_path(str(save_path), create=True))
 
     return synth_data, res_model

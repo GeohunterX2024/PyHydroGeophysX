@@ -25,6 +25,7 @@ from .common import (
     np,
     theme,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 class _ImportPanel:
@@ -485,7 +486,7 @@ class _ImportPanel:
         import pygimli.physics.ert as ert
 
         with ert_load.no_invalid_data_file():
-            data = ert.load(path, verbose=False)
+            data = ert.load(pygimli_path(path), verbose=False)
         if not data.haveData("rhoa"):
             try:
                 data["k"] = ert.createGeometricFactors(data, numerical=False)

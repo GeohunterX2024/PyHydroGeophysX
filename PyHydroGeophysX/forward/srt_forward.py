@@ -7,6 +7,7 @@ import numpy as np
 import pygimli as pg
 import pygimli.physics.traveltime as tt
 from pygimli.physics import TravelTimeManager
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 # ---------------------------------------------------------------------------
@@ -190,7 +191,7 @@ class SeismicForwardModeling:
         
         # Save data if a path is provided
         if save_path is not None:
-            synth_data.save(save_path)
+            synth_data.save(pygimli_path(save_path, create=True))
         
         # Display data if requested
         if show_data:

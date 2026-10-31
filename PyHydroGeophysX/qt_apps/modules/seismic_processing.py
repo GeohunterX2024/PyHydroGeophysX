@@ -71,6 +71,7 @@ from PyHydroGeophysX.workflows import (
     export_workflow_bundle,
 )
 import logging
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 _logger = logging.getLogger(__name__)
 
@@ -1950,7 +1951,7 @@ class SeismicProcessingModule(BaseModule):
         p = str(path)
         # 1. Native pyGIMLi / BERT travel-time format (sensors + 's g t').
         try:
-            data = tt.load(p)
+            data = tt.load(pygimli_path(p))
             if data is not None and int(data.size()) > 0 and data.haveData("t"):
                 return data
         except Exception:  # noqa: BLE001 - fall through to the table parser
@@ -1990,7 +1991,7 @@ class SeismicProcessingModule(BaseModule):
         out = self.state.ensure_results_store().scratch_dir(self.module_key)
         tmp = str(out / "uploaded_traveltime.dat")
         first_breaks_to_traveltime(picks, tmp)
-        return tt.load(tmp)
+        return tt.load(pygimli_path(tmp))
 
     def _clear_traveltime(self) -> None:
         self._tt_data = None

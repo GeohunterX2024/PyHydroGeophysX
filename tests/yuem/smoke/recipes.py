@@ -20,6 +20,7 @@ from typing import Any
 
 import numpy as np
 
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 from PyHydroGeophysX.workflows.models import ArtifactRef, RunContext, WorkflowRunResult, WorkflowSpec
 from PyHydroGeophysX.workflows.runner import run_workflow
 
@@ -419,7 +420,7 @@ def _seismic3d(ws: Workspace) -> WorkflowSpec:
     folder = ws.root / "inputs" / "seismic3d"
     folder.mkdir(parents=True, exist_ok=True)
     mesh_path, velocity_path = folder / "velmesh.bms", folder / "Vinvmodel.npy"
-    manager.paraDomain.save(str(mesh_path))
+    manager.paraDomain.save(pygimli_path(mesh_path, create=True))
     np.save(velocity_path, np.asarray(manager.model, dtype=float))
     lines = [
         {

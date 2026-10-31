@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from PyHydroGeophysX._internal.utils import noop as _noop
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 LogFn = Callable[[str], None]
 
@@ -587,7 +588,7 @@ def _via_native(path: str, log: LogFn):
     try:
         from pygimli.physics import ert as pg_ert
         with no_invalid_data_file():
-            data = pg_ert.load(str(path), verbose=False)
+            data = pg_ert.load(pygimli_path(str(path)), verbose=False)
     except Exception as exc:  # noqa: BLE001
         log(f"pygimli native load failed: {exc}")
         return None
@@ -764,7 +765,7 @@ def save_edited_ert_container(
 
     target = Path(destination)
     target.parent.mkdir(parents=True, exist_ok=True)
-    edited.save(str(target))
+    edited.save(pygimli_path(str(target), create=True))
     return str(target)
 
 
@@ -902,7 +903,7 @@ def normalize_for_timelapse(files: Sequence[str], instrument: Optional[str],
     basenames: List[str] = []
     for i, (f, data) in enumerate(zip(files, containers)):
         name = f"step_{i:03d}.dat"
-        data.save(str(base / name))
+        data.save(pygimli_path(str(base / name), create=True))
         basenames.append(name)
         log(f"Prepared {i + 1}/{len(files)}: {Path(f).name} -> "
             f"{int(data.size())} data, {int(data.sensorCount())} electrodes")

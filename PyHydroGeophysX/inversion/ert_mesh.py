@@ -24,6 +24,7 @@ import pygimli as pg
 from pygimli.physics import ert
 
 from PyHydroGeophysX._internal.utils import noop as _noop_log
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 #: Mesh formats a user can hand the inversion. ``.bms`` is PyGIMLi's own,
@@ -102,7 +103,7 @@ def load_inversion_mesh(mesh_path: str | Path, data=None,
                                name=path.stem, log=log)
         mesh = built["mesh"]
     else:
-        mesh = pg.load(str(path))
+        mesh = pg.load(pygimli_path(str(path)))
     if mesh is None or int(mesh.cellCount()) == 0:
         raise ValueError(f"{path.name} loaded no cells; is it a mesh file?")
 

@@ -59,6 +59,7 @@ from PyHydroGeophysX.core.hydro_profile import (  # noqa: E402,F401
     interpolate_profile_to_mesh,
     sample_profile,
 )
+from PyHydroGeophysX._internal.native_paths import pygimli_path
 
 
 # ---------------------------------------------------------------------------
@@ -381,7 +382,7 @@ def run_hydro_forward(
             mesh_markers=mesh_markers, verbose=False, seed=seed,
         )
         data_summary["ert_count"] = int(ert_data.size())
-        _save_data(lambda p: ert_data.save(str(p)), "ert_data.dat")
+        _save_data(lambda p: ert_data.save(pygimli_path(str(p), create=True)), "ert_data.dat")
         _save_data(lambda p: np.save(p, np.asarray(resistivity_model, dtype=float)),
                    "resistivity_model.npy")
 
@@ -402,7 +403,7 @@ def run_hydro_forward(
             mesh_markers=mesh_markers, verbose=False, seed=seed,
         )
         data_summary["srt_count"] = int(srt_data.size())
-        _save_data(lambda p: srt_data.save(str(p)), "srt_data.dat")
+        _save_data(lambda p: srt_data.save(pygimli_path(str(p), create=True)), "srt_data.dat")
         _save_data(lambda p: np.save(p, np.asarray(velocity_model, dtype=float)),
                    "velocity_model.npy")
 
@@ -453,7 +454,7 @@ def run_hydro_forward(
         fig.savefig(ert_srt_path, dpi=180, bbox_inches="tight")
         plt.close(fig)
         figure_paths.append(str(ert_srt_path))
-        _save_data(lambda p: mesh.save(str(p)), "model_mesh.bms")
+        _save_data(lambda p: mesh.save(pygimli_path(str(p), create=True)), "model_mesh.bms")
 
     # Pseudo-2D EM / gravity along the same profile.
     em_methods = [m for m in methods if m in ("TDEM", "FDEM", "Gravity")]
