@@ -21,6 +21,10 @@
 - `dev` extra 换成 ruff、mypy、import-linter、pytest-qt、pytest-benchmark、hypothesis、empymod，新增同内容的 `[dependency-groups] dev`。
 - 新增 `uv.lock` 与 `tools/yuem/dev_env.sh`：显式使用 PyPI；锁定平台按 pgcore 轮子实际覆盖限定；自动修复 macOS 上 pgcore 缺 `libblas.3.dylib` 与解释器缺 CA 证书两个问题。
 
+- 新增 Full 打包环境 `packaging/conda/environment-full.yml` 与三平台锁文件 `conda-lock.yml`（osx-arm64、win-64、linux-64），与上游 Full CI 的包和 rustsolve 校验过的 pgcore 构建一致。
+- 新增 CI `.github/workflows/yuem-ci.yml`：静态门禁；快速测试（Linux 3.11/3.12、macOS 26 arm64 3.12、Windows 3.12）；GUI 测试（Linux、macOS）；`yuem/main` 推送与手动触发时运行 slow、numerical、golden 三层。
+- 新增 `tools/yuem/build_macos_dmg.sh`：在锁定的 Full 环境中构建、拷出源码树后签名、自检、生成 DMG、挂载复检、输出 SHA-256。
+
 ### 修复（可回馈上游）
 
 - `pftools` 移到独立的 `parflow-tools` extra：它硬锁 `pyyaml==6.0.1`，且部分版本元数据被 pip 拒收，导致 `geophysics` 整组无法安装。

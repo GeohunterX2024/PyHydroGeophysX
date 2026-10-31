@@ -159,6 +159,7 @@ docs/comment_review_inventory_*.csv
 !/docs/yuem/**/*.md
 !/tests/yuem/**/*.md
 # Local tool caches and lock-step environments.
+.conda/
 .ruff_cache/
 .mypy_cache/
 .import_linter_cache/

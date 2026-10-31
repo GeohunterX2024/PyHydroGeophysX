@@ -11,8 +11,15 @@
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT"
-PY="${PHGX_PYTHON:-$ROOT/.venv/bin/python}"
+cd "$ROOT" || exit 2
+if [ -z "${PHGX_PYTHON:-}" ]; then
+  if [ -x "$ROOT/.venv/Scripts/python.exe" ]; then
+    PHGX_PYTHON="$ROOT/.venv/Scripts/python.exe"   # Windows venv layout
+  else
+    PHGX_PYTHON="$ROOT/.venv/bin/python"
+  fi
+fi
+PY="$PHGX_PYTHON"
 BIN="$(dirname "$PY")"
 FULL=0
 TESTS=1
@@ -61,7 +68,8 @@ if [ -f .importlinter ]; then
   step "import-linter (layer contracts)" "$BIN/lint-imports" --config .importlinter
 fi
 step "ratchet metrics" "$PY" tools/yuem/metrics.py --check
-CHANGELOG_BASE="yuem/main"
+# CI passes the PR's base (e.g. origin/yuem/main) in PHGX_CHANGELOG_BASE.
+CHANGELOG_BASE="${PHGX_CHANGELOG_BASE-yuem/main}"
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "yuem/main" ]; then
   CHANGELOG_BASE=""
 fi

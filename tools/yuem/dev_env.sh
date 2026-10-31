@@ -37,7 +37,11 @@ uv sync --locked --python "$PYVER" \
   --extra desktop --extra desktop-3d --extra geophysics --extra hydrology \
   --group dev
 
-PY="$ROOT/.venv/bin/python"
+if [ -x "$ROOT/.venv/Scripts/python.exe" ]; then
+  PY="$ROOT/.venv/Scripts/python.exe"   # Windows venv layout
+else
+  PY="$ROOT/.venv/bin/python"
+fi
 SITE="$("$PY" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 
 if [ "$(uname -s)" = "Darwin" ]; then
@@ -76,8 +80,8 @@ for name in ("PyHydroGeophysX", "numpy", "scipy", "pygimli", "simpeg", "PySide6"
     print(f"  {name:<16} {getattr(module, '__version__', 'ok')}")
 EOF
 
-if [ -x "$ROOT/.venv/bin/phgx-doctor" ]; then
+if "$PY" -c "import PyHydroGeophysX.doctor" >/dev/null 2>&1; then
   echo "==> phgx-doctor"
-  "$ROOT/.venv/bin/phgx-doctor" || true
+  "$PY" -m PyHydroGeophysX.doctor || true
 fi
 echo "Development environment ready: source .venv/bin/activate"

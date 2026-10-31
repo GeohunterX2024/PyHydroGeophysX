@@ -1,0 +1,107 @@
+# YUEM fork CI (docs/yuem/adr/0003-quality-gates.md).
+#
+# Upstream's own workflows trigger on `main` only and are left untouched; this
+# one runs on the fork's branches. Matrix per ADR 0002: PyPI has pyGIMLi's
+# compiled core for macOS arm64 only on CPython 3.12 (macOS 26 wheels) and for
+# Windows from 3.12, so 3.11 is covered on Linux, where upstream's CI runs it.
+name: yuem-ci
+
+on:
+  push:
+    branches: ["yuem/**"]
+  pull_request:
+    branches: ["yuem/main"]
+  workflow_dispatch:
+
+concurrency:
+  group: yuem-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MPLBACKEND: Agg
+  QT_QPA_PLATFORM: offscreen
+  PYTHONUTF8: "1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  static:
+    name: "Static gates (ruff, mypy, ratchet, patch ledger)"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # the patch ledger diffs against the fork base commit
+      - uses: astral-sh/setup-uv@v7
+      - name: Development environment
+        run: tools/yuem/dev_env.sh --python 3.12
+      - name: Static gates
+        env:
+          PHGX_CHANGELOG_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+        run: tools/yuem/gates.sh --no-tests
+
+  tests:
+    name: "Fast tests (${{ matrix.os }}, py${{ matrix.python }})"
+    needs: static
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, python: "3.11" }
+          - { os: ubuntu-24.04, python: "3.12" }
+          - { os: macos-26, python: "3.12" }
+          - { os: windows-2022, python: "3.12" }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - name: Development environment
+        run: tools/yuem/dev_env.sh --python ${{ matrix.python }}
+      - name: Fast tier
+        run: >
+          uv run --no-sync python -m pytest -q -p no:cacheprovider
+          -m "not slow and not golden and not numerical and not gui and not network and not packaging"
+
+  gui:
+    name: "GUI tests (${{ matrix.os }}, py3.12)"
+    needs: static
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-26]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      # Qt's EGL/GL runtime, installed explicitly as upstream's CI does.
+      - name: Qt system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3
+      - name: Development environment
+        run: tools/yuem/dev_env.sh --python 3.12
+      - name: GUI tier
+        run: uv run --no-sync python -m pytest -q -p no:cacheprovider -m "gui and not slow"
+
+  verification:
+    name: "Slow, numerical and golden tiers (ubuntu, py3.12)"
+    needs: [tests, gui]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/yuem/main')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - name: Qt system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3
+      - name: Development environment
+        run: tools/yuem/dev_env.sh --python 3.12
+      - name: Slow, numerical and golden tiers
+        run: uv run --no-sync python -m pytest -q -p no:cacheprovider -m "slow or numerical or golden"
+      - name: Verification report
+        if: always()
+        run: uv run --no-sync python tools/yuem/verification_report.py --check

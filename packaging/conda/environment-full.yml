@@ -1,0 +1,52 @@
+# Full desktop build environment (docs/yuem/adr/0002-toolchain-uv-conda-lock.md).
+#
+# Mirrors the "Install dependencies (full)" step of
+# .github/workflows/build-desktop.yml, so the bundle is built from the same
+# packages upstream ships, and pins them per platform with conda-lock:
+#
+#   conda-lock lock -f packaging/conda/environment-full.yml \
+#       --lockfile packaging/conda/conda-lock.yml
+#   conda-lock install -n phgx-full packaging/conda/conda-lock.yml
+#
+# * pgcore and pygimli are the builds packaging/rustsolve/manifest.json was
+#   verified with (macOS arm64 and Windows); apply.py refuses any other build.
+#   Linux has no rustsolve build upstream; it gets the gimli pgcore 1.5.0 core
+#   for headless engine tests, not for a desktop bundle.
+# * vtk-base, not the vtk metapackage (which adds FFmpeg linked to GPL x264/x265);
+#   OpenBLAS, not MKL; conda-forge's PySide6 so VTK and the GUI share one Qt.
+# * SimPEG, pymatsolver and PyInstaller come from PyPI, as upstream installs them.
+name: phgx-full
+channels:
+  - gimli
+  - conda-forge
+  - nodefaults
+platforms:
+  - osx-arm64
+  - win-64
+  - linux-64
+dependencies:
+  - python=3.11
+  - pgcore=1.5.4=np22py311h3a9382f_0  # [osx]
+  - pgcore=1.5.0=py311_1  # [win]
+  - pgcore=1.5.0  # [linux]
+  - pygimli=1.5.5
+  - pyvista
+  - vtk-base
+  - pyside6
+  - pyqtgraph
+  - qtawesome
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - pyproj
+  - pypdf
+  - pillow
+  - psutil
+  - h5py
+  - libblas=*=*openblas
+  - pip
+  - pip:
+      - simpeg
+      - pymatsolver
+      - pyinstaller
