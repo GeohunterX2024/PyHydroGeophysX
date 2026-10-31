@@ -42,10 +42,12 @@ def test_thread_limits_apply_and_restore() -> None:
     before_blas = [info["num_threads"] for info in threadpoolctl.threadpool_info()]
     with RunContext(threads=1).thread_limits():
         assert pg.core.threadCount() == 1
+        # A pool threadpoolctl cannot query (num_threads None) it cannot limit
+        # either; the CLI sets the load-time variables for those (F-18).
         unlimited = [
             {key: info.get(key) for key in ("user_api", "internal_api", "filepath", "num_threads")}
             for info in threadpoolctl.threadpool_info()
-            if info["num_threads"] != 1
+            if info["num_threads"] not in (1, None)
         ]
         assert not unlimited, unlimited
     assert pg.core.threadCount() == before_pg
@@ -88,7 +90,10 @@ def test_cli_records_the_thread_budget(tmp_path: Path) -> None:
         env={**os.environ, "PHGX_EXIT_WITH_PARENT": "0"},
     )
     assert done.returncode == 0, done.stderr
-    assert json.loads(result.read_text())["provenance"]["threads"] == 2
+    provenance = json.loads(result.read_text())["provenance"]
+    assert provenance["threads"] == 2
+    # Libraries loaded during the run read the budget when they start.
+    assert provenance["environment"]["threads"]["OPENBLAS_NUM_THREADS"] == "2"
 
 
 def _environment_reads(path: Path) -> int:

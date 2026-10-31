@@ -124,6 +124,10 @@ def _quiet_pygimli_show() -> None:
 EXIT_WITH_PARENT_ENV = "PHGX_EXIT_WITH_PARENT"
 #: Default thread budget of a run when ``--threads`` is not given.
 THREADS_ENV = "PHGX_THREADS"
+#: Read by BLAS and OpenMP runtimes when they load. threadpoolctl limits a
+#: loaded library only where it can query it, which PyGIMLi's bundled OpenBLAS
+#: on Windows does not allow (docs/yuem/findings.md F-18).
+LOAD_TIME_THREAD_VARIABLES = ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
 
 
 def _is_launcher(parent: Any, me: Any) -> bool:
@@ -241,6 +245,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     threads = args.threads if args.threads is not None else _threads_from_environment()
     if threads is not None:
         context_kwargs["threads"] = threads
+        for name in LOAD_TIME_THREAD_VARIABLES:
+            os.environ[name] = str(threads)
     context = RunContext(
         **context_kwargs,
     )
