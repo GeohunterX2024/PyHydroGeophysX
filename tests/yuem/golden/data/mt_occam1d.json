@@ -1,0 +1,67 @@
+{
+  "case": "mt_occam1d",
+  "workflow_id": "mt.invert_1d",
+  "rtol": 1e-08,
+  "atol": 1e-12,
+  "note": "NMX20 EMTF XML",
+  "keys": [
+    "metric.iterations",
+    "metric.rms",
+    "metric.roughness",
+    "mt1d_fit_csv.frequency_hz",
+    "mt1d_fit_csv.log10_rho_error",
+    "mt1d_fit_csv.log10_rho_observed",
+    "mt1d_fit_csv.log10_rho_predicted",
+    "mt1d_fit_csv.phase_error",
+    "mt1d_fit_csv.phase_observed",
+    "mt1d_fit_csv.phase_predicted",
+    "mt1d_model_csv.bottom_m",
+    "mt1d_model_csv.resistivity_ohm_m",
+    "mt1d_model_csv.top_m"
+  ],
+  "environment": {
+    "schema": "phgx-provenance-v1",
+    "phgx_version": "0.5.0+yuem.1",
+    "git": "v0.5.0-35-g8d327d5",
+    "frozen": false,
+    "python": {
+      "version": "3.12.6",
+      "implementation": "CPython"
+    },
+    "platform": {
+      "system": "Darwin",
+      "release": "27.2.0",
+      "machine": "arm64"
+    },
+    "packages": {
+      "PyHydroGeophysX": "0.5.0+yuem.1",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "pandas": "3.1.0",
+      "matplotlib": "3.11.2",
+      "pygimli": "1.6.1",
+      "pgcore": "1.6.0",
+      "simpeg": "0.26.0",
+      "discretize": "0.13.0",
+      "pymatsolver": "0.5.1",
+      "empymod": "2.6.1",
+      "numba": "0.68.1",
+      "h5py": "3.16.0",
+      "pyproj": "3.8.0",
+      "vtk": "9.7.1",
+      "pyvista": "0.49.2",
+      "PySide6": "6.12.0"
+    },
+    "blas": [
+      {
+        "user_api": "blas",
+        "internal_api": "accelerate",
+        "version": "unknown",
+        "num_threads": null,
+        "library": "numpy build configuration"
+      }
+    ],
+    "threads": {},
+    "cpu_count": 8
+  }
+}

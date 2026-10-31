@@ -1,0 +1,76 @@
+{
+  "case": "mt_processing",
+  "workflow_id": "mt.process",
+  "rtol": 1e-08,
+  "atol": 1e-12,
+  "note": "synthetic time series",
+  "keys": [
+    "metric.median_coherence",
+    "metric.median_relative_error_zxy",
+    "mt_rho_phase_csv.frequency_hz",
+    "mt_rho_phase_csv.period_s",
+    "mt_rho_phase_csv.phase_err_xx",
+    "mt_rho_phase_csv.phase_err_xy",
+    "mt_rho_phase_csv.phase_err_yx",
+    "mt_rho_phase_csv.phase_err_yy",
+    "mt_rho_phase_csv.phase_xx",
+    "mt_rho_phase_csv.phase_xy",
+    "mt_rho_phase_csv.phase_yx",
+    "mt_rho_phase_csv.phase_yy",
+    "mt_rho_phase_csv.rho_err_xx",
+    "mt_rho_phase_csv.rho_err_xy",
+    "mt_rho_phase_csv.rho_err_yx",
+    "mt_rho_phase_csv.rho_err_yy",
+    "mt_rho_phase_csv.rho_xx",
+    "mt_rho_phase_csv.rho_xy",
+    "mt_rho_phase_csv.rho_yx",
+    "mt_rho_phase_csv.rho_yy",
+    "summary.period_range_s",
+    "summary.sample_rates"
+  ],
+  "environment": {
+    "schema": "phgx-provenance-v1",
+    "phgx_version": "0.5.0+yuem.1",
+    "git": "v0.5.0-35-g8d327d5",
+    "frozen": false,
+    "python": {
+      "version": "3.12.6",
+      "implementation": "CPython"
+    },
+    "platform": {
+      "system": "Darwin",
+      "release": "27.2.0",
+      "machine": "arm64"
+    },
+    "packages": {
+      "PyHydroGeophysX": "0.5.0+yuem.1",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "pandas": "3.1.0",
+      "matplotlib": "3.11.2",
+      "pygimli": "1.6.1",
+      "pgcore": "1.6.0",
+      "simpeg": "0.26.0",
+      "discretize": "0.13.0",
+      "pymatsolver": "0.5.1",
+      "empymod": "2.6.1",
+      "numba": "0.68.1",
+      "h5py": "3.16.0",
+      "pyproj": "3.8.0",
+      "vtk": "9.7.1",
+      "pyvista": "0.49.2",
+      "PySide6": "6.12.0"
+    },
+    "blas": [
+      {
+        "user_api": "blas",
+        "internal_api": "accelerate",
+        "version": "unknown",
+        "num_threads": null,
+        "library": "numpy build configuration"
+      }
+    ],
+    "threads": {},
+    "cpu_count": 8
+  }
+}
