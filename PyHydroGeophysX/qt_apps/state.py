@@ -1,9 +1,11 @@
-"""Studio state and the Streamlit <-> Qt JSON bridge (Qt-free).
+"""Studio state (Qt-free).
 
-``StudioState`` owns the context that Streamlit handed us (where the project
-lives, where to read hydro data, where to write results) and accumulates
-per-module results. It can persist those results back to the bridge file that
-Streamlit polls. Nothing here imports PySide6 so it stays easy to test.
+``StudioState`` holds the project state the pages share: the open Project and
+its runs, per-module results, and in-session resources. The Streamlit bridge
+(the context Streamlit handed over and the result file it polls) lives in
+:mod:`PyHydroGeophysX.qt_apps.bridge_compat`; the attributes and methods of
+the state that reach it are kept as thin delegates for existing callers.
+Nothing here imports PySide6 so it stays easy to test.
 """
 
 from __future__ import annotations
@@ -13,15 +15,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from PyHydroGeophysX.qt_apps import io_utils
+from PyHydroGeophysX.qt_apps import bridge_compat
+from PyHydroGeophysX.qt_apps.bridge_compat import APP_NAME, RESULT_FILENAME, BridgeLink
 from PyHydroGeophysX.qt_apps.results_store import ResultsStore, RunHandle
-from PyHydroGeophysX._internal.utils import utc_now as _utc_now
 import logging
 
 _logger = logging.getLogger(__name__)
-
-RESULT_FILENAME = "full_studio_result.json"
-APP_NAME = "PyHydroGeophysX Professional Studio"
 #: Names the folder used when no Project is open. The cloud image sets it to a
 #: folder its file browser shows, since ``~/.pyhydrogeophysx`` is hidden there.
 PROJECT_DIR_ENV = "PHGX_PROJECT_DIR"
@@ -42,9 +41,8 @@ def default_project_root() -> Path:
 class StudioState:
     """Mutable state shared across the studio main window and its modules."""
 
-    context_path: Optional[Path] = None
-    result_path: Optional[Path] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    #: The Streamlit bridge: context file, its content, and the result file.
+    bridge: BridgeLink = field(default_factory=BridgeLink, repr=False)
     selected_module: str = "home"
     project_root: Optional[Path] = None
     output_dir: Optional[Path] = None
@@ -100,6 +98,43 @@ class StudioState:
     #: holding a run's log open use it to close that log (``modules/base.py``).
     run_watchers: List[Callable[[], None]] = field(default_factory=list, repr=False)
 
+    # -- bridge (delegates to bridge_compat) ---------------------------------
+    @property
+    def context_path(self) -> Optional[Path]:
+        return self.bridge.context_path
+
+    @context_path.setter
+    def context_path(self, value: Optional[Path]) -> None:
+        self.bridge.context_path = None if value is None else Path(value)
+
+    @property
+    def result_path(self) -> Optional[Path]:
+        return self.bridge.result_path
+
+    @result_path.setter
+    def result_path(self, value: Optional[Path]) -> None:
+        self.bridge.result_path = None if value is None else Path(value)
+
+    @property
+    def context(self) -> Dict[str, Any]:
+        return self.bridge.context
+
+    @context.setter
+    def context(self, value: Dict[str, Any]) -> None:
+        self.bridge.context = dict(value or {})
+
+    def load_context(self) -> Dict[str, Any]:
+        """Load the bridge context JSON. Missing/invalid files yield ``{}``."""
+        return bridge_compat.load_context(self)
+
+    def build_result(self) -> Dict[str, Any]:
+        """Assemble the result document in the schema Streamlit expects."""
+        return bridge_compat.build_result(self)
+
+    def save_result(self) -> Path:
+        """Persist the current results to the bridge result file."""
+        return bridge_compat.save_result(self)
+
     # -- construction --------------------------------------------------------
     @classmethod
     def from_context(cls, context_path: Optional[str]) -> "StudioState":
@@ -124,33 +159,8 @@ class StudioState:
                 base = default_project_root()
             state.output_dir = base
             state.default_project = True
-            state.result_path = base / "qt_bridge" / RESULT_FILENAME
+            state.result_path = bridge_compat.default_result_path(base)
         return state
-
-    # -- bridge IO -----------------------------------------------------------
-    def load_context(self) -> Dict[str, Any]:
-        """Load the bridge context JSON. Missing/invalid files yield ``{}``."""
-        context = io_utils.read_json(self.context_path) if self.context_path else None
-        self.context = context or {}
-
-        def _as_path(value: Any) -> Optional[Path]:
-            return Path(value) if value else None
-
-        self.project_root = _as_path(self.context.get("project_root"))
-        self.output_dir = _as_path(self.context.get("output_dir"))
-        self.hydro_data_dir = _as_path(self.context.get("hydro_data_dir"))
-        self.hydro_output_dir = _as_path(self.context.get("hydro_output_dir"))
-
-        initial_module = self.context.get("initial_module") or "home"
-        if initial_module:
-            self.selected_module = str(initial_module)
-
-        # The result file lives next to the context file in the qt_bridge dir.
-        if self.context_path is not None:
-            self.result_path = self.context_path.parent / RESULT_FILENAME
-        elif self.output_dir is not None:
-            self.result_path = self.output_dir / "qt_bridge" / RESULT_FILENAME
-        return self.context
 
     def update_module_result(self, module_name: str, result_dict: Dict[str, Any]) -> None:
         """Record (or overwrite) the result payload for a single module."""
@@ -229,7 +239,7 @@ class StudioState:
             # defaults.  New persistent writes use RunHandle directories.
             self.output_dir = store.root
             if self.context_path is None:
-                self.result_path = store.root / "qt_bridge" / RESULT_FILENAME
+                self.result_path = bridge_compat.default_result_path(store.root)
         return store
 
     def ensure_results_store(self) -> ResultsStore:
@@ -445,28 +455,6 @@ class StudioState:
     def get_geophysical_resource(self, resource_id: str) -> Optional[Dict[str, Any]]:
         """Return a registered resource including its in-memory payload."""
         return self.geophysical_resources.get(str(resource_id))
-
-    def build_result(self) -> Dict[str, Any]:
-        """Assemble the result document in the schema Streamlit expects."""
-        return {
-            "app": APP_NAME,
-            "status": "saved",
-            "selected_module": self.selected_module,
-            "created_time": _utc_now(),
-            "context_path": str(self.context_path) if self.context_path else "",
-            "output_dir": str(self.output_dir) if self.output_dir else "",
-            "module_results": self.module_results,
-            "workflow_id": self.active_workflow_id,
-            "recipe_path": self.active_recipe_path,
-            "workflow_results": self.workflow_results,
-        }
-
-    def save_result(self) -> Path:
-        """Persist the current results to the bridge result file."""
-        if self.result_path is None:
-            base = self.output_dir or Path.cwd()
-            self.result_path = base / "qt_bridge" / RESULT_FILENAME
-        return io_utils.write_json(self.result_path, self.build_result())
 
     # -- convenience ---------------------------------------------------------
     def context_summary(self) -> Dict[str, Any]:
