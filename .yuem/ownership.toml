@@ -15,6 +15,7 @@ upstream = "https://github.com/geohang/PyHydroGeophysX"
 base_commit = "16930bb6b50d20973a38bdc0890c1d1a876b77d3"
 default_class = "follow"
 
+[classes]
 own = [
     "PyHydroGeophysX/qt_apps/",
     "PyHydroGeophysX/workflows/",
@@ -104,3 +105,38 @@ frozen = [
     "examples/app_mesh3d.py",
     "examples/aquah_web.py",
 ]
+
+[quality]
+# Paths held to the full standard by tools/yuem/gates.sh: ruff with the strict
+# rule set, ruff format, and (for Python packages and tools) mypy --strict.
+# New own modules are added here when they are created.
+strict_rules = ["E", "F", "W", "I", "B", "BLE", "UP", "SIM", "RUF"]
+strict = [
+    "tools/yuem/",
+    "tests/yuem/",
+    "PyHydroGeophysX/plugins.py",
+    "PyHydroGeophysX/errors.py",
+    "PyHydroGeophysX/doctor.py",
+    "PyHydroGeophysX/datastore/",
+    "PyHydroGeophysX/results/",
+    "PyHydroGeophysX/_internal/logging_setup.py",
+    "PyHydroGeophysX/_internal/provenance.py",
+    "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/visualization/styles/",
+]
+# Subset type-checked with mypy --strict (tests are excluded).
+typed = [
+    "tools/yuem/",
+    "PyHydroGeophysX/plugins.py",
+    "PyHydroGeophysX/errors.py",
+    "PyHydroGeophysX/doctor.py",
+    "PyHydroGeophysX/datastore/",
+    "PyHydroGeophysX/results/",
+    "PyHydroGeophysX/_internal/logging_setup.py",
+    "PyHydroGeophysX/_internal/provenance.py",
+    "PyHydroGeophysX/_internal/rng.py",
+    "PyHydroGeophysX/visualization/styles/",
+]
+# New or edited Python files may not exceed this many lines; existing longer
+# files may only shrink.
+max_file_lines = 1500

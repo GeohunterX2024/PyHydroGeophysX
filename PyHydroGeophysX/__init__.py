@@ -11,7 +11,7 @@ import importlib
 import os as _os
 from typing import Dict, Tuple
 
-__version__ = "0.5.0"
+__version__ = "0.5.0+yuem.1"
 
 # Keep qtpy-based optional packages on the same Qt binding as the desktop app.
 # ``setdefault`` continues to respect an explicit user override.

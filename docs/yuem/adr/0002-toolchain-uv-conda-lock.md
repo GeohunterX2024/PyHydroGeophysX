@@ -24,10 +24,17 @@
    - `dev_env.sh` 检测 `pgcore/.dylibs/libblas.3.dylib`，缺失时链接到同目录的 `libopenblas.0.dylib`；
    - `dev_env.sh` 和 `phgx-doctor` 检查证书，缺失时把 `SSL_CERT_FILE` 指向 certifi。
 
-## 3. Python 版本
+## 3. Python 版本与平台矩阵
 
-- 主力 3.12；CI 同时测 3.11（上游 CI 版本）和 3.12。
-- `requires-python` 保持上游的 `>=3.10`。
+- 主力 3.12。`requires-python` 保持上游的 `>=3.10`。
+- 2026-10-31 生成锁文件时核实：PyPI 上 pyGIMLi 的编译核心 pgcore 1.6.0 只提供以下轮子，经 PyPI 安装的 pyGIMLi 只在这些组合上可用：
+  - macOS arm64：仅 CPython 3.12，且轮子标签为 `macosx_26_0`（需要 macOS 26 或更新）；
+  - Windows x86-64：CPython 3.12–3.14；
+  - Linux x86-64：CPython 3.10–3.14。
+- 另外，pygimli 1.5.5 是不含 pgcore 的纯 Python 轮子，安装后无法导入。锁文件用 `constraint-dependencies = ["pygimli>=1.6.1"]` 排除它。
+- 因此 `uv.lock` 的 `[tool.uv].environments` 限定为：macOS arm64 + 3.12、Windows x86-64 + 3.12–3.13、Linux x86-64 + 3.11–3.13。
+- CI 测试矩阵相应为：Linux 3.11 与 3.12，macOS arm64（macOS 26 runner）3.12，Windows 3.12。计划原写“三平台 × 3.11/3.12”，因 macOS 与 Windows 没有 3.11 的 pgcore 轮子而收窄；Linux 的 3.11 覆盖上游 CI 使用的版本。
+- 解析过程中还发现上游 `all` 与 `adtlert` extra 在 macOS 上不可安装（CuPy、ADTLERT 没有 macOS 轮子），已加平台标记修复（台账 P-0002，可回馈上游）。
 
 ## 4. 影响
 

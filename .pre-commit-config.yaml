@@ -1,0 +1,26 @@
+# YUEM pre-commit hooks (docs/yuem/adr/0003-quality-gates.md).
+# Install once:  uv tool install pre-commit && pre-commit install
+# The static gates run from the project's .venv, so the hooks check with exactly
+# the tool versions pinned in uv.lock; tests are left to tools/yuem/gates.sh.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+        exclude: ^(docs/source/|PyHydroGeophysX/agents/)
+      - id: end-of-file-fixer
+        files: ^(tools/yuem/|tests/yuem/|docs/yuem/|\.yuem/|CHANGELOG-YUEM\.md$)
+      - id: trailing-whitespace
+        files: ^(tools/yuem/|tests/yuem/|docs/yuem/|\.yuem/|CHANGELOG-YUEM\.md$)
+  - repo: local
+    hooks:
+      - id: yuem-static-gates
+        name: YUEM static gates (ruff, mypy, ratchet, patch ledger)
+        entry: tools/yuem/gates.sh --no-tests
+        language: system
+        pass_filenames: false
+        always_run: true

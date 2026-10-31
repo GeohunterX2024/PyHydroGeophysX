@@ -1,0 +1,70 @@
+{
+  "python_lines": 188041,
+  "tests": 197,
+  "test_files": 4,
+  "broad_except": 805,
+  "print_calls": 315,
+  "suppressions": 713,
+  "logging_getlogger": 1,
+  "os_environ": 33,
+  "global_np_random": 9,
+  "files_over_2000": 17,
+  "inprocess_worker_modules": 10,
+  "by_class": {
+    "follow": {
+      "broad_except": 234,
+      "print_calls": 205,
+      "suppressions": 159,
+      "logging_getlogger": 1,
+      "os_environ": 14,
+      "global_np_random": 9
+    },
+    "frozen": {
+      "broad_except": 202,
+      "print_calls": 94,
+      "suppressions": 119,
+      "logging_getlogger": 0,
+      "os_environ": 9,
+      "global_np_random": 0
+    },
+    "own": {
+      "broad_except": 369,
+      "print_calls": 16,
+      "suppressions": 435,
+      "logging_getlogger": 0,
+      "os_environ": 10,
+      "global_np_random": 0
+    }
+  },
+  "long_files": [
+    "PyHydroGeophysX/agents/context_input_agent.py",
+    "PyHydroGeophysX/agents/report_agent.py",
+    "PyHydroGeophysX/agents/runtime/catalog.py",
+    "PyHydroGeophysX/data_processing/em1d.py",
+    "PyHydroGeophysX/data_processing/ert_data_agent.py",
+    "PyHydroGeophysX/data_processing/seismic.py",
+    "PyHydroGeophysX/data_processing/seismic_shallow.py",
+    "PyHydroGeophysX/inversion/ert_inversion.py",
+    "PyHydroGeophysX/qt_apps/agent/chat_panel.py",
+    "PyHydroGeophysX/qt_apps/modules/em_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/ert_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py",
+    "PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/model_viewer.py",
+    "PyHydroGeophysX/qt_apps/modules/mt_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/one_click.py",
+    "PyHydroGeophysX/qt_apps/modules/seismic_processing.py"
+  ],
+  "worker_modules": [
+    "PyHydroGeophysX/qt_apps/modules/em_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/ert_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/gpr_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/gravmag_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py",
+    "PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/model_viewer.py",
+    "PyHydroGeophysX/qt_apps/modules/mt_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/project_map.py",
+    "PyHydroGeophysX/qt_apps/modules/seismic_processing.py"
+  ]
+}

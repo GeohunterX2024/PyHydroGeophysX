@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyHydroGeophysX"
-version = "0.5.0"
+version = "0.5.0+yuem.1"
 description = "A comprehensive Python package for integrating hydrological model outputs with geophysical forward modeling and inversion, featuring an automatic cross-modal geophysics agent for subsurface hydrology"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -55,7 +55,6 @@ geophysics = [
     "simpeg>=0.24,<1.0",
     "pymatsolver>=0.2",
     "flopy>=3.5,<4.0",
-    "pftools>=1.3",
     # Limit supported native BLAS pools during parallel sounding solves to
     # reduce CPU oversubscription. Without this optional control, inversion
     # still runs but native libraries retain their configured thread counts;
@@ -64,6 +63,13 @@ geophysics = [
     # Compiles the TDEM response and conductivity Jacobian
     # (forward._tdem_kernels); without it SimPEG's dpred and getJ are used.
     "numba>=0.57",
+]
+# ParFlow's Python tools pin pyyaml==6.0.1, which has no wheels for recent
+# Pythons and conflicts with packages that need a newer PyYAML, and several of
+# their releases carry metadata pip rejects. The ParFlow readers fall back to a
+# standalone PFB reader without them, so they are a separate opt-in.
+parflow-tools = [
+    "pftools>=1.3",
 ]
 # ResIPy reads a wider set of ERT instrument formats than this package does on
 # its own, so it is preferred whenever it imports. It is GPL-3.0 and is kept as
@@ -74,11 +80,13 @@ ert = [
     "resipy>=3.4",
 ]
 adtlert = [
-    "adtlert>=0.3,<0.4; python_version >= '3.11'",
+    # ADTLERT needs CUDA, which macOS does not have; the extra keeps pygimli there.
+    "adtlert>=0.3,<0.4; python_version >= '3.11' and sys_platform != 'darwin'",
     "pygimli>=1.5.5,<2.0; python_version >= '3.11'",
 ]
 gpu = [
-    "cupy-cuda12x[ctk]>=14,<15",
+    # CUDA wheels exist for Linux and Windows only; on macOS the extra is a no-op.
+    "cupy-cuda12x[ctk]>=14,<15; sys_platform != 'darwin'",
 ]
 agents = [
     "openai",
@@ -129,10 +137,15 @@ docs = [
     "sphinx_rtd_theme",
 ]
 dev = [
-    "pytest>=7.0",
-    "pytest-cov",
-    "black",
-    "flake8",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-qt>=4.4",
+    "pytest-benchmark>=4.0",
+    "hypothesis>=6.100",
+    "ruff>=0.15",
+    "mypy>=1.13",
+    "import-linter>=2.1",
+    "empymod>=2.3",
 ]
 all = [
     "h5py>=3.8,<4.0",
@@ -142,8 +155,8 @@ all = [
     "simpeg>=0.24,<1.0",
     "pymatsolver>=0.2",
     "flopy>=3.5,<4.0",
-    "pftools>=1.3",
-    "cupy-cuda12x[ctk]>=14,<15",
+    # CUDA wheels exist for Linux and Windows only; on macOS the extra is a no-op.
+    "cupy-cuda12x[ctk]>=14,<15; sys_platform != 'darwin'",
     "openai", "google-genai", "anthropic",
     "pandas>=1.3.0", "requests>=2.25",
     "streamlit>=1.35,<2.0", "plotly>=5.18,<7.0", "streamlit-plotly-events>=0.0.6", "pyarrow>=14.0",
@@ -152,7 +165,24 @@ all = [
     "pypdf>=4.0", "pyproj>=3.4",
     "pyvista>=0.40", "pyvistaqt>=0.10", "vtk>=9.2",
     "sphinx>=5.0", "sphinx-gallery", "sphinx_rtd_theme",
-    "pytest>=7.0", "pytest-cov", "black", "flake8",
+    "pytest>=8.0", "pytest-cov>=5.0", "pytest-qt>=4.4", "pytest-benchmark>=4.0",
+    "hypothesis>=6.100", "ruff>=0.15", "mypy>=1.13", "import-linter>=2.1", "empymod>=2.3",
+]
+
+[dependency-groups]
+# The YUEM development toolchain (docs/yuem/adr/0002, 0003). Kept identical to
+# the `dev` extra so pip users get the same tools; tests/yuem/test_packaging_meta
+# checks the two lists agree.
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-qt>=4.4",
+    "pytest-benchmark>=4.0",
+    "hypothesis>=6.100",
+    "ruff>=0.15",
+    "mypy>=1.13",
+    "import-linter>=2.1",
+    "empymod>=2.3",
 ]
 
 [project.scripts]
@@ -184,3 +214,88 @@ PyHydroGeophysX = [
     # The assistants' written procedures (agents/skills.py).
     "agents/assistants/*/skills/**/*",
 ]
+
+# --- YUEM development environment (docs/yuem/adr/0002) -----------------------
+# uv resolves against PyPI explicitly, whatever the machine's pip mirror is, and
+# only where PyPI has a compiled pyGIMLi core (pgcore 1.6.0): macOS arm64 on
+# CPython 3.12 (macOS 26 wheels), Windows x86-64 on 3.12-3.13, Linux x86-64 on
+# 3.11-3.13. requires-python stays at upstream's >=3.10.
+[tool.uv]
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64' and python_full_version >= '3.12' and python_full_version < '3.13'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64' and python_full_version >= '3.11' and python_full_version < '3.14'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64' and python_full_version >= '3.12' and python_full_version < '3.14'",
+]
+# pygimli 1.5.5 is a pure-Python wheel without the compiled core (pgcore); the
+# lock must take a release that pulls pgcore in, or pygimli cannot import.
+constraint-dependencies = ["pygimli>=1.6.1"]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+# --- YUEM quality toolchain (docs/yuem/adr/0003-quality-gates.md) ------------
+# The whole tree is held to the rules upstream code passes today. Modules listed
+# under [quality].strict in .yuem/ownership.toml are checked by
+# tools/yuem/gates.sh with the full rule set, ruff format and mypy --strict.
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+extend-exclude = ["*.ipynb", "docs/source", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "W6"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["PyHydroGeophysX"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "gui: needs Qt; runs offscreen",
+    "slow: a single test takes more than about 10 s",
+    "numerical: numerical verification against analytic or cross-code references",
+    "golden: regression against recorded golden outputs",
+    "network: needs network access",
+    "packaging: needs a built desktop bundle",
+]
+filterwarnings = [
+    "default::DeprecationWarning:PyHydroGeophysX.*",
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+follow_imports = "silent"
+warn_unused_configs = false
+
+# Existing code is not type-checked; the strict modules below are.
+[[tool.mypy.overrides]]
+module = ["PyHydroGeophysX", "PyHydroGeophysX.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "PyHydroGeophysX.plugins",
+    "PyHydroGeophysX.errors",
+    "PyHydroGeophysX.doctor",
+    "PyHydroGeophysX.datastore.*",
+    "PyHydroGeophysX.results.*",
+    "PyHydroGeophysX._internal.logging_setup",
+    "PyHydroGeophysX._internal.provenance",
+    "PyHydroGeophysX._internal.rng",
+    "PyHydroGeophysX.visualization.styles.*",
+]
+ignore_errors = false
+
+[tool.coverage.run]
+source = ["PyHydroGeophysX"]
+branch = true
+omit = ["*/agents/*", "*/llm/*", "*/mcp_server.py"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = false
