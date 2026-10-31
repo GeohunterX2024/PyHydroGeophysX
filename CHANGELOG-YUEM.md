@@ -74,6 +74,7 @@
 
 ### 发行与持续（M5）
 
+- CI 首轮实跑暴露的问题：Linux 各测试层补装 Qt 运行库（pytest-qt 启动即导入 Qt）与 Gmsh；E4D 网格冒烟在没有 TetGen/Gmsh 的机器上跳过并说明原因；数据库原始文件校验的提示统一用记录中的 POSIX 路径（Windows 上曾显示反斜杠）；Windows 上 pyGIMLi 无法打开中文路径记为 F-16，相关两个冒烟用例在 Windows 上标为预期失败；Linux GUI 层退出时中止（F-17）与 Windows 线程上限不完整（F-18）加诊断输出，待下一轮 CI 定位。
 - 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。
 - 签名与公证（M5.1）：`build_macos_dmg.sh` 设 `PHGX_SIGN_IDENTITY` 时由内到外以 Developer ID 签名（hardened runtime、时间戳、`packaging/macos/entitlements.plist`），再设 `PHGX_NOTARY_PROFILE` 时签名镜像、`notarytool` 公证、`stapler` 装订并以 `spctl` 核验；未设时保持 ad-hoc 签名，镜像内安装说明随之切换。当前无 Apple Developer 账号与 Windows 证书，按 ad-hoc 发布并在说明中注明。
 - 发布流程（M5.2）：`docs/yuem/release_checklist.md` 与 `tools/yuem/release.sh`（核对版本号与变更记录、全部门禁层、翻译与验证报告、带审计的 DMG 构建、sha256 与发布说明；默认只打印 `gh release create --draft` 命令，`--publish` 须经负责人确认）。`build_macos_dmg.sh` 可选 `PHGX_RELEASE_AUDIT=1`：复用 `packaging/release_audit.py stage` 在镜像根目录写入 `BUILD_INFO.txt`、`SOURCE_CODE.md` 与 `LICENSES/`。

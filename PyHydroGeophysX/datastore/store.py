@@ -129,12 +129,13 @@ class DatasetStore:
         """Problems with the raw files ``dataset`` references: missing, or changed since."""
         problems = []
         for record in dataset.provenance.get("raw_files") or []:
-            path = Path(str(record.get("path", "")))
+            stored = str(record.get("path", ""))
+            path = Path(stored)
             resolved = path if path.is_absolute() else self.project_root / path
             if not resolved.is_file():
-                problems.append(f"{path}: missing")
+                problems.append(f"{stored}: missing")
             elif sha256_of(resolved) != record.get("sha256"):
-                problems.append(f"{path}: changed since it was read (sha256 differs)")
+                problems.append(f"{stored}: changed since it was read (sha256 differs)")
         return problems
 
     # -- index -------------------------------------------------------------------

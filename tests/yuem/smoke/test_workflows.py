@@ -28,6 +28,15 @@ SLOW = {
     "hydro_geophysics.forward",
 }
 OK_STATUSES = {"ok", "success", "completed"}
+#: Workflows that read or write files through PyGIMLi's C++ core, which on
+#: Windows cannot open a path with non-ASCII characters (docs/yuem/findings.md F-16).
+PYGIMLI_FILE_IO = {"ert3d.forward", "seismic3d.build"}
+
+
+def _no_mesher() -> bool:
+    from PyHydroGeophysX.core import e4d_mesh
+
+    return not (e4d_mesh.find_tetgen() or e4d_mesh._tetgen_module() or e4d_mesh._find_gmsh())
 
 
 @pytest.fixture(scope="module")
@@ -46,10 +55,21 @@ def test_every_registered_workflow_has_a_smoke_recipe() -> None:
 
 
 def _cases() -> list[object]:
-    return [
-        pytest.param(wid, marks=[pytest.mark.slow] if wid in SLOW else [], id=wid)
-        for wid in sorted(d.workflow_id for d in list_workflows())
-    ]
+    cases = []
+    for wid in sorted(d.workflow_id for d in list_workflows()):
+        marks: list[pytest.MarkDecorator] = [pytest.mark.slow] if wid in SLOW else []
+        if wid in PYGIMLI_FILE_IO:
+            marks.append(
+                pytest.mark.xfail(
+                    sys.platform == "win32",
+                    reason="F-16: PyGIMLi's C++ file functions cannot open non-ASCII paths on Windows",
+                    strict=True,
+                )
+            )
+        if wid == "ert.e4d_mesh" and _no_mesher():
+            marks.append(pytest.mark.skip(reason="needs TetGen (`pip install tetgen`) or Gmsh on PATH"))
+        cases.append(pytest.param(wid, marks=marks, id=wid))
+    return cases
 
 
 @pytest.mark.parametrize("workflow_id", _cases())

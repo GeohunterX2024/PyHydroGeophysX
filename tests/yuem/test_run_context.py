@@ -42,7 +42,12 @@ def test_thread_limits_apply_and_restore() -> None:
     before_blas = [info["num_threads"] for info in threadpoolctl.threadpool_info()]
     with RunContext(threads=1).thread_limits():
         assert pg.core.threadCount() == 1
-        assert all(info["num_threads"] == 1 for info in threadpoolctl.threadpool_info())
+        unlimited = [
+            {key: info.get(key) for key in ("user_api", "internal_api", "filepath", "num_threads")}
+            for info in threadpoolctl.threadpool_info()
+            if info["num_threads"] != 1
+        ]
+        assert not unlimited, unlimited
     assert pg.core.threadCount() == before_pg
     assert [info["num_threads"] for info in threadpoolctl.threadpool_info()] == before_blas
 
