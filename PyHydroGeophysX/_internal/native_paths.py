@@ -23,9 +23,11 @@ def pygimli_path(path: str | os.PathLike[str], *, create: bool = False) -> str:
     Elsewhere than on Windows, and for an ASCII path, that is the path itself.
     On Windows a path with other characters is given 8.3 short names: the
     folder's when the file name is ASCII, so PyGIMLi may still add a suffix to
-    it or write a new file; otherwise the file's own, which ``create`` makes
-    (empty) first for a file about to be written. A volume without short names
-    leaves the path unchanged, and the call fails as it would have.
+    it or write a new file; otherwise the file's own, with the file's suffix,
+    which ``create`` makes (empty) first for a file about to be written. A
+    volume without short names, or a non-ASCII name with a suffix longer than
+    three letters, leaves the path unchanged, and the call fails as it would
+    have.
     """
     text = os.fspath(path)
     if not _WINDOWS or text.isascii():
@@ -37,7 +39,12 @@ def pygimli_path(path: str | os.PathLike[str], *, create: bool = False) -> str:
     if create and not target.exists():
         target.touch()
     short = _short_name(target)
-    return short if short is not None else text
+    if short is None:
+        return text
+    # PyGIMLi picks a reader or writer by the suffix, case-sensitively; a short
+    # name has it upper-cased, or cut to three letters, which cannot be undone.
+    stem, suffix = os.path.splitext(short)
+    return stem + target.suffix if suffix.lower() == target.suffix.lower() else text
 
 
 def _short_name(path: Path) -> str | None:

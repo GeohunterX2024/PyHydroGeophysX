@@ -74,6 +74,7 @@
 
 ### 发行与持续（M5）
 
+- `FlowLayout` 在页面销毁、属性已被回收时仍可能收到 Qt 回调，改为此时按空布局应答（F-21，Linux CI 偶发）。
 - 金标准跨平台：重力两例的测点改为偏离规则网格至多 0.5 m 并重新录制（规则网格上 Delaunay 三角剖分不唯一，Linux 与 macOS 网格化结果相差最大 51%，F-19）；金标准失败时列出每个数组的最大绝对差与相对差；在录制平台（macOS arm64）之外比较时，`gravity_inversion` 与 `fdem_tdem_joint` 按每个数组最大值的 10% 与 1e-5 比较（实测 Linux 与 macOS 相差约 3% 与 2e-6，F-20），其余各例仍用原容差。`tools/yuem/coverage.py` 改名为 `coverage_baseline.py`：直接运行 `tools/yuem/` 下的脚本时，它会遮蔽 coverage 包，使导入 SimPEG 失败。
 - CI 首轮实跑暴露的问题：Linux 各测试层补装 Qt 运行库（pytest-qt 启动即导入 Qt）与 Gmsh；E4D 网格冒烟在没有 TetGen/Gmsh 的机器上跳过并说明原因；数据库原始文件校验的提示统一用记录中的 POSIX 路径（Windows 上曾显示反斜杠）；Windows 上 pyGIMLi 无法打开中文路径记为 F-16，相关两个冒烟用例在 Windows 上标为预期失败；Linux GUI 层退出时中止（F-17）的原因是助手面板在测试中联网下载 Codex CLI、退出时下载线程仍在运行，GUI 测试会话改为指向不存在的 CLI 路径，不再联网；Windows 上 pgcore 自带的 OpenBLAS 不受 threadpoolctl 控制（F-18），`--threads` 改为同时在导入前设置 `OMP_NUM_THREADS`、`OPENBLAS_NUM_THREADS`、`MKL_NUM_THREADS`。
 - 性能基线：`tests/yuem/perf/`（ERT 单次反演、TEM LCI 测线、MT Occam 1D，各跑 3 轮取中位数）与 `tools/yuem/perf.py record/check`；基线按机器记录在 `.yuem/metrics/perf-baseline.json`（本机 darwin-arm64：ERT 5.18 s、TEM LCI 1.24 s、MT 0.35 s），慢 20% 以上告警；CI 每周定时与手动触发 `perf` 任务（告警不阻断，首次在 CI 上记录基线并作为产物上传）。pytest-benchmark 5.3 与 pytest 9 的私有属性不兼容，在性能测试的 conftest 中补齐。

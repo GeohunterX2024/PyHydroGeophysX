@@ -40,7 +40,7 @@ def test_a_non_ascii_file_name_gets_its_own_short_name(tmp_path: Path, windows: 
     target = tmp_path / "剖面.dat"
     windows[str(target)] = "C:\\TMP\\5A2B~1.DAT"
 
-    assert pygimli_path(target) == "C:\\TMP\\5A2B~1.DAT"
+    assert pygimli_path(target) == "C:\\TMP\\5A2B~1.dat"
     assert not target.exists()
 
 
@@ -50,8 +50,17 @@ def test_a_file_about_to_be_written_is_created_for_its_short_name(
     target = tmp_path / "剖面.dat"
     windows[str(target)] = "C:\\TMP\\5A2B~1.DAT"
 
-    assert pygimli_path(target, create=True) == "C:\\TMP\\5A2B~1.DAT"
+    assert pygimli_path(target, create=True) == "C:\\TMP\\5A2B~1.dat"
     assert target.is_file()
+
+
+def test_a_suffix_the_short_name_cuts_leaves_the_path_as_it_was(
+    tmp_path: Path, windows: dict[str, str]
+) -> None:
+    target = tmp_path / "剖面.json"
+    windows[str(target)] = "C:\\TMP\\5A2B~1.JSO"
+
+    assert pygimli_path(target) == str(target)
 
 
 def test_without_short_names_the_path_is_left_as_it_was(tmp_path: Path, windows: dict[str, str]) -> None:

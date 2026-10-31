@@ -14,7 +14,7 @@ row (Qt invalidates a layout when one of its widgets changes visibility).
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QLayout, QLayoutItem, QWidget
@@ -69,6 +69,12 @@ class FlowLayout(QLayout):
     >>> flow.heightForWidth(10_000) < flow.heightForWidth(widest)    # one line vs. three
     True
     """
+
+    # Qt can call the overrides below while the wrapper is being torn down and
+    # its instance attributes are already cleared; it then sees an empty layout.
+    _items: Sequence[QLayoutItem] = ()
+    _gap = 0
+    _line_gap = 0
 
     def __init__(self, parent: Optional[QWidget] = None, spacing: int = 6,
                  line_spacing: Optional[int] = None) -> None:
