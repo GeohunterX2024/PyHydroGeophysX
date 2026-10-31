@@ -6,6 +6,8 @@ it with ``python tools/yuem/golden.py --update --case <name> --reason "..."``.
 
 from __future__ import annotations
 
+import json
+import platform
 from pathlib import Path
 
 import numpy as np
@@ -33,6 +35,11 @@ def test_golden(case: GoldenCase, workspace: Workspace) -> None:
         expected = {key: archive[key] for key in archive.files}
     actual = compute(case, workspace)
     assert sorted(actual) == sorted(expected), "the set of outputs changed"
+    recorded = json.loads((DATA / f"{case.name}.json").read_text(encoding="utf-8"))["environment"]["platform"]
+    cross = case.cross_platform is not None and (recorded["system"], recorded["machine"]) != (
+        platform.system(),
+        platform.machine(),
+    )
     report = []
     for key, value in sorted(expected.items()):
         got = np.asarray(actual[key], dtype=float)
@@ -40,9 +47,18 @@ def test_golden(case: GoldenCase, workspace: Workspace) -> None:
         if got.shape != want.shape:
             report.append(f"{key}: shape {got.shape} != {want.shape}")
             continue
-        if np.allclose(got, want, rtol=case.rtol, atol=case.atol, equal_nan=True):
-            continue
         diff = np.abs(got - want)
+        if cross:
+            scale = float(np.nanmax(np.abs(want))) if want.size else 0.0
+            if not np.nanmax(diff, initial=0.0) > case.cross_platform * scale + case.atol:
+                continue
+        elif np.allclose(got, want, rtol=case.rtol, atol=case.atol, equal_nan=True):
+            continue
         rel = diff / np.maximum(np.abs(want), np.finfo(float).tiny)
         report.append(f"{key}: max abs {np.nanmax(diff):.3e}, max rel {np.nanmax(rel):.3e}")
-    assert not report, f"{case.name} (rtol {case.rtol:g}, atol {case.atol:g}):\n" + "\n".join(report)
+    limits = (
+        f"cross-platform {case.cross_platform:g} of each array's largest value"
+        if cross
+        else f"rtol {case.rtol:g}, atol {case.atol:g}"
+    )
+    assert not report, f"{case.name} ({limits}):\n" + "\n".join(report)

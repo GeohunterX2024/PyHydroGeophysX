@@ -17,3 +17,4 @@
   - `gravity_processing`：max relative change 3.00e+02 (gravmag_residual_csv.residual)
 - 2026-10-31（PyHydroGeophysX 0.5.0+yuem.1）：Gravity stations offset up to 0.5 m from a perfect grid (the shared station layout of the gravity cases), see gravity_processing above. F-19.
   - `gravity_inversion`：max relative change 3.30e+01 (object.model3d)
+- 2026-10-31（PyHydroGeophysX 0.5.0+yuem.1）：金标准在 macOS arm64（Accelerate）上录制，Linux CI（OpenBLAS）上比较时改用跨平台容差，按每个数组最大记录值的比例：`gravity_inversion` 0.1（实测约 3%，F-20），`fdem_tdem_joint` 1e-5（实测约 2e-6）；同平台仍用原 rtol/atol。记录值未变。

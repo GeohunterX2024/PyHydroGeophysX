@@ -30,6 +30,10 @@ class GoldenCase:
     rtol: float
     atol: float
     note: str
+    #: On a platform other than the recording one (another BLAS), each array
+    #: may differ by this fraction of its largest recorded magnitude; None keeps
+    #: rtol/atol there too.
+    cross_platform: float | None = None
 
 
 CASES: tuple[GoldenCase, ...] = (
@@ -46,8 +50,23 @@ CASES: tuple[GoldenCase, ...] = (
     GoldenCase("tem_lci_line", "em.line_inversion", 1e-6, 1e-12, "LM+HM line, 3 soundings"),
     GoldenCase("mt_occam1d", "mt.invert_1d", 1e-8, 1e-12, "NMX20 EMTF XML"),
     GoldenCase("mt_processing", "mt.process", 1e-8, 1e-12, "synthetic time series"),
-    GoldenCase("gravity_inversion", "gravmag.invert", 1e-6, 1e-12, "seeded SimPEG inversion"),
-    GoldenCase("fdem_tdem_joint", "joint_inversion.run", 1e-6, 1e-12, "shared conductivity"),
+    GoldenCase(
+        "gravity_inversion",
+        "gravmag.invert",
+        1e-6,
+        1e-12,
+        "seeded SimPEG inversion; Linux OpenBLAS vs macOS Accelerate differ by ~3 % of the "
+        "model's largest value (F-20)",
+        cross_platform=0.1,
+    ),
+    GoldenCase(
+        "fdem_tdem_joint",
+        "joint_inversion.run",
+        1e-6,
+        1e-12,
+        "shared conductivity; Linux vs macOS chi2 differ by ~2e-6",
+        cross_platform=1e-5,
+    ),
     GoldenCase("gravity_processing", "gravmag.process", 1e-10, 1e-12, "QC grids"),
 )
 BY_NAME = {case.name: case for case in CASES}
