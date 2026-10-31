@@ -84,7 +84,7 @@ def main() -> int:
     from PyHydroGeophysX.qt_apps.agent.controller import StudioController
     from PyHydroGeophysX.qt_apps.agent.tools import tool_specs
     from PyHydroGeophysX.qt_apps.main_window import PyHydroGeophysXStudio
-    from PyHydroGeophysX.qt_apps.modules import MODULE_SPECS
+    from PyHydroGeophysX.qt_apps.modules import MODULE_SPECS, page_module_path
     from PyHydroGeophysX.qt_apps.modules.base import BaseModule
 
     ok = True
@@ -135,7 +135,7 @@ def main() -> int:
     # 4. Every module class overrides the agent interface (static, no widgets).
     missing = []
     for key, (sub, cls_name, _title) in MODULE_SPECS.items():
-        mod = importlib.import_module(f"PyHydroGeophysX.qt_apps.modules.{sub}")
+        mod = importlib.import_module(page_module_path(sub))
         cls = getattr(mod, cls_name)
         if cls.agent_describe is BaseModule.agent_describe or cls.agent_apply is BaseModule.agent_apply:
             missing.append(key)

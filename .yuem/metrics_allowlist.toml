@@ -13,9 +13,11 @@
 [broad_except]
 "PyHydroGeophysX/doctor.py" = "diagnostic boundary: a failing check is the finding and is reported, never raised"
 "PyHydroGeophysX/_internal/simpeg_compat.py" = "SimPEG < 0.25 raises a bare Exception for an unknown keyword; anything else is re-raised"
+"PyHydroGeophysX/plugins.py" = "plugin-loading boundary: a broken plugin is recorded and logged, never allowed to stop the others or the Studio"
 
 [suppressions]
 "PyHydroGeophysX/doctor.py" = "its noqa: BLE001 markers document the diagnostic boundary above"
+"PyHydroGeophysX/plugins.py" = "its noqa: BLE001 marker documents the plugin-loading boundary above"
 
 [global_np_random]
 "PyHydroGeophysX/inversion/joint_gravity_magnetics.py" = "seeds SimPEG < 0.23 directives that draw from the legacy global RNG; the state is saved before and restored after (newer SimPEG gets the seed on the directive itself)"

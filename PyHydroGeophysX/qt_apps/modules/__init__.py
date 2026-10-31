@@ -11,6 +11,8 @@ import importlib
 import traceback
 from typing import Any, Callable, List, Tuple
 
+from PyHydroGeophysX import plugins as _plugins
+
 from PyHydroGeophysX._internal.optional_dependencies import (
     INSTALL_HINTS,
     installation_hint,
@@ -59,6 +61,12 @@ def _missing_dependency_hint(exc: BaseException) -> str:
     )
 
 
+def page_module_path(submodule: str) -> str:
+    """Import path of a page module: built-ins are named relative to this package,
+    plugin pages (``PyHydroGeophysX.plugins.register_module``) absolutely."""
+    return submodule if "." in submodule else f"PyHydroGeophysX.qt_apps.modules.{submodule}"
+
+
 def build_module(key: str, state: Any, log: LogFn) -> BaseModule:
     """Instantiate the page for ``key``; never raises."""
     if key == "home":
@@ -68,7 +76,7 @@ def build_module(key: str, state: Any, log: LogFn) -> BaseModule:
         return PlaceholderModule(state, log, key, f"Unknown module '{key}'.", key=key)
     submodule, class_name, title = spec
     try:
-        mod = importlib.import_module(f"PyHydroGeophysX.qt_apps.modules.{submodule}")
+        mod = importlib.import_module(page_module_path(submodule))
         cls = getattr(mod, class_name)
         return cls(state, log)
     except Exception as exc:  # noqa: BLE001 - we want to catch everything here
@@ -86,6 +94,10 @@ def build_module(key: str, state: Any, log: LogFn) -> BaseModule:
         )
 
 
+# Pages contributed by installed plugins join the tables above.
+_plugins.load_entry_points()
+_plugins.apply_pages()
+
 __all__ = [
     "BaseModule",
     "HomePage",
@@ -94,4 +106,5 @@ __all__ = [
     "build_module",
     "MODULE_ORDER",
     "MODULE_SPECS",
+    "page_module_path",
 ]

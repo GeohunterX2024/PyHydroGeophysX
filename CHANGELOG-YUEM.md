@@ -47,6 +47,11 @@
 - `pyhydrogeophysx-workflow env-diff <run.json>` 比较记录环境与当前环境；`run` 重跑时若 recipe 旁有 `run.json`，自动提示环境差异。
 - 环境自检 `phgx-doctor`（`PyHydroGeophysX/doctor.py`）：Python、包、核心库、pyGIMLi 核心（含 macOS libblas 缺失检测）、证书、Qt 平台插件、VTK/OpenGL、中文字体、工程目录空间与写权限、可选引擎；退出码 0/1/2。Studio“Help > Environment Check…”运行同一套检查。
 
+### 架构（M2）
+
+- 插件注册中心 `PyHydroGeophysX/plugins.py`：`register_module`（页面、导航顺序与分组、模块描述）、`register_workflow`、`register_reader`（后缀与嗅探）、`register_short_code`；入口分组 `phgx.plugins`、`phgx.modules`、`phgx.workflows`、`phgx.readers`。原有硬编码表保持数据形态、原地更新。页面注册不依赖 Qt，无界面工作进程加载同一插件时工作流照常注册；损坏的插件被记录、不影响其他插件。工作流注册表与 Studio 页面表首次使用时自动加载插件。开发指南 `docs/yuem/plugins.md`。`phgx-doctor` 列出插件与加载失败。
+- `dev_env.sh`：仓库位于 iCloud 同步的 `~/Desktop` 或 `~/Documents` 时，环境建在 `~/Library/Caches/phgx-venvs/`，`.venv` 为符号链接（iCloud 会持续给点目录中的文件打隐藏标志）。
+
 ### 修复（可回馈上游）
 
 - 重力+磁法联合反演可复现性：SimPEG ≥ 0.23 的 `PairedBetaEstimate_ByEig` 不读全局随机数状态，上游的全局设种对它无效，同一种子两次运行相差 2.6%；种子改为直接赋给该 directive（台账 P-0006）。

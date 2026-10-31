@@ -54,13 +54,23 @@ def register_workflow(descriptor: WorkflowDescriptor, *, replace: bool = False) 
     _WORKFLOWS[descriptor.workflow_id] = descriptor
 
 
+def _load_plugins() -> None:
+    """Register installed plugins' workflows (once per process; PyHydroGeophysX.plugins)."""
+    from PyHydroGeophysX import plugins
+
+    plugins.load_entry_points()
+
+
 def list_workflows() -> Tuple[WorkflowDescriptor, ...]:
     """Return registered descriptors ordered by workflow ID, without loading handlers."""
+    _load_plugins()
     return tuple(_WORKFLOWS[key] for key in sorted(_WORKFLOWS))
 
 
 def get_workflow(workflow_id: str) -> WorkflowDescriptor:
     """Look up an exact workflow ID; raise KeyError listing available IDs if absent."""
+    if str(workflow_id) not in _WORKFLOWS:
+        _load_plugins()
     try:
         return _WORKFLOWS[str(workflow_id)]
     except KeyError as exc:

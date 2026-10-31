@@ -146,7 +146,8 @@ def _check_hidden_files() -> Check:
             "error",
             f"{len(hidden)} file(s) flagged hidden in {site} ({names}); Python skips hidden .pth "
             "files and Qt skips hidden plugins",
-            f"chflags -R nohidden {site}  (tools/yuem/dev_env.sh does this)",
+            f"chflags -R nohidden {site}; under iCloud-synced Desktop/Documents keep the venv outside "
+            "(tools/yuem/dev_env.sh does this)",
         )
     return Check("Hidden files", "ok", "no hidden .pth files or Qt platform plugins")
 
@@ -264,6 +265,20 @@ def _check_engines() -> list[Check]:
     return checks
 
 
+def _check_plugins() -> Check:
+    from PyHydroGeophysX import plugins
+
+    plugins.load_entry_points()
+    failures = plugins.load_failures()
+    if failures:
+        return Check("Plugins", "warn", "; ".join(failures), "reinstall or remove the failing plugin")
+    pages = [page.key for page in plugins.plugin_pages()]
+    readers = [reader.name for reader in plugins.readers()]
+    if not pages and not readers:
+        return Check("Plugins", "ok", "none installed")
+    return Check("Plugins", "ok", f"pages: {', '.join(pages) or '-'}; readers: {', '.join(readers) or '-'}")
+
+
 def run_checks(*, project: Path | None = None, network: bool = False) -> list[Check]:
     """Run every check; never raises."""
     steps: list[Callable[[], Check | list[Check]]] = [
@@ -277,6 +292,7 @@ def run_checks(*, project: Path | None = None, network: bool = False) -> list[Ch
         _check_vtk,
         _check_cjk_font,
         lambda: _check_project(project),
+        _check_plugins,
         _check_engines,
     ]
     results: list[Check] = []

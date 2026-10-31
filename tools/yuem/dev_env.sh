@@ -7,9 +7,11 @@
 # Steps: uv sync against the lock file with the desktop, 3D, geophysics and
 # hydrology extras and the dev group; then the macOS repairs real installs
 # needed, applied only when the problem is actually present:
-#   * files flagged hidden (cloned from a uv cache) are skipped: .pth files by
-#     Python >= 3.12, so the editable install imports only from the repository
-#     root, and Qt's platform plugins by Qt - clear the flag in the venv;
+#   * files flagged hidden are skipped: .pth files by Python >= 3.12, so the
+#     editable install imports only from the repository root, and Qt's
+#     platform plugins by Qt. iCloud's Desktop & Documents sync keeps setting
+#     the flag inside dot-directories, so such checkouts get their venv outside
+#     iCloud (see below); any flag left is cleared;
 #   * pgcore's macOS wheel links @rpath/libblas.3.dylib but ships only
 #     libopenblas.0.dylib, so pygimli cannot import - link the one to the other;
 #   * an interpreter without a usable CA bundle cannot open HTTPS - point
@@ -35,6 +37,26 @@ fi
 # The lock already pins the PyPI index; clear any mirror a user pip config sets.
 unset PIP_INDEX_URL PIP_EXTRA_INDEX_URL UV_INDEX_URL UV_EXTRA_INDEX_URL || true
 
+# iCloud Drive's "Desktop & Documents" sync keeps setting the hidden flag on
+# files inside dot-directories, within seconds of it being cleared, and Python
+# then skips the venv's .pth files and Qt its plugins. A checkout under those
+# folders gets its environment outside them; .venv is a link to it.
+if [ "$(uname -s)" = "Darwin" ] && [ -z "${UV_PROJECT_ENVIRONMENT:-}" ]; then
+  case "$ROOT/" in
+    "$HOME/Desktop/"*|"$HOME/Documents/"*)
+      UV_PROJECT_ENVIRONMENT="$HOME/Library/Caches/phgx-venvs/$(basename "$ROOT")-$(printf '%s' "$ROOT" | shasum | cut -c1-8)"
+      export UV_PROJECT_ENVIRONMENT
+      if [ -d "$ROOT/.venv" ] && [ ! -L "$ROOT/.venv" ]; then
+        echo "==> moving the environment out of the iCloud-synced folder"
+        rm -rf "$ROOT/.venv"
+      fi
+      mkdir -p "$(dirname "$UV_PROJECT_ENVIRONMENT")"
+      ln -sfn "$UV_PROJECT_ENVIRONMENT" "$ROOT/.venv"
+      echo "==> environment: $UV_PROJECT_ENVIRONMENT (linked as .venv)"
+      ;;
+  esac
+fi
+
 echo "==> uv sync (Python $PYVER)"
 uv sync --locked --python "$PYVER" \
   --extra desktop --extra desktop-3d --extra geophysics --extra hydrology \
@@ -48,9 +70,8 @@ fi
 SITE="$("$PY" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 
 if [ "$(uname -s)" = "Darwin" ]; then
-  # Files cloned from a uv cache can inherit the macOS UF_HIDDEN flag. Python
-  # >= 3.12 then skips the .pth files (the editable install, coverage's hook)
-  # and Qt skips its platform plugins, so nothing in the venv may be hidden.
+  # Python >= 3.12 skips .pth files flagged UF_HIDDEN (the editable install,
+  # coverage's hook) and Qt skips hidden platform plugins: nothing may be hidden.
   if [ -n "$(find "$ROOT/.venv" -flags +hidden -print -quit 2>/dev/null)" ]; then
     echo "==> repair: clear the hidden flag on files in .venv"
     chflags -R nohidden "$ROOT/.venv"
