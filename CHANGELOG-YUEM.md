@@ -35,6 +35,9 @@
 - Studio 页面冒烟测试 `tests/yuem/gui/`：15 个页面 offscreen 构建，不得退化为占位页，`agent_describe()` 可用，`stop_workers()` 5 秒内返回；主窗口帮助菜单有环境自检入口；测试期间 Qt 报告 QThread/QProcess 在运行中被销毁即判失败。
 - `phgx-doctor` 增加 macOS 隐藏文件检测（`.pth` 与 Qt 平台插件）；`dev_env.sh` 对整个 `.venv` 递归清除隐藏标志（Qt 也会跳过隐藏的平台插件）。
 
+- 数值验证集 `tests/yuem/verification/`（标记 `numerical`）14 例：ERT 均匀半空间、两层 Wenner（镜像级数）、三维逐单元模型；SRT 两层折射；TDEM 中心回线（Ward & Hohmann）；FDEM 半空间与三层（empymod，Anderson 801 点滤波器）；MT 半空间与三层（Wait 递推）；重力棱柱（Bouguer 板）与球体/立方体（点质量）；磁性球体（极点偶极子）；Waxman-Smits 正反变换往返。`tools/yuem/verification_report.py` 生成 `docs/yuem/verification.md`。
+- 新增 `docs/yuem/findings.md`：改造过程中发现的问题、根因、影响与处理状态。
+- 溯源的 BLAS 识别在 threadpoolctl 看不到 Apple Accelerate 时回退到 NumPy 构建配置。
 - 棘轮白名单 `.yuem/metrics_allowlist.toml`：只收边界代码（CLI 前端、诊断边界），逐文件写明理由，命中数单独报告。
 
 - 运行溯源 `PyHydroGeophysX/_internal/provenance.py`：每个工作流结果的 `provenance` 记录分叉版本、`git describe`、Python 与平台、关键库版本（取自安装元数据，不读模块 `__version__`，因为 pyGIMLi 的 `__version__` 反映的是当前目录的 git 状态）、BLAS 实现与线程数、种子、输入校验和、参数摘要；Studio 页面在进程内计算的运行由 `ResultsStore.finish_run` 补记环境。
@@ -42,6 +45,8 @@
 - 环境自检 `phgx-doctor`（`PyHydroGeophysX/doctor.py`）：Python、包、核心库、pyGIMLi 核心（含 macOS libblas 缺失检测）、证书、Qt 平台插件、VTK/OpenGL、中文字体、工程目录空间与写权限、可选引擎；退出码 0/1/2。Studio“Help > Environment Check…”运行同一套检查。
 
 ### 修复（可回馈上游）
+
+- ERT 正演区域映射：`ERTForwardModeling` 在网格含标记 1 区域时把逐单元模型映射到错误单元，二维两层误差 284%，三维正演（`ert3d.forward`）合成数据误差达 90%；改为按模型长度选用区域算子或逐单元算子，长度不符时报错（台账 P-0005）。数值验证发现。
 
 - SimPEG 0.26 兼容：`gravmag.invert`、`FDEMInversion`、`TDEMInversion`、MT 二维反演使用了 SimPEG 0.26 已删除的 `maxIterCG`/`tolCG`，在上游声明的依赖范围内新装即报错；改由 `_internal/simpeg_compat.cg_keywords` 按版本选择参数名（台账 P-0004）。冒烟测试发现。
 - `packaging/rustsolve/apply.py`：替换 libgimli 前先删除目标文件。conda 以硬链接把包缓存中的文件装进环境，原地写入会改坏缓存中的 pgcore，之后从同一缓存创建的环境都通不过校验（本机复现）。

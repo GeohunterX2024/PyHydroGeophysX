@@ -248,6 +248,8 @@ extend-exclude = ["*.ipynb", "docs/source", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["E9", "F63", "F7", "W6"]
+# The fork writes Chinese reports and messages; their punctuation is intended.
+allowed-confusables = ["，", "：", "（", "）", "；", "、", "。"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["PyHydroGeophysX"]

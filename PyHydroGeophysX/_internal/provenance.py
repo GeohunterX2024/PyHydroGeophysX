@@ -96,6 +96,8 @@ def _blas() -> list[dict[str, Any]]:
         from threadpoolctl import threadpool_info
     except ImportError:
         return []
+    import numpy  # loaded first, so threadpoolctl can see its BLAS
+
     pools = []
     for info in threadpool_info():
         pools.append(
@@ -107,6 +109,23 @@ def _blas() -> list[dict[str, Any]]:
                 "library": Path(str(info.get("filepath", ""))).name,
             }
         )
+    if not any(pool["user_api"] == "blas" for pool in pools):
+        # threadpoolctl cannot see Apple Accelerate, which NumPy's macOS arm64
+        # wheels link; NumPy's build configuration still names it.
+        try:
+            config = numpy.show_config(mode="dicts")
+            blas = config["Build Dependencies"]["blas"]
+            pools.append(
+                {
+                    "user_api": "blas",
+                    "internal_api": str(blas.get("name")),
+                    "version": str(blas.get("version")),
+                    "num_threads": None,
+                    "library": "numpy build configuration",
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            pass
     return pools
 
 
