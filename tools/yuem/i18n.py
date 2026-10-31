@@ -495,12 +495,17 @@ def _ensure_import(text: str) -> str:
     return "".join(lines)
 
 
+def _builds_widgets(text: str) -> bool:
+    """Imports Qt, or the translation of a page split into parts (``modules/ert/``)."""
+    return "PySide6" in text or "QCoreApplication" in text
+
+
 def ui_files() -> list[Path]:
     """Files of qt_apps that build widgets; Qt-free ones (records, stores, bridges) are left in English."""
     return sorted(
         p
         for p in UI_ROOT.rglob("*.py")
-        if p.name not in SKIP_FILES and p.name != "i18n.py" and "PySide6" in p.read_text(encoding="utf-8")
+        if p.name not in SKIP_FILES and p.name != "i18n.py" and _builds_widgets(p.read_text(encoding="utf-8"))
     )
 
 

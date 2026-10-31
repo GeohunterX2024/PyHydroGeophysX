@@ -1471,7 +1471,6 @@ Both are written next to the section automatically. This writes a second copy to
     </message>
     <message>
       <source>Apparent resistivity (Ω·m)</source>
-      <extracomment>The highest mesh quality offered, ert_mesh.MAX_MESH_QUALITY: Triangle never finishes much above it. Repeated here because ert_mesh pulls in pygimli, which this module does not import. The Reciprocal errors tab before data are loaded, and how to get pairs. Where the Data QC checks start. None acts until Apply filter is pressed, and those under "More checks" only while it is unfolded, so none changes a run nobody filtered. Each starts where it drops readings that are plainly bad and leaves the bulk of a survey alone. The files of a folder dropped on the page that join the list: the data filter's extensions, matched without regard to case. The χ² stopping rule's tooltip, while the engine and mode use it. What the Data tab says before anything is loaded. The electrodes drawn along the top of the pseudosection: the canvas text colour (theme PALETTE["canvas_text"]); the canvas is white in either theme. How the file list finds each survey's time, on hover over its summary line. survey_timing reads every form listed; ert_input_format.md says the same.</extracomment>
       <translation>视电阻率（Ω·m）</translation>
     </message>
     <message>
@@ -7942,22 +7941,6 @@ ways. Hover over a file to see where its time came from. Data format has more.</
       <translation>自定义</translation>
     </message>
     <message>
-      <source>  Put the time in each file name, year first (e.g. &lt;code&gt;site_2026-01-12_05-50-38.dat&lt;/code&gt;), add a line &lt;code&gt;# date: 2026-01-12 05:50:38&lt;/code&gt; at the top of each file, or tick “Date undated files” below.</source>
-      <translation>  在每个文件名中写入时间，年份在前（例如 &lt;code&gt;site_2026-01-12_05-50-38.dat&lt;/code&gt;），或在每个文件开头添加一行 &lt;code&gt;# date: 2026-01-12 05:50:38&lt;/code&gt;，或勾选下方的“为无日期文件指定日期”。</translation>
-    </message>
-    <message>
-      <source>Joint χ² over all time steps.</source>
-      <translation>所有时间步的联合 χ²。</translation>
-    </message>
-    <message>
-      <source>Run an inversion first.</source>
-      <translation>请先运行反演。</translation>
-    </message>
-    <message>
-      <source>Add an ERT data file to run an inversion.</source>
-      <translation>添加 ERT 数据文件以运行反演。</translation>
-    </message>
-    <message>
       <source>no measurements were parsed from it.</source>
       <translation>未从中解析出任何测量数据。</translation>
     </message>
@@ -7974,6 +7957,38 @@ ways. Hover over a file to see where its time came from. Data format has more.</
       <translation>其中未定义电极，因此无法放置其四极组合。此文件的“仪器”设置可能有误。</translation>
     </message>
     <message>
+      <source>pygimli is not installed, so the file can be plotted but not inverted.</source>
+      <translation>未安装 pygimli，因此该文件可以绘图但无法反演。</translation>
+    </message>
+    <message>
+      <source>10 µV, a common noise floor</source>
+      <translation>10 µV，常见的噪声基底</translation>
+    </message>
+    <message>
+      <source>0.1 mA, below which the injection failed</source>
+      <translation>0.1 mA，低于此值视为供电失败</translation>
+    </message>
+    <message>
+      <source>|V| floor</source>
+      <translation>|V| 下限</translation>
+    </message>
+    <message>
+      <source>Potential |V|</source>
+      <translation>电位 |V|</translation>
+    </message>
+    <message>
+      <source>|I| floor</source>
+      <translation>|I| 下限</translation>
+    </message>
+    <message>
+      <source>Current |I|</source>
+      <translation>电流 |I|</translation>
+    </message>
+    <message>
+      <source>ResIPy could not parse this file</source>
+      <translation>ResIPy 无法解析此文件</translation>
+    </message>
+    <message>
       <source>not checked</source>
       <translation>未检查</translation>
     </message>
@@ -7982,12 +7997,36 @@ ways. Hover over a file to see where its time came from. Data format has more.</
       <translation>已重新计算几何因子；请查看日志。</translation>
     </message>
     <message>
-      <source>E4D time-lapse: χ² of each survey in turn, the last one shown; each started from the solution before it.</source>
-      <translation>E4D 时移：依次显示每次测量的 χ²，此处为最后一次；每次均以前一次的解为起点。</translation>
+      <source>Auto (this computer, then WSL)</source>
+      <translation>自动（本机，其次 WSL）</translation>
     </message>
     <message>
-      <source>No electrodes</source>
-      <translation>无电极</translation>
+      <source>This computer</source>
+      <translation>本机</translation>
+    </message>
+    <message>
+      <source>WSL (Windows)</source>
+      <translation>WSL (Windows)</translation>
+    </message>
+    <message>
+      <source>Write files only</source>
+      <translation>仅写出文件</translation>
+    </message>
+    <message>
+      <source>Auto (this computer)</source>
+      <translation>自动（本机）</translation>
+    </message>
+    <message>
+      <source>⚠ Geometric factors look wrong; the scale is off.</source>
+      <translation>⚠ 几何因子似乎有误；标度存在偏差。</translation>
+    </message>
+    <message>
+      <source>scale unverified</source>
+      <translation>标度未核实</translation>
+    </message>
+    <message>
+      <source>Load ERT data, or import a mesh, to see the inversion mesh.</source>
+      <translation>载入 ERT 数据或导入网格以查看反演网格。</translation>
     </message>
     <message>
       <source>Quick: invert only</source>
@@ -8042,6 +8081,26 @@ ways. Hover over a file to see where its time came from. Data format has more.</
       <translation>来自互易误差模型</translation>
     </message>
     <message>
+      <source>No electrodes</source>
+      <translation>无电极</translation>
+    </message>
+    <message>
+      <source>Joint χ² over all time steps.</source>
+      <translation>所有时间步的联合 χ²。</translation>
+    </message>
+    <message>
+      <source>Run an inversion first.</source>
+      <translation>请先运行反演。</translation>
+    </message>
+    <message>
+      <source>Add an ERT data file to run an inversion.</source>
+      <translation>添加 ERT 数据文件以运行反演。</translation>
+    </message>
+    <message>
+      <source>E4D time-lapse: χ² of each survey in turn, the last one shown; each started from the solution before it.</source>
+      <translation>E4D 时移：依次显示每次测量的 χ²，此处为最后一次；每次均以前一次的解为起点。</translation>
+    </message>
+    <message>
       <source>Pick the instrument / format, then add one file per survey. Name each file with its time, year first: site_2026-01-12_05-50-38.dat.</source>
       <translation>选择仪器/格式，然后每次测量添加一个文件。用时间命名每个文件，年份在前：site_2026-01-12_05-50-38.dat。</translation>
     </message>
@@ -8052,62 +8111,6 @@ ways. Hover over a file to see where its time came from. Data format has more.</
     <message>
       <source>Add at least two surveys to the list for a time-lapse run - one file per survey, or drop a folder of them on the page.</source>
       <translation>时移运行需要在列表中至少添加两次测量——每次测量一个文件，或将存放这些文件的文件夹拖放到页面上。</translation>
-    </message>
-    <message>
-      <source>Auto (this computer, then WSL)</source>
-      <translation>自动（本机，其次 WSL）</translation>
-    </message>
-    <message>
-      <source>This computer</source>
-      <translation>本机</translation>
-    </message>
-    <message>
-      <source>WSL (Windows)</source>
-      <translation>WSL (Windows)</translation>
-    </message>
-    <message>
-      <source>Write files only</source>
-      <translation>仅写出文件</translation>
-    </message>
-    <message>
-      <source>Auto (this computer)</source>
-      <translation>自动（本机）</translation>
-    </message>
-    <message>
-      <source>pygimli is not installed, so the file can be plotted but not inverted.</source>
-      <translation>未安装 pygimli，因此该文件可以绘图但无法反演。</translation>
-    </message>
-    <message>
-      <source>10 µV, a common noise floor</source>
-      <translation>10 µV，常见的噪声基底</translation>
-    </message>
-    <message>
-      <source>0.1 mA, below which the injection failed</source>
-      <translation>0.1 mA，低于此值视为供电失败</translation>
-    </message>
-    <message>
-      <source>|V| floor</source>
-      <translation>|V| 下限</translation>
-    </message>
-    <message>
-      <source>Potential |V|</source>
-      <translation>电位 |V|</translation>
-    </message>
-    <message>
-      <source>|I| floor</source>
-      <translation>|I| 下限</translation>
-    </message>
-    <message>
-      <source>Current |I|</source>
-      <translation>电流 |I|</translation>
-    </message>
-    <message>
-      <source>⚠ Geometric factors look wrong; the scale is off.</source>
-      <translation>⚠ 几何因子似乎有误；标度存在偏差。</translation>
-    </message>
-    <message>
-      <source>scale unverified</source>
-      <translation>标度未核实</translation>
     </message>
     <message>
       <source>Add displayed result to Project Map…</source>
@@ -8130,12 +8133,8 @@ ways. Hover over a file to see where its time came from. Data format has more.</
       <translation>测量几何 (JSON)</translation>
     </message>
     <message>
-      <source>ResIPy could not parse this file</source>
-      <translation>ResIPy 无法解析此文件</translation>
-    </message>
-    <message>
-      <source>Load ERT data, or import a mesh, to see the inversion mesh.</source>
-      <translation>载入 ERT 数据或导入网格以查看反演网格。</translation>
+      <source>  Put the time in each file name, year first (e.g. &lt;code&gt;site_2026-01-12_05-50-38.dat&lt;/code&gt;), add a line &lt;code&gt;# date: 2026-01-12 05:50:38&lt;/code&gt; at the top of each file, or tick “Date undated files” below.</source>
+      <translation>  在每个文件名中写入时间，年份在前（例如 &lt;code&gt;site_2026-01-12_05-50-38.dat&lt;/code&gt;），或在每个文件开头添加一行 &lt;code&gt;# date: 2026-01-12 05:50:38&lt;/code&gt;，或勾选下方的“为无日期文件指定日期”。</translation>
     </message>
     <message>
       <source># ERT → Water Content input format

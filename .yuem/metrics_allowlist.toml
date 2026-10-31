@@ -33,7 +33,6 @@
 [file_length]
 "PyHydroGeophysX/qt_apps/agent/chat_panel.py" = { lines = 2391, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/em_processing.py" = { lines = 3419, reason = "M2.4: swallowed errors are logged (+6 lines)" }
-"PyHydroGeophysX/qt_apps/modules/ert_processing.py" = { lines = 7705, reason = "M2.4: swallowed errors are logged (+12 lines) until the M4.5 split into qt_apps/modules/ert/" }
 "PyHydroGeophysX/qt_apps/modules/geo_hydrology.py" = { lines = 1544, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py" = { lines = 2038, reason = "M2.4: swallowed errors are logged (+6 lines)" }
 "PyHydroGeophysX/qt_apps/modules/joint_inversion.py" = { lines = 1629, reason = "M2.4: swallowed errors are logged (+4 lines)" }

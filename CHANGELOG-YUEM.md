@@ -70,6 +70,7 @@
 ### 专业化与体验（M4）
 
 - 界面中文化（`docs/yuem/i18n.md`）：own 目录 54 个界面文件中 2078 处界面文字改为 `QCoreApplication.translate`（字面量与 f-string）、455 处改为 `i18n.tr`（变量），由 `tools/yuem/i18n.py wrap` 自动改写，保留原有换行与注释；`pyside6-lupdate` 生成 `qt_apps/translations/phgx_zh_CN.ts`（2399 条，全部译出，占位符与 HTML 标签经校验），`lrelease` 编译 `.qm` 并纳入 PyInstaller spec 与 wheel。默认跟随系统语言，“视图 > 语言”可切换（下次启动生效）。日志、作为取值读回的下拉框条目、无 Qt 的报告模块保持英文。门禁新增 `i18n.py check`；GUI 测试在中文翻译下逐页构建。
+- 拆分 ERT 页面（样板工程）：7676 行的 `qt_apps/modules/ert_processing.py` 拆为 `qt_apps/modules/ert/` 包：`page.py`（控件与初始化）、`import_panel.py`、`qc_panel.py`、`mesh_panel.py`、`inversion_panel.py`、`timelapse_panel.py`、`results_panel.py`、`presenter.py`（助手接口与电极编辑）与 `common.py`（共用导入、常量与辅助函数），最长 1190 行。方法原样按功能区移入各部分（mixin），`ERTProcessingModule` 组合这些部分，覆盖关系与方法解析顺序不变；`ert_processing.py` 保留为转发入口（`MODULE_SPECS` 键、旧导入名与 0.3.0 兼容名照常可用）。行为由页面构建（中英文）、计算隔离、ERT 金标准与冒烟测试锁定。棘轮指标 `inprocess_worker_modules` 改为按页面计数。
 - 中文字体回退（`qt_apps/theme.py`）：PingFang SC、Hiragino Sans GB、Microsoft YaHei、Noto Sans CJK SC、Segoe UI 依次回退，只引用已安装字体，消除自检的 “missing font family” 警告；Matplotlib 同步中文字体并关闭 unicode 负号。
 
 ### 修复（可回馈上游）

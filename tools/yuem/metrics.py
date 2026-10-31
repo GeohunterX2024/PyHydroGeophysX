@@ -146,8 +146,13 @@ def collect() -> dict[str, object]:
         lines_total += n_lines
         if n_lines > LONG_FILE:
             long_files.append(rel)
-        if rel.startswith(f"{PACKAGE}/qt_apps/modules/") and WORKER_RE.search(text):
-            worker_modules.append(rel)
+        prefix = f"{PACKAGE}/qt_apps/modules/"
+        if rel.startswith(prefix) and WORKER_RE.search(text):
+            # A page split into a package (modules/ert/) counts once.
+            parts = rel[len(prefix) :].split("/")
+            unit = prefix + parts[0] + ("/" if len(parts) > 1 else "")
+            if unit not in worker_modules:
+                worker_modules.append(unit)
         if cls == "own" and rel not in allow.get("broad_except", {}):
             silent += silent_broad_excepts(text)
         bucket = by_class.setdefault(cls, dict.fromkeys(PATTERNS, 0))

@@ -1,14 +1,14 @@
 {
-  "python_lines": 189792,
-  "tests": 257,
-  "test_files": 16,
+  "python_lines": 191972,
+  "tests": 308,
+  "test_files": 25,
   "broad_except": 800,
   "print_calls": 299,
-  "suppressions": 708,
-  "logging_getlogger": 48,
+  "suppressions": 707,
+  "logging_getlogger": 51,
   "os_environ": 23,
   "global_np_random": 0,
-  "files_over_2000": 17,
+  "files_over_2000": 15,
   "inprocess_worker_modules": 10,
   "own_silent_broad_except": 0,
   "by_class": {
@@ -23,9 +23,9 @@
     "own": {
       "broad_except": 364,
       "print_calls": 0,
-      "suppressions": 430,
-      "logging_getlogger": 47,
-      "os_environ": 17,
+      "suppressions": 429,
+      "logging_getlogger": 50,
+      "os_environ": 20,
       "global_np_random": 0
     },
     "frozen": {
@@ -39,7 +39,7 @@
   },
   "allowlisted": {
     "broad_except": 8,
-    "print_calls": 24,
+    "print_calls": 25,
     "suppressions": 8,
     "global_np_random": 1
   },
@@ -54,17 +54,15 @@
     "PyHydroGeophysX/inversion/ert_inversion.py",
     "PyHydroGeophysX/qt_apps/agent/chat_panel.py",
     "PyHydroGeophysX/qt_apps/modules/em_processing.py",
-    "PyHydroGeophysX/qt_apps/modules/ert_processing.py",
     "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py",
     "PyHydroGeophysX/qt_apps/modules/mesh3d_processing.py",
-    "PyHydroGeophysX/qt_apps/modules/model_viewer.py",
     "PyHydroGeophysX/qt_apps/modules/mt_processing.py",
     "PyHydroGeophysX/qt_apps/modules/one_click.py",
     "PyHydroGeophysX/qt_apps/modules/seismic_processing.py"
   ],
   "worker_modules": [
     "PyHydroGeophysX/qt_apps/modules/em_processing.py",
-    "PyHydroGeophysX/qt_apps/modules/ert_processing.py",
+    "PyHydroGeophysX/qt_apps/modules/ert/",
     "PyHydroGeophysX/qt_apps/modules/gpr_processing.py",
     "PyHydroGeophysX/qt_apps/modules/gravmag_processing.py",
     "PyHydroGeophysX/qt_apps/modules/hydro_geophysics.py",
