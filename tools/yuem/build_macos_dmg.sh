@@ -5,6 +5,10 @@
 #   tools/yuem/build_macos_dmg.sh --variant light Light variant (same env, engines left out)
 #   tools/yuem/build_macos_dmg.sh --python PATH   build with another interpreter
 #
+# PHGX_PLUGIN_WHEELS (wheel files separated by ":") puts Studio plugins into the app: they are
+# installed without dependencies into a build folder the spec collects them from, and the
+# frozen Studio must list their workflows before the image is made.
+#
 # Steps, each one checked:
 #   1. the build environment: .conda/phgx-full from packaging/conda/conda-lock.yml,
 #      with rustsolve put in place of SuiteSparse exactly as upstream's Full CI
@@ -61,9 +65,32 @@ NAME="PyHydroGeophysX-Studio-${VERSION}-macos-arm64"
 STAGE="$(mktemp -d /tmp/phgx-dmg.XXXXXX)"
 trap 'rm -rf "$STAGE"' EXIT
 
+PLUGIN_SITE=""
+PLUGIN_WORKFLOWS=()
+if [ -n "${PHGX_PLUGIN_WHEELS:-}" ]; then
+  PLUGIN_SITE="$STAGE/plugins"
+  IFS=":" read -r -a WHEELS <<< "$PHGX_PLUGIN_WHEELS"
+  echo "==> 1b. plugins: ${WHEELS[*]}"
+  for wheel in "${WHEELS[@]}"; do
+    [ -f "$wheel" ] || { echo "plugin wheel not found: $wheel" >&2; exit 2; }
+  done
+  "$PYTHON" -m pip install --quiet --no-deps --no-compile --target "$PLUGIN_SITE" "${WHEELS[@]}"
+  # The workflows each plugin registers, which the frozen Studio must list (step 5).
+  while IFS= read -r workflow; do PLUGIN_WORKFLOWS+=("$workflow"); done < <(
+    PYTHONPATH="$PLUGIN_SITE:$ROOT" QT_QPA_PLATFORM=offscreen "$PYTHON" -c '
+from PyHydroGeophysX.plugins import load_entry_points, load_failures
+from PyHydroGeophysX.workflows.registry import list_workflows
+load_entry_points()
+assert not load_failures(), load_failures()
+for w in list_workflows():
+    if not w.handler_path.startswith("PyHydroGeophysX."):
+        print(w.workflow_id)')
+  [ "${#PLUGIN_WORKFLOWS[@]}" -gt 0 ] || { echo "the plugin wheels register no workflow" >&2; exit 2; }
+fi
+
 echo "==> 2. icons and PyInstaller ($VARIANT, $VERSION)"
 "$PYTHON" packaging/make_icons.py
-PHGX_BUILD_VARIANT="$VARIANT" QT_QPA_PLATFORM=offscreen \
+PHGX_BUILD_VARIANT="$VARIANT" PHGX_PLUGIN_SITE="$PLUGIN_SITE" QT_QPA_PLATFORM=offscreen \
   "$BIN/pyinstaller" --noconfirm --clean packaging/pyinstaller_studio.spec
 
 APP_SRC="$ROOT/dist/PyHydroGeophysX-Studio.app"
@@ -91,6 +118,13 @@ codesign --verify --deep --strict "$APP"
 EXE="$APP/Contents/MacOS/PyHydroGeophysX-Studio"
 echo "==> 5. self-test"
 QT_QPA_PLATFORM=offscreen "$EXE" --self-test
+# The workflow processes the Studio starts run in the frozen app too (findings F-23), and see
+# every bundled plugin's workflows.
+LISTED="$(QT_QPA_PLATFORM=offscreen "$EXE" -m PyHydroGeophysX.workflows.cli list | cut -f1)"
+for workflow in ${PLUGIN_WORKFLOWS[@]+"${PLUGIN_WORKFLOWS[@]}"}; do
+  grep -qx "$workflow" <<< "$LISTED" || { echo "the frozen Studio does not list $workflow" >&2; exit 1; }
+done
+echo "    workflow processes run; $(wc -l <<< "$LISTED" | tr -d ' ') workflows listed"
 
 if [ -n "$IDENTITY" ] && [ -n "${PHGX_NOTARY_PROFILE:-}" ]; then
   OPEN_NOTE="首次打开：本镜像经 Developer ID 签名并已通过 Apple 公证，双击即可打开。"
