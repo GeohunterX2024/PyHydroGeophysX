@@ -85,6 +85,10 @@
 - 工程位置校验（F-10）：工程目录在包源码内时拒绝打开，在源码检出的 `examples/` 内时给出警告（兼容已有工程）。
 - 月度上游同步：`tools/yuem/sync_upstream.sh`（拉取、快进 `upstream`、按 follow 路径列出候选提交、可选创建 `yuem/sync-YYYYMM`；不推送、不自动挑拣）；2026-10-31 检查上游无新提交，记入 `.yuem/SYNC_LOG.md`。
 
+### DCIP 插件文档
+
+- 新增 `docs/yuem/dcip.md`：DCIP 插件（phgx-dcip）的能力、安装方式（开发环境、已有环境、桌面安装包）、9 个工作流、验证情况与已知限制；`docs/yuem/plugins.md` 增加 DCIP 作为插件接口的完整实例。
+
 ### 修复（可回馈上游）
 
 - 三维地震建模的可选 pyvista 离屏渲染在没有 OpenGL 的 Windows 上会让 VTK 崩溃、连带结束整个工作流，改为在子进程中渲染，失败只跳过这张图（F-22，台账 P-0009）。
