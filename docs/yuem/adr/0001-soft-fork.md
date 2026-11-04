@@ -19,7 +19,7 @@ PyHydroGeophysX（PHGX）0.5.0 是本项目的主框架。要把它做成工业�
 
 ## 3. 仓库约定
 
-- 本地仓库：`/Users/geohunterx/Desktop/YUEM_Software/PHGX`，与 YUEM 仓库平级。
+- 本地仓库：`/Users/geohunterx/Desktop/YUEM_Software/PHGX`，与 YUEM 仓库平级。实际目录为 `PHGX.nosync`（不进 iCloud，F-24），`PHGX` 是指向它的符号链接；DCIP 插件检出 `phgx-dcip` 与之并列；本地测试数据在 `.data/`（由 `.git/info/exclude` 忽略）。
 - `origin`：`https://github.com/GeohunterX2024/PyHydroGeophysX`（fork）。
 - `upstream`：`https://github.com/geohang/PyHydroGeophysX`，推送地址设为 `DISABLED`，防止误推。
 - 分叉基点：`16930bb6b50d20973a38bdc0890c1d1a876b77d3`，核对记录见 `.yuem/baseline_diff.md`。
