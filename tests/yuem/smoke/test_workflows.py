@@ -43,8 +43,14 @@ def workspace(tmp_path_factory: pytest.TempPathFactory, examples_data: Path) -> 
     return Workspace(root, examples_data)
 
 
+def _builtin_workflows() -> list[str]:
+    """Workflows PyHydroGeophysX itself provides. An installed plugin's (DCIP)
+    are smoke-tested in the plugin's own repository."""
+    return sorted(d.workflow_id for d in list_workflows() if d.handler_path.startswith("PyHydroGeophysX."))
+
+
 def test_every_registered_workflow_has_a_smoke_recipe() -> None:
-    registered = {descriptor.workflow_id for descriptor in list_workflows()}
+    registered = set(_builtin_workflows())
     assert registered == set(BUILDERS), {
         "without a recipe": sorted(registered - set(BUILDERS)),
         "recipe for an unknown workflow": sorted(set(BUILDERS) - registered),
@@ -53,7 +59,7 @@ def test_every_registered_workflow_has_a_smoke_recipe() -> None:
 
 def _cases() -> list[object]:
     cases = []
-    for wid in sorted(d.workflow_id for d in list_workflows()):
+    for wid in _builtin_workflows():
         marks: list[pytest.MarkDecorator] = [pytest.mark.slow] if wid in SLOW else []
         if wid == "ert.e4d_mesh" and _no_mesher():
             marks.append(pytest.mark.skip(reason="needs TetGen (`pip install tetgen`) or Gmsh on PATH"))
