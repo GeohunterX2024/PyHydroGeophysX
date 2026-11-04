@@ -50,3 +50,7 @@ def register():
 - **键名唯一**：页面键与内置页面重名时拒绝并记录；工作流 ID 重复时抛出 `KeyError`（需要覆盖时传 `replace=True`）。
 - **页面类**：继承 `PyHydroGeophysX.qt_apps.modules.base.BaseModule`，实现 `agent_describe()` 和 `agent_apply()`；重计算通过 `ProcessWorkflowWorker` 运行注册过的工作流。
 - **质量门禁**：扩展包自身沿用本仓库的门禁标准（ruff 严格规则、`mypy --strict`、冒烟测试与数值验证）。
+
+## 4. 实例：DCIP 插件
+
+[phgx-dcip](dcip.md) 用上述接口接入了一个完整的方法：一个页面、9 个工作流、一个 LAS 读取器和运行目录简称，并展示了插件常用的几件事——工作流在独立进程中以工程目录为根运行、结果写成 `ModelResultV2`、质控用 `QCLog`、界面文字用插件自己的翻译目录（上下文 `PHGX_DCIP`）、规程提示写入 `qt_apps.standards.ANNOTATIONS`。把插件打进桌面安装包见 `tools/yuem/build_macos_dmg.sh` 的 `PHGX_PLUGIN_WHEELS`。

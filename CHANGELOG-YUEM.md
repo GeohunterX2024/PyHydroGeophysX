@@ -94,6 +94,10 @@
 - `build_macos_dmg.sh` 增加 `PHGX_PLUGIN_WHEELS`（以 ":" 分隔的 wheel）：不带依赖装入构建目录，由 `packaging/pyinstaller_studio.spec` 经 `PHGX_PLUGIN_SITE` 收集——对 `phgx.plugins` 入口点所在的发行包 `copy_metadata`、`collect_submodules` 与 `collect_data_files`，该目录计入可追溯的来源根目录；构建前列出插件登记的工作流，自检后要求冻结的 Studio 全部列出。以 phgx-dcip 0.4.0 实测：Full 变体 DMG 列出 28 个工作流（内置 19、DCIP 9），冻结应用中 DCIP 导入、处理、反演链运行通过。
 - 冻结的 Studio 运行它自己启动的工作流进程（F-23）：运行时钩子 `packaging/rthook_workflow_runner.py`。
 
+### DCIP 插件文档
+
+- 新增 `docs/yuem/dcip.md`：DCIP 插件（phgx-dcip）的能力、安装方式（开发环境、已有环境、桌面安装包）、9 个工作流、验证情况与已知限制；`docs/yuem/plugins.md` 增加 DCIP 作为插件接口的完整实例。
+
 ### 修复（可回馈上游）
 
 - 三维地震建模的可选 pyvista 离屏渲染在没有 OpenGL 的 Windows 上会让 VTK 崩溃、连带结束整个工作流，改为在子进程中渲染，失败只跳过这张图（F-22，台账 P-0009）。
