@@ -98,6 +98,11 @@
 
 - 新增 `docs/yuem/dcip.md`：DCIP 插件（phgx-dcip）的能力、安装方式（开发环境、已有环境、桌面安装包）、9 个工作流、验证情况与已知限制；`docs/yuem/plugins.md` 增加 DCIP 作为插件接口的完整实例。
 
+### 开发目录
+
+- 本地检出改为完整克隆（原为 `blob:none` 部分克隆），历史对象全部在本地；检出目录改名为 `PHGX.nosync` 以避开 iCloud 同步，原路径保留为符号链接（F-24）。DCIP 插件检出与之并列，金标准实测数据放在本地忽略的 `.data/DCIP`，开发不再依赖 YUEM 仓库目录。
+- `docs/source/_static/stats/usage_stats.json` 恢复为上游版本：上游的“Usage stats”定时工作流在 fork 中运行时会用 fork 的数据改写这个跟随上游的文件，并直接提交到 `yuem/main`（2026-11-01），使补丁台账检查失败；该工作流在 fork 中停用。
+
 ### 修复（可回馈上游）
 
 - 三维地震建模的可选 pyvista 离屏渲染在没有 OpenGL 的 Windows 上会让 VTK 崩溃、连带结束整个工作流，改为在子进程中渲染，失败只跳过这张图（F-22，台账 P-0009）。

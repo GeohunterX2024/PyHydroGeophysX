@@ -2,7 +2,7 @@
 
 时间域直流电阻率与激发极化（DCIP）以插件包 **phgx-dcip** 接入 PHGX，与 ERT、EM、MT、GPR 并列，位于导航“地球物理数据处理”下的“DCIP / 激发极化”。插件通过 `docs/yuem/plugins.md` 所述的公开接口注册，不修改 PHGX 源码；它是该接口的第一个完整实例。
 
-插件仓库为私有仓库（开发检出 `~/Developer/phgx-dcip`）。用户说明见插件仓库的 `docs/dcip_user_guide.md`，架构见 `docs/architecture.md`，金标准与数值验证见 `docs/golden.md`。
+插件仓库为私有仓库（`GeohunterX2024/phgx-dcip`，开发检出 `~/Desktop/YUEM_Software/phgx-dcip`，与 PHGX 检出并列；金标准的实测数据在 PHGX 检出的本地目录 `.data/DCIP`）。用户说明见插件仓库的 `docs/dcip_user_guide.md`，架构见 `docs/architecture.md`，金标准与数值验证见 `docs/golden.md`。
 
 ## 能力
 
