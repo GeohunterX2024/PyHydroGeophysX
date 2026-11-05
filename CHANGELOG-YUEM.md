@@ -18,6 +18,15 @@
   - 页面列出各步骤自己的运行按钮。屏幕上恰好显示一个时，工具栏右段出现同名的“运行”主按钮，跟随它的文字和可用状态，点击等同点击页面上的那个按钮；一个都没显示或同时显示多个时不出现。
   - 已接入：ERT（单次 / 时移二选一）、EM、大地电磁（时间序列处理、一维、二维）、重力 / 磁法、地震（SRT、反射叠加）、三维网格构建器、联合反演、水文 → 地球物理、地震 → 构造、ERT → 含水量。
   - 工具栏代码从 `main_window.py` 移到 `qt_apps/main_toolbar.py`，主窗口回到 1500 行以内。
+- 共用测量视图（说明见 `docs/yuem/survey.md`），供各方法页面复用：
+  - 数据描述 `PyHydroGeophysX/survey/`（算法层，不依赖 Qt，`mypy --strict`），包括布设（点、角色、分组、选择键、连线、地形、测线方向与本地投影）、拟深度点（`pole_dipole_zond` 与 `pygimli` 两种约定，与 DCIP 插件和 ERT 页面现有的位置逐元素一致）、曲线与时间窗、Welch 频谱与工频谐波折叠、每道噪声指标、三维场景图层、页面接口 `SurveyProvider`、共用着色名称。
+  - 界面 `qt_apps/widgets/survey/`：pyqtgraph 平面图、剖面图、双纵轴曲线、频谱与噪声表；三维以 PyVista 为主，无可用显卡时（offscreen、`PHGX_SURVEY_3D=simple`、选项“使用简易三维”、窗口创建失败）改用 Matplotlib 画同一场景；图层、着色、纵向夸大、相机预设、点选、截图与 VTK 导出放在可折叠选项栏；共享选择；多选项卡工作台 `SurveyWorkbench`。三维文字使用中文字体文件。
+  - 出版图 `visualization/styles/survey.py`：平面图、剖面图、曲线图、频谱图，带比例尺、指北针与图签，导出 PDF、PNG、SVG。
+  - MT 新增“测站与数据质量”选项卡（`qt_apps/modules/mt_survey_tab.py`，适配 `survey/adapters/mt.py`）：测站与记录的位置、Ex 与 Ey 偶极，所选记录的曲线与频谱（可切换场值单位）。原“时间序列”页不变，`mt_processing.py` 行数未增加。
+  - ERT 新增“测量布设”选项卡（`qt_apps/modules/ert/survey_tab.py`，适配 `survey/adapters/ert.py`）：电极、按注入电极对分组的 AB 与 MN 连线、拟深度点（与 ERT 拟断面相同），可按视电阻率、误差、装置系数、有效性着色。
+  - DCIP 插件的炮记录页改用此组件（插件仓库另记）。
+  - `phgx-doctor` 新增 “Survey 3D view” 一项，报告三维使用 PyVista 还是简易视图。
+  - 治理：`PyHydroGeophysX/survey/` 登记为 own 路径并纳入严格质量检查，加入导入约束的算法层与“算法层不导入 Qt”契约，mypy 严格模块列表增补（台账 P-0002）。
 - 导航中“地球物理数据处理”改为“地球物理数据处理与反演”。该组顺序为大地电磁、EM、DCIP、ERT、GPR、重力/磁法、地震、钻孔、三维网格构建器、联合反演。EM 用交流符号 ∿，地震用四道波形，DCIP 用穿过基线的方波脉冲。
 
 ### 治理

@@ -142,13 +142,15 @@ def value_brushes(
         with np.errstate(divide="ignore", invalid="ignore"):
             data = np.where(data > 0, np.log10(data), np.nan)
     lo, hi = limits
-    fraction = np.clip((data - lo) / (hi - lo if hi > lo else 1.0), 0.0, 1.0)
+    with np.errstate(invalid="ignore"):
+        fraction = np.clip((data - lo) / (hi - lo if hi > lo else 1.0), 0.0, 1.0)
+    # 256 shades, made once: a brush per point would cost a Qt object per point.
     cmap = cmaps.to_pyqtgraph(colormap)
+    table = [pg.mkBrush(cmap.map(i / 255.0, mode="qcolor")) for i in range(256)]
     missing = pg.mkBrush(MISSING)
-    brushes: list[Any] = []
-    for value, f in zip(data, fraction, strict=True):
-        brushes.append(pg.mkBrush(cmap.map(float(f), mode="qcolor")) if np.isfinite(value) else missing)
-    return brushes
+    finite = np.isfinite(data)
+    index = np.where(finite, np.round(np.nan_to_num(fraction) * 255.0), 0).astype(int)
+    return [table[i] if ok else missing for i, ok in zip(index, finite, strict=True)]
 
 
 class ColorBar:

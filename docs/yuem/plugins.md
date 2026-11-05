@@ -52,6 +52,10 @@ def register():
 - **主工具栏**（可选）：
   - 类属性 `toolbar_run_attrs` 列出页面各步骤运行按钮的属性名，例如 `("_import_btn", "_invert_btn")`。屏幕上恰好显示其中一个时，工具栏右段出现同名的“运行”按钮，点击即点击页面上的那个按钮；不写则不出现。
   - 平移、缩放、拾取默认按页面上可见的 pyqtgraph 图件和剖面查看器自动显示或隐藏；图件交互方式不同的页面可重写 `toolbar_view_tools()`，返回 `"pan"`、`"zoom"`、`"pick"` 中适用的几个。
+- **共用测量视图**（可选）：
+  - 布设图（二维 / 三维）、曲线、频谱由 PHGX 提供（[survey.md](survey.md)）。插件写一个不依赖 Qt 的适配，实现 `PyHydroGeophysX.survey.provider.SurveyProvider`，把自己的数据转成 `SurveyLayout`、`PseudoPoints`、`TraceSet`。
+  - 页面中放一个 `qt_apps.widgets.survey.SurveyWorkbench`；着色值优先用 `survey.attributes` 中的共用名称，界面会翻译它们。
+  - DCIP 插件的 `phgx_dcip/survey_adapter.py` 是一个完整的例子。
 - **质量门禁**：扩展包自身沿用本仓库的门禁标准（ruff 严格规则、`mypy --strict`、冒烟测试与数值验证）。
 
 ## 4. 实例：DCIP 插件
