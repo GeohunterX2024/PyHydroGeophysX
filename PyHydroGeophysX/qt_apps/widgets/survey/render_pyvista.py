@@ -33,6 +33,55 @@ _GLYPHS = {
 }
 
 
+_FONT_FILE: list[str | None] = []
+#: ``vtkTextProperty`` family that reads a font file (``VTK_FONT_FILE``).
+_VTK_FONT_FILE = 4
+
+
+def cjk_font_file() -> str | None:
+    """Path of the first CJK font Matplotlib finds (VTK's own fonts have no Chinese), or None."""
+    if not _FONT_FILE:
+        found = None
+        try:
+            from matplotlib import font_manager
+
+            from PyHydroGeophysX.visualization.styles.publication import cjk_fonts
+
+            for family in cjk_fonts():
+                try:
+                    found = font_manager.findfont(
+                        font_manager.FontProperties(family=family), fallback_to_default=False
+                    )
+                    break
+                except ValueError:
+                    continue
+        except ImportError:
+            _logger.debug("cjk_font_file: Matplotlib is not available", exc_info=True)
+        _FONT_FILE.append(found)
+    return _FONT_FILE[0]
+
+
+def use_font(text_property: Any) -> None:
+    """Draw ``text_property`` with the CJK font file, when there is one."""
+    path = cjk_font_file()
+    if path is not None and text_property is not None:
+        text_property.SetFontFamily(_VTK_FONT_FILE)
+        text_property.SetFontFile(path)
+
+
+def label_format(limits: tuple[float, float] | None) -> str:
+    """A printf format with enough significant digits to tell the colour bar's labels apart."""
+    if limits is None:
+        return "%.3g"
+    low, high = limits
+    span = abs(high - low)
+    size = max(abs(low), abs(high), 1e-300)
+    if span <= 0:
+        return "%.3g"
+    digits = int(np.clip(np.ceil(np.log10(size / span)) + 2, 3, 8))
+    return f"%.{digits}g"
+
+
 def _glyph(pv: Any, kind: str, size: float) -> Any:
     if kind == "cube":
         return pv.Cube(x_length=size, y_length=size, z_length=size)
@@ -135,20 +184,23 @@ class PyVistaCanvas:
                             show_scalar_bar=not scalar_shown,
                             scalar_bar_args={
                                 "title": style.value_label or scene.value_name,
-                                "vertical": True,
-                                "position_x": 0.88,
-                                "position_y": 0.18,
-                                "height": 0.62,
-                                "width": 0.045,
-                                "title_font_size": 14,
-                                "label_font_size": 12,
-                                "n_labels": 5,
-                                "fmt": "%.3g",
+                                "vertical": False,
+                                "position_x": 0.3,
+                                "position_y": 0.03,
+                                "width": 0.4,
+                                "height": 0.06,
+                                "title_font_size": 13,
+                                "label_font_size": 11,
+                                "n_labels": 3,
+                                "fmt": label_format(style.value_range or scene.value_range),
                                 "color": "#1f2937",
                             },
                             **kwargs,
                         )
                         scalar_shown = True
+                        for bar in plotter.scalar_bars.values():
+                            use_font(bar.GetTitleTextProperty())
+                            use_font(bar.GetLabelTextProperty())
                     else:
                         plotter.add_mesh(data, color=layer.color, **kwargs)
                 else:
@@ -167,7 +219,7 @@ class PyVistaCanvas:
                     show_points=False,
                     name=layer.name,
                 )
-        plotter.show_bounds(
+        axes = plotter.show_bounds(
             grid="back",
             location="outer",
             ticks="outside",
@@ -178,6 +230,12 @@ class PyVistaCanvas:
             fmt="%.0f",
             color="#374151",
         )
+        for axis in range(3):
+            try:
+                use_font(axes.GetTitleTextProperty(axis))
+                use_font(axes.GetLabelTextProperty(axis))
+            except (AttributeError, TypeError):
+                _logger.debug("PyVistaCanvas.render: these axes have no per-axis text", exc_info=True)
         plotter.add_axes(xlabel="E", ylabel="N", zlabel="Z", line_width=2)
         if camera is not None:
             plotter.camera_position = camera
@@ -198,6 +256,7 @@ class PyVistaCanvas:
             return
         position, focal, up = camera_vectors(preset, self._scene, self._style.line_azimuth)
         self.plotter.camera_position = [position, focal, up]
+        self.plotter.reset_camera()
         self.plotter.reset_camera_clipping_range()
         self._repaint()
 

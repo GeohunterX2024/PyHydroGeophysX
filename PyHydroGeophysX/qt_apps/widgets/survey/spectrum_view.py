@@ -199,7 +199,7 @@ class SurveySpectrumView(QWidget):
         unit = f"{traces.unit}²/Hz" if traces.unit else "1/Hz"
         plot.setLabel("left", QCoreApplication.translate("PHGX", "PSD ({0})").format(unit))
         signal_window = traces.window("End of on-time")
-        noise_window = traces.window("Off-time") or traces.window("Late off-time")
+        noise_window = traces.window("Late off-time") or traces.window("Off-time")
         self._metrics = noise_metrics(
             traces, spectrum, line_frequency=f0, signal_window=signal_window, noise_window=noise_window
         )
