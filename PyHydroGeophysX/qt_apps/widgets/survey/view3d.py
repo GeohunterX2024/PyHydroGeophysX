@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 from PyHydroGeophysX.qt_apps import i18n
 from PyHydroGeophysX.qt_apps.widgets import colormaps as cmaps
 from PyHydroGeophysX.qt_apps.widgets import length_units
-from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings
+from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings, default_attribute, widen_combo
 from PyHydroGeophysX.qt_apps.widgets.survey.options import CollapsiblePanel
 from PyHydroGeophysX.qt_apps.widgets.survey.render3d import (
     RenderStyle,
@@ -121,7 +121,7 @@ class Survey3DView(QWidget):
 
         look = QGroupBox(QCoreApplication.translate("PHGX", "Appearance"))
         grid = QGridLayout(look)
-        self._colour = QComboBox()
+        self._colour = widen_combo(QComboBox(), 12)
         self._colour.currentIndexChanged.connect(
             lambda _i: self._on_option("colour_by", self._colour.currentData())
         )
@@ -275,6 +275,9 @@ class Survey3DView(QWidget):
         self._layout, self._pseudo = layout, pseudo
         self._switches["show_other_groups"].setVisible(has_grouped_sources(layout))
         self._switches["show_pseudo"].setVisible(pseudo is not None)
+        self._switches["include_remote"].setVisible(
+            layout is not None and bool(layout.points.is_remote().any())
+        )
         self._depth.setEnabled(pseudo is not None)
         self._key_groups = {}
         if layout is not None and layout.points.keys:
@@ -285,7 +288,9 @@ class Survey3DView(QWidget):
             self._key_groups.update({k: g for k, g in zip(pseudo.keys, pseudo.group, strict=True) if g})
         names = sorted(set(pseudo.attrs) if pseudo is not None else set())
         names += sorted(set(layout.points.attrs) - set(names)) if layout is not None else []
-        wanted = self._colour.currentData() or self._settings.get("colour_by", "")
+        wanted = self._colour.currentData() or default_attribute(
+            names, str(self._settings.get("colour_by", ""))
+        )
         self._colour.blockSignals(True)
         self._colour.clear()
         self._colour.addItem(QCoreApplication.translate("PHGX", "None"), "")

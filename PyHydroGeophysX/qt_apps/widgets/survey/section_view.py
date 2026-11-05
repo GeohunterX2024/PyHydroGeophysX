@@ -23,11 +23,13 @@ from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout, group
 from PyHydroGeophysX.qt_apps.widgets.survey.common import (
     ColorBar,
     Settings,
+    default_attribute,
     inside,
     keys_at,
     make_plot,
     value_brushes,
     value_range,
+    widen_combo,
 )
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.survey import attributes
@@ -54,7 +56,7 @@ class SurveySectionView(QWidget):
         self._settings = Settings("section")
         self._layout: SurveyLayout | None = None
         self._pseudo: PseudoPoints | None = None
-        self._colour = QComboBox()
+        self._colour = widen_combo(QComboBox(), 16)
         self._colour.setToolTip(
             QCoreApplication.translate("PHGX", "Colour the pseudo-depth points by one of their values")
         )
@@ -109,7 +111,8 @@ class SurveySectionView(QWidget):
         self._colour.addItem(QCoreApplication.translate("PHGX", "None"), "")
         for name in names:
             self._colour.addItem(i18n.tr(name), name)
-        index = self._colour.findData(current if current is not None else self._settings.get("attribute", ""))
+        wanted = current if current else default_attribute(names, str(self._settings.get("attribute", "")))
+        index = self._colour.findData(wanted)
         self._colour.setCurrentIndex(max(index, 0))
         self._colour.blockSignals(False)
         self._log.setChecked(str(self._colour.currentData() or "") in LOG_ATTRIBUTES)

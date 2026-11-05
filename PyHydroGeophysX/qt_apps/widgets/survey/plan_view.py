@@ -29,6 +29,7 @@ from PyHydroGeophysX.qt_apps.widgets.survey.common import (
     symbol_of,
     value_brushes,
     value_range,
+    widen_combo,
 )
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.survey.layout import SurveyLayout
@@ -71,7 +72,7 @@ class SurveyPlanView(QWidget):
         self._settings = Settings("plan")
         self._layout: SurveyLayout | None = None
         self._spots: list[tuple[np.ndarray, list[Any], list[str]]] = []
-        self._colour = QComboBox()
+        self._colour = widen_combo(QComboBox(), 10)
         self._colour.setToolTip(
             QCoreApplication.translate("PHGX", "Colour the points by one of their values")
         )
@@ -127,6 +128,7 @@ class SurveyPlanView(QWidget):
     def set_layout(self, layout: SurveyLayout | None) -> None:
         self._layout = layout
         self._others.setVisible(has_grouped_sources(layout))
+        self._remote.setVisible(layout is not None and bool(layout.points.is_remote().any()))
         names = sorted(layout.points.attrs) if layout is not None else []
         current = self._colour.currentData()
         self._colour.blockSignals(True)

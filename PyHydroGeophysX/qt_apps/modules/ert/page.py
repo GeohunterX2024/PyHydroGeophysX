@@ -69,6 +69,7 @@ from .mesh_panel import _MeshPanel
 from .timelapse_panel import _TimelapsePanel
 from .results_panel import _ResultsPanel
 from .presenter import _Presenter
+from .survey_tab import ERTSurveyTab
 
 
 class ERTProcessingModule(_ManualQC, _QCPanel, _InversionPanel, _ImportPanel, _MeshPanel, _TimelapsePanel, _ResultsPanel, _Presenter, BaseModule):
@@ -383,6 +384,9 @@ class ERTProcessingModule(_ManualQC, _QCPanel, _InversionPanel, _ImportPanel, _M
         # electrodes are drawn along the top of the pseudosection and on the
         # Mesh tab, and summed up in the data panel.
         self._tabs.addTab(self._pseudo_widget, QCoreApplication.translate("PHGX", "Data"))
+        # The electrodes, injections and pseudo-depth points in plan, section and 3-D.
+        self._survey_tab = ERTSurveyTab(self)
+        self._tabs.addTab(self._survey_tab, QCoreApplication.translate("PHGX", "Survey layout"))
         self._tabs.addTab(self._recip_view, QCoreApplication.translate("PHGX", "Reciprocal errors"))
         self._tabs.addTab(self._mesh_tab, QCoreApplication.translate("PHGX", "Mesh"))
         self._tabs.addTab(model_tab, QCoreApplication.translate("PHGX", "Resistivity model"))

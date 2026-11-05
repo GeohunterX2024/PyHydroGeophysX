@@ -89,6 +89,25 @@ def inside(xy: np.ndarray, rect: QRectF) -> np.ndarray:
     return np.flatnonzero(keep & np.isfinite(x) & np.isfinite(y))
 
 
+def widen_combo(combo: Any, characters: int = 16) -> Any:
+    """A value list wide enough to read its entries (names like "Apparent resistivity (ohm.m)")."""
+    from PySide6.QtWidgets import QComboBox
+
+    combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+    combo.setMinimumContentsLength(characters)
+    return combo
+
+
+def default_attribute(names: list[str], remembered: str) -> str:
+    """The value to colour by: the one remembered, else apparent resistivity, else none."""
+    if remembered in names:
+        return remembered
+    for preferred in ("Apparent resistivity (ohm.m)", "rho_a"):
+        if preferred in names:
+            return preferred
+    return ""
+
+
 def make_plot(parent: Any = None) -> tuple[pg.PlotWidget, SelectViewBox]:
     """A plot widget on a :class:`SelectViewBox`, with a light grid."""
     box = SelectViewBox()
@@ -207,10 +226,12 @@ __all__ = [
     "SelectViewBox",
     "Settings",
     "ThinLogAxis",
+    "default_attribute",
     "inside",
     "keys_at",
     "make_plot",
     "symbol_of",
     "value_brushes",
     "value_range",
+    "widen_combo",
 ]

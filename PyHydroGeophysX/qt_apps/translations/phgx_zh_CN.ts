@@ -1539,6 +1539,10 @@ Both are written next to the section automatically. This writes a second copy to
       <translation>数据</translation>
     </message>
     <message>
+      <source>Survey layout</source>
+      <translation>测量布设</translation>
+    </message>
+    <message>
       <source>Reciprocal errors</source>
       <translation>互易误差</translation>
     </message>
@@ -7926,6 +7930,18 @@ B：{1}
     <message>
       <source>{0:g} Hz · {1:.1f} min</source>
       <translation>{0:g} Hz · {1:.1f} 分钟</translation>
+    </message>
+    <message>
+      <source>Current injections</source>
+      <translation>供电电极对</translation>
+    </message>
+    <message>
+      <source>{0} ({1} readings)</source>
+      <translation>{0}（{1} 个测量）</translation>
+    </message>
+    <message>
+      <source>Load a survey on the Data tab to see its layout.</source>
+      <translation>在“数据”选项卡中载入测量后，即可查看其布设。</translation>
     </message>
     <message>
       <source>Workflow</source>
