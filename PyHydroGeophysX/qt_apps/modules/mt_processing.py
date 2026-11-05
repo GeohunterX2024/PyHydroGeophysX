@@ -182,6 +182,7 @@ def _safe_name(text: str) -> str:
 class MTProcessingModule(BaseModule):
     module_key = "mt_processing"
     module_title = "Magnetotellurics"
+    toolbar_run_attrs = ("_process_btn", "_run_1d_btn", "_run_2d_btn")
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

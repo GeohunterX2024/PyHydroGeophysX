@@ -77,6 +77,7 @@ _FILE_FILTER = "Station data (*.csv *.txt *.dat);;All files (*)"
 class GravMagProcessingModule(BaseModule):
     module_key = "gravmag_processing"
     module_title = "Gravity / Magnetics"
+    toolbar_run_attrs = ("_inv_btn",)
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

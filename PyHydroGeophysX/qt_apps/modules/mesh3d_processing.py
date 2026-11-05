@@ -131,6 +131,7 @@ class Mesh3DModule(BaseModule):
 
     module_key = "mesh3d"
     module_title = "3D Mesh Builder"
+    toolbar_run_attrs = ("_gen_btn",)
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

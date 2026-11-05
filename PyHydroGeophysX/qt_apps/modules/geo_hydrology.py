@@ -218,6 +218,7 @@ class _LayerMapView(QWidget):
 class GeoHydrologyModule(BaseModule):
     module_key = "geo_hydrology"
     module_title = "ERT → Water Content"
+    toolbar_run_attrs = ("_run_btn",)
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

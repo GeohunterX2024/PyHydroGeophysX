@@ -9,9 +9,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-import pyqtgraph as pg
 from PySide6.QtCore import QCoreApplication, QEvent, QSettings, QTimer, Qt
-from PySide6.QtGui import QAction, QActionGroup
+from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (
     QDialog,
     QDockWidget,
@@ -20,11 +19,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
-    QSizePolicy,
     QStackedWidget,
     QTabWidget,
     QTextEdit,
-    QToolBar,
     QVBoxLayout,
     QWidget,
 )
@@ -36,6 +33,7 @@ from PyHydroGeophysX.qt_apps.agent.chat_panel import AssistantChatPanel
 from PyHydroGeophysX.qt_apps.agent.controller import StudioController
 from PyHydroGeophysX.qt_apps import stall_watch
 from PyHydroGeophysX.qt_apps.layout_fit import relax_minimum_width
+from PyHydroGeophysX.qt_apps.main_toolbar import MainToolbar, dock_toggle_title, elapsed_since, page_activity
 from PyHydroGeophysX.qt_apps.modules import build_module
 from PyHydroGeophysX.qt_apps.modules.base import GENERIC_ACTIVITY, BaseModule
 from PyHydroGeophysX.qt_apps.results_store import run_title
@@ -43,7 +41,6 @@ from PyHydroGeophysX.qt_apps.state import StudioState
 from PyHydroGeophysX.qt_apps.workers import prepare_workflow_process
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.widgets.ai_presence import AgentGlowFrame
-from PyHydroGeophysX.qt_apps.widgets.array_viewer import ArrayViewer
 from PyHydroGeophysX.qt_apps.widgets.log_panel import LogPanel
 from PyHydroGeophysX.qt_apps.widgets.project_dialogs import NewProjectDialog, SaveRunsDialog
 from PyHydroGeophysX.qt_apps.widgets.project_tree import ProjectTree
@@ -52,33 +49,6 @@ import logging
 _logger = logging.getLogger(__name__)
 
 WINDOW_TITLE = "PyHydroGeophysX Professional Studio"
-
-
-#: Longest activity phrase the status bar shows; the label never wraps, and a
-#: long one would push the output folder off the bar.
-_ACTIVITY_CHARS = 70
-
-
-def _page_activity(page) -> str:
-    """What ``page`` is busy with ("" when idle), shortened for the status bar."""
-    try:
-        phrase = str(page.activity() or "") if hasattr(page, "activity") else ""
-    except RuntimeError:                  # a page Qt has already destroyed
-        return ""
-    return phrase if len(phrase) <= _ACTIVITY_CHARS else phrase[:_ACTIVITY_CHARS - 1] + "…"
-
-
-def _elapsed_since(page, now: float) -> str:
-    """How long ``page`` has been busy, in words: "45 s", "3 min 05 s", "1 h 02 min"."""
-    since = page.busy_since() if hasattr(page, "busy_since") else None
-    if since is None:
-        return ""
-    seconds = max(0, int(now - since))
-    if seconds < 60:
-        return f"{seconds} s"
-    if seconds < 3600:
-        return f"{seconds // 60} min {seconds % 60:02d} s"
-    return f"{seconds // 3600} h {seconds % 3600 // 60:02d} min"
 
 
 def _stop_page_workers(pages) -> None:
@@ -90,7 +60,7 @@ def _stop_page_workers(pages) -> None:
             _logger.debug("_stop_page_workers: shutdown is best effort", exc_info=True)
 
 
-class PyHydroGeophysXStudio(QMainWindow):
+class PyHydroGeophysXStudio(MainToolbar, QMainWindow):
     """Top-level window: tree | stacked modules | properties, with a log dock."""
 
     def __init__(self, context_path: Optional[str] = None, initial_module: str = "home") -> None:
@@ -130,6 +100,9 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._tree = ProjectTree()
         self._tree.moduleSelected.connect(self.show_module)
         self._tree_dock = self._make_dock("Project", self._tree, Qt.LeftDockWidgetArea)
+        # "Project" is a button, not a caption: clicking it closes the navigator
+        # so the workspace can use the width. The toolbar carries the same action.
+        self._tree_dock.setTitleBarWidget(dock_toggle_title(self._tree_dock))
 
         # Right: the assistant's chat + properties summary, in a tabbed dock.
         # A normal PyHydroGeophysX launch always starts in its native AQUAH
@@ -167,10 +140,6 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._status_timer = QTimer(self)
         self._status_timer.setInterval(1000)
         self._status_timer.timeout.connect(self._refresh_status)
-        # Runs are not recorded in the Project until saved, so how many are
-        # waiting has to be visible without opening a menu.
-        self._unsaved_label = QLabel()
-        self.statusBar().addPermanentWidget(self._unsaved_label)
         self.state.on_runs_changed = self._refresh_unsaved_state
         # Every module writes under state.output_dir, so which Project that is
         # belongs on screen rather than only in whichever log line mentions a
@@ -243,13 +212,20 @@ class PyHydroGeophysXStudio(QMainWindow):
     def _refresh_output_label(self) -> None:
         """Name the Project in use in the status bar and the window title."""
         path = self.state.project_directory
+        button = getattr(self, "_project_button", None)
         if path is None:
             self.setWindowTitle(i18n.tr(WINDOW_TITLE))
             self._output_label.setText(QCoreApplication.translate("PHGX", "Project: (none)"))
             self._output_label.setToolTip(QCoreApplication.translate("PHGX", "Results go to the current working directory."))
+            if button is not None:
+                button.setText(QCoreApplication.translate("PHGX", "Project: (none)"))
+                button.setToolTip(QCoreApplication.translate("PHGX", "Results go to the current working directory."))
             return
         name = self._project_name()
         self.setWindowTitle(f"{name} — {WINDOW_TITLE}")
+        if button is not None:
+            button.setText(name)  # i18n: as written
+            button.setToolTip(str(path))  # i18n: as written
         text = str(path)
         warn = not mesh_serialization.ansi_safe(text)
         default = bool(getattr(self.state, "default_project", False))
@@ -345,9 +321,12 @@ class PyHydroGeophysXStudio(QMainWindow):
         # moment it finishes, so nothing here is a "save your work or lose it"
         # command and none of it is on the critical path.
         file_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&File"))
-        self._add_action(file_menu, QCoreApplication.translate("PHGX", "New Project…"), self._new_project)
-        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Open Project…"), self._open_project)
-        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Import Existing Results…"), self._import_existing_results)
+        self._new_action = self._add_action(
+            file_menu, QCoreApplication.translate("PHGX", "New Project…"), self._new_project)
+        self._open_action = self._add_action(
+            file_menu, QCoreApplication.translate("PHGX", "Open Project…"), self._open_project)
+        self._import_action = self._add_action(
+            file_menu, QCoreApplication.translate("PHGX", "Import Existing Results…"), self._import_existing_results)
         file_menu.addSeparator()
         self._save_action = self._add_action(
             file_menu, QCoreApplication.translate("PHGX", "Save Runs to Project"), self._save_runs)
@@ -359,6 +338,7 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._discard_action = self._add_action(
             file_menu, QCoreApplication.translate("PHGX", "Discard Unsaved Runs…"), self._discard_runs)
         export = self._add_action(file_menu, QCoreApplication.translate("PHGX", "Export Results…"), self._export_results)
+        self._export_action = export
         export.setShortcut("Ctrl+E")
         export.setStatusTip(
             QCoreApplication.translate("PHGX", "Write the current module's results to a folder you choose, CSV included.")
@@ -373,7 +353,11 @@ class PyHydroGeophysXStudio(QMainWindow):
         self._add_action(bridge, QCoreApplication.translate("PHGX", "Export Module Result (JSON)…"), self._export_current_result)
         self._add_action(bridge, QCoreApplication.translate("PHGX", "Rebuild Run Index"), self._save_project)
         file_menu.addSeparator()
-        self._add_action(file_menu, QCoreApplication.translate("PHGX", "Exit"), self.close)
+        # close() asks about unsaved runs and joins running work (closeEvent).
+        self._exit_action = self._add_action(
+            file_menu, QCoreApplication.translate("PHGX", "Exit"), self.close, icon_name="fa5s.power-off")
+        self._exit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        self._exit_action.setMenuRole(QAction.MenuRole.QuitRole)
 
         view_menu = menubar.addMenu(QCoreApplication.translate("PHGX", "&View"))
         self._add_action(view_menu, QCoreApplication.translate("PHGX", "Reset Layout"), self._reset_layout)
@@ -434,46 +418,6 @@ class PyHydroGeophysXStudio(QMainWindow):
         help_menu.addSeparator()
         self._add_action(help_menu, QCoreApplication.translate("PHGX", "About"), self._about)
 
-    def _build_toolbar(self) -> None:
-        from PySide6.QtCore import QSize
-
-        toolbar = QToolBar("Main")
-        toolbar.setObjectName("main_toolbar")
-        toolbar.setMovable(False)
-        toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        toolbar.setIconSize(QSize(16, 16))
-        self.addToolBar(toolbar)
-        self._main_toolbar = toolbar
-        toolbar.addAction(self._properties_dock.toggleViewAction())
-        # The toolbar carries the commands a session actually repeats. The
-        # Streamlit bridge commands stay in the File menu, so no toolbar button
-        # reads as "save my results" while writing a manifest. New sits beside
-        # Open: a Project is made by naming it, which a File menu entry that
-        # opened a bare folder picker would leave easy to miss.
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "New Project"), self._new_project, icon_name="fa5s.folder-plus")
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Open Project"), self._open_project, icon_name="fa5s.folder-open")
-        # "Save" adds the finished runs to the Project's history; the Streamlit
-        # bridge commands are in the File menu.
-        self._save_button = self._add_action(
-            toolbar, QCoreApplication.translate("PHGX", "Save"), self._save_runs, icon_name="fa5s.save")
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Export"), self._export_results, icon_name="fa5s.file-export")
-        toolbar.addSeparator()
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Select"), lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.mouse-pointer")
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Pan"), lambda: self._set_mouse_mode(rect=False), icon_name="fa5s.arrows-alt")
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Zoom"), lambda: self._set_mouse_mode(rect=True), icon_name="fa5s.search-plus")
-        self._pick_action = self._add_action(toolbar, QCoreApplication.translate("PHGX", "Pick"), self._toggle_pick, checkable=True, icon_name="fa5s.crosshairs")
-        self._add_action(toolbar, QCoreApplication.translate("PHGX", "Delete"), self._delete_last_marker, icon_name="fa5s.eraser")
-        # Day and night, at the far end of the toolbar.
-        spacer = QWidget()
-        spacer.setObjectName("toolbarSpacer")
-        spacer.setStyleSheet("#toolbarSpacer { background: transparent; }")
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        toolbar.addWidget(spacer)
-        self._appearance_action = self._add_action(
-            toolbar, "", self._toggle_appearance)
-        self._sync_appearance_controls()
-        theme.notifier().changed.connect(lambda _mode: self._sync_appearance_controls())
-
     def _set_appearance(self, value: str) -> None:
         """Switch the whole studio to Light, Dark or the system's appearance."""
         from PySide6.QtWidgets import QApplication
@@ -484,23 +428,12 @@ class PyHydroGeophysXStudio(QMainWindow):
                  "dark": "Dark"}.get(value, value)
         self.log(f"Appearance: {label}.", "info")
 
-    def _toggle_appearance(self) -> None:
-        """The toolbar's day/night switch: the other of Light and Dark."""
-        self._set_appearance("light" if theme.is_dark() else "dark")
-
     def _sync_appearance_controls(self) -> None:
-        """Point the menu and the toolbar switch at the appearance in force."""
+        """Point the Appearance menu at the appearance in force."""
         group = getattr(self, "_appearance_group", None)
         if group is not None:
             for action in group.actions():
                 action.setChecked(action.data() == theme.appearance())
-        action = getattr(self, "_appearance_action", None)
-        if action is not None:
-            dark = theme.is_dark()
-            action.setIcon(theme.icon("fa5s.sun" if dark else "fa5s.moon"))
-            action.setText(QCoreApplication.translate("PHGX", "Light") if dark else QCoreApplication.translate("PHGX", "Dark"))
-            action.setToolTip(QCoreApplication.translate("PHGX", "Switch to the light appearance") if dark
-                              else QCoreApplication.translate("PHGX", "Switch to the dark appearance"))
 
     def _set_length_unit(self, unit: str) -> None:
         """Redraw every plot with its axes in ``unit`` (``'m'`` or ``'ft'``)."""
@@ -558,6 +491,12 @@ class PyHydroGeophysXStudio(QMainWindow):
             if key == "home":
                 page.newProjectRequested.connect(self._new_project)
                 page.openProjectRequested.connect(self._open_project)
+            # The toolbar's plot tools follow the view on screen: a page's tabs
+            # and stacked steps change it, and so does a result being drawn.
+            page.resultsUpdated.connect(self._schedule_page_tools)
+            page.activityChanged.connect(self._schedule_page_tools)
+            for switcher in (*page.findChildren(QTabWidget), *page.findChildren(QStackedWidget)):
+                switcher.currentChanged.connect(self._schedule_page_tools)
             self._stack.addWidget(page)
             self._pages[key] = page
         self._stack.setCurrentWidget(self._pages[key])
@@ -570,6 +509,7 @@ class PyHydroGeophysXStudio(QMainWindow):
             self._pick_action.setChecked(False)
         self._refresh_properties()
         self._refresh_status()
+        self._schedule_page_tools()
 
     # -- status bar ----------------------------------------------------------
     def _refresh_status(self, *_changed) -> None:
@@ -589,24 +529,25 @@ class PyHydroGeophysXStudio(QMainWindow):
         now = time.monotonic()
         title = i18n.tr(getattr(current, 'module_title', '') or self.state.selected_module)
         parts = [QCoreApplication.translate("PHGX", "Module: {0}").format(title)]
-        doing = _page_activity(current)
+        doing = page_activity(current)
         if doing:
             parts.append(QCoreApplication.translate("PHGX", "Working…") if doing == GENERIC_ACTIVITY
                          else QCoreApplication.translate("PHGX", "Working: {0}").format(i18n.tr(doing)))
-            parts.extend(filter(None, [_elapsed_since(current, now)]))
+            parts.extend(filter(None, [elapsed_since(current, now)]))
         others = [page for page in self._pages.values()
-                  if page is not current and _page_activity(page)]
+                  if page is not current and page_activity(page)]
         if len(others) == 1:
             other = others[0]
-            phrase = _page_activity(other)
+            phrase = page_activity(other)
             text = f"{getattr(other, 'module_title', 'Another page')} is still working"
             if phrase != GENERIC_ACTIVITY:
                 text += f": {phrase}"
-            parts.extend(filter(None, [text, _elapsed_since(other, now)]))
+            parts.extend(filter(None, [text, elapsed_since(other, now)]))
         elif others:
             names = [str(getattr(page, "module_title", "a page")) for page in others]
             parts.append(f"{', '.join(names[:-1])} and {names[-1]} are still working")
         busy = bool(doing or others)
+        self._refresh_activity_button()
         if not busy:
             parts.append("Ready")
         text = "    ·    ".join(parts)
@@ -696,9 +637,8 @@ class PyHydroGeophysXStudio(QMainWindow):
         focused = getattr(assistant_registry.active(), 'focused_workspace', False)
         self._all_tools_action.setChecked(not focused)
         self._toggle_all_tools(not focused)
-        for action in self._main_toolbar.actions():
-            if action.text() in {i18n.tr(t) for t in ('Export', 'Select', 'Pan', 'Zoom', 'Pick', 'Delete')} or action.isSeparator():
-                action.setVisible(not focused)
+        self._export_button.setVisible(not focused)
+        self._schedule_page_tools()
         for page in self._pages.values():
             compact = getattr(page, 'set_compact', None)
             if callable(compact):
@@ -762,37 +702,6 @@ class PyHydroGeophysXStudio(QMainWindow):
     def current_module(self) -> Optional[QWidget]:
         """Public accessor for the active module page (used by the AQUAH agent)."""
         return self._stack.currentWidget()
-
-    # -- toolbar behavior ----------------------------------------------------
-    def _array_viewers(self):
-        page = self._current_page()
-        return page.findChildren(ArrayViewer) if page is not None else []
-
-    def _set_mouse_mode(self, rect: bool) -> None:
-        page = self._current_page()
-        if page is None:
-            return
-        mode = pg.ViewBox.RectMode if rect else pg.ViewBox.PanMode
-        boxes = page.findChildren(pg.ViewBox)
-        for vb in boxes:
-            vb.setMouseMode(mode)
-        if not boxes:
-            self.log("No plot in the current module to change mouse mode.", "debug")
-
-    def _toggle_pick(self, checked: bool) -> None:
-        viewers = self._array_viewers()
-        for av in viewers:
-            av.set_pick_mode(checked)
-        if not viewers:
-            self.log("Pick mode is not applicable in this module.", "debug")
-            self._pick_action.setChecked(False)
-
-    def _delete_last_marker(self) -> None:
-        viewers = self._array_viewers()
-        for av in viewers:
-            av.remove_last_marker()
-        if not viewers:
-            self.log("Nothing to delete in this module.", "debug")
 
     # -- file actions --------------------------------------------------------
     def _activate_results_store(self, root: Optional[Path]) -> bool:
@@ -1287,6 +1196,9 @@ class PyHydroGeophysXStudio(QMainWindow):
     def eventFilter(self, watched, event) -> bool:  # noqa: N802 - Qt override
         if watched is getattr(self, "_properties", None) and event.type() == QEvent.Show:
             QTimer.singleShot(0, self, self._refresh_properties)
+        elif watched in getattr(self, "_watched_run_buttons", ()) and event.type() in (
+                QEvent.Show, QEvent.Hide, QEvent.EnabledChange):
+            self._schedule_page_tools()
         return super().eventFilter(watched, event)
 
     def _refresh_properties(self) -> None:

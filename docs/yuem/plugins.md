@@ -49,6 +49,9 @@ def register():
 - **故障隔离**：某个插件导入或注册失败时，记录到 `plugins.load_failures()` 并写入日志，不影响其他插件和 Studio。`phgx-doctor` 会列出失败的插件。
 - **键名唯一**：页面键与内置页面重名时拒绝并记录；工作流 ID 重复时抛出 `KeyError`（需要覆盖时传 `replace=True`）。
 - **页面类**：继承 `PyHydroGeophysX.qt_apps.modules.base.BaseModule`，实现 `agent_describe()` 和 `agent_apply()`；重计算通过 `ProcessWorkflowWorker` 运行注册过的工作流。
+- **主工具栏**（可选）：
+  - 类属性 `toolbar_run_attrs` 列出页面各步骤运行按钮的属性名，例如 `("_import_btn", "_invert_btn")`。屏幕上恰好显示其中一个时，工具栏右段出现同名的“运行”按钮，点击即点击页面上的那个按钮；不写则不出现。
+  - 平移、缩放、拾取默认按页面上可见的 pyqtgraph 图件和剖面查看器自动显示或隐藏；图件交互方式不同的页面可重写 `toolbar_view_tools()`，返回 `"pan"`、`"zoom"`、`"pick"` 中适用的几个。
 - **质量门禁**：扩展包自身沿用本仓库的门禁标准（ruff 严格规则、`mypy --strict`、冒烟测试与数值验证）。
 
 ## 4. 实例：DCIP 插件
