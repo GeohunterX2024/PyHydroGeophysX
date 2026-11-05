@@ -163,6 +163,27 @@ def test_zoom_buttons_and_full_view_keep_a_history(bench: Any) -> None:
     assert _width(plan._view) == pytest.approx(full, rel=0.05)
 
 
+def test_toolbar_fades_until_the_mouse_comes_near(bench: Any, memory_settings: dict[str, Any]) -> None:
+    from PySide6.QtCore import QPoint
+
+    from PyHydroGeophysX.qt_apps.widgets.survey.plot_tools import IDLE_OPACITY
+
+    toolbar = bench.plan.toolbar
+    assert not toolbar.pinned() and not toolbar.revealed()
+    assert toolbar.graphicsEffect().opacity() == pytest.approx(IDLE_OPACITY)
+    corner = toolbar.geometry().bottomRight()
+    assert toolbar.is_near(corner + QPoint(10, 10))
+    assert not toolbar.is_near(corner + QPoint(300, 200))
+    toolbar.reveal(toolbar.is_near(corner + QPoint(10, 10)), animate=False)
+    assert toolbar.revealed() and toolbar.graphicsEffect().opacity() == pytest.approx(1.0)
+    toolbar.reveal(False, animate=False)
+    assert toolbar.graphicsEffect().opacity() == pytest.approx(IDLE_OPACITY)
+    toolbar.buttons["pin"].setChecked(True)
+    toolbar.reveal(False, animate=False)
+    assert toolbar.revealed() and toolbar.graphicsEffect().opacity() == pytest.approx(1.0)
+    assert memory_settings["survey/plot_tools/pinned"] is True
+
+
 def test_style_draws_symbols_and_is_remembered(bench: Any, memory_settings: dict[str, Any]) -> None:
     import pyqtgraph as pg
 

@@ -8195,7 +8195,7 @@ B：{1}
     </message>
     <message>
       <source>Crosshair: lines through the cursor</source>
-      <extracomment>Left-button modes. A drag shorter than this (pixels, both ways) is taken for a click and changes nothing. Views remembered for stepping back. Wheel steps closer together than this (seconds) are one view in the history. Zoom of one press of the toolbar's zoom in / zoom out. The left-button mode changed (``zoom``, ``pan`` or ``select``). What "full view" means for the plot (fixed axis ranges, or fitting the data). Toolbar buttons: key, icon, tooltip (English source text). Modes first. The plot asks to fill the space of the views beside it (True) or to share it again.</extracomment>
+      <extracomment>Left-button modes. A drag shorter than this (pixels, both ways) is taken for a click and changes nothing. Views remembered for stepping back. Wheel steps closer together than this (seconds) are one view in the history. Zoom of one press of the toolbar's zoom in / zoom out. Opacity of the toolbar while the mouse is away from it (it stays findable). How close (pixels) the mouse must come to the toolbar to show it. Duration of the fade, in milliseconds. The left-button mode changed (``zoom``, ``pan`` or ``select``). What "full view" means for the plot (fixed axis ranges, or fitting the data). Toolbar buttons: key, icon, tooltip (English source text). Modes first. The plot asks to fill the space of the views beside it (True) or to share it again.</extracomment>
       <translation>十字光标：显示过鼠标位置的十字线</translation>
     </message>
     <message>
@@ -8205,6 +8205,10 @@ B：{1}
     <message>
       <source>Fill the space of both plots, or share it again</source>
       <translation>本图占满上下两幅图的空间，或恢复为两图并列</translation>
+    </message>
+    <message>
+      <source>Keep the tools shown (off: they fade out until the mouse comes near)</source>
+      <translation>固定显示工具栏（关闭时工具栏自动半透明，鼠标移近才显示）</translation>
     </message>
     <message>
       <source>{0} {1:.2f}   {2} {3:.2f}  ({4})</source>

@@ -8,6 +8,9 @@ move the plot. *Pan* drags the plot, *Select* reports the box for selection.
 The middle button pans in every mode, the right button does nothing, and the
 wheel zooms only when switched on in the toolbar. Every zoom, pan and reset is
 remembered, so the toolbar can step back and forward through the views.
+
+The toolbar stays almost transparent until the mouse comes near the top left
+of the plot, then fades in; its pin keeps it shown.
 """
 
 from __future__ import annotations
@@ -17,11 +20,22 @@ from collections.abc import Callable
 from typing import Any
 
 import pyqtgraph as pg
-from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPointF, QRectF, Qt, Signal
-from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QLabel, QToolButton
+from PySide6.QtCore import (
+    QCoreApplication,
+    QEvent,
+    QObject,
+    QPoint,
+    QPointF,
+    QPropertyAnimation,
+    QRectF,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import QButtonGroup, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QToolButton
 
 from PyHydroGeophysX.qt_apps import theme
-from PyHydroGeophysX.qt_apps.widgets.survey.common import SelectViewBox
+from PyHydroGeophysX.qt_apps.widgets.survey.common import SelectViewBox, Settings
 from PyHydroGeophysX.visualization import axis_units
 
 #: Left-button modes.
@@ -34,6 +48,12 @@ HISTORY = 50
 _WHEEL_GAP = 0.6
 #: Zoom of one press of the toolbar's zoom in / zoom out.
 STEP = 1.25
+#: Opacity of the toolbar while the mouse is away from it (it stays findable).
+IDLE_OPACITY = 0.15
+#: How close (pixels) the mouse must come to the toolbar to show it.
+NEAR = 36
+#: Duration of the fade, in milliseconds.
+FADE_MS = 160
 
 
 class NavigationViewBox(SelectViewBox):
@@ -277,8 +297,28 @@ class PlotToolbar(QFrame):
             checkable=True,
         )
         maximize.toggled.connect(self._on_maximize)
+        pin = self._tool(
+            "pin",
+            "fa5s.thumbtack",
+            QCoreApplication.translate(
+                "PHGX", "Keep the tools shown (off: they fade out until the mouse comes near)"
+            ),
+            checkable=True,
+        )
         for button in (crosshair, wheel, maximize):
             row.addWidget(button)
+        row.addWidget(self._rule())
+        row.addWidget(pin)
+        self._settings = Settings("plot_tools")
+        self._effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self._effect)
+        self._fade = QPropertyAnimation(self._effect, b"opacity", self)
+        self._fade.setDuration(FADE_MS)
+        self._revealed = False
+        pin.setChecked(self._settings.get("pinned", False))
+        pin.toggled.connect(self._on_pin)
+        self._effect.setOpacity(1.0 if pin.isChecked() else IDLE_OPACITY)
+        self._revealed = pin.isChecked()
         self._readout = QLabel(plot)  # i18n: as written
         self._readout.setObjectName("surveyCursorReadout")
         self._readout.setStyleSheet(
@@ -357,6 +397,46 @@ class PlotToolbar(QFrame):
             for line in self._lines:
                 line.setVisible(False)
 
+    # -- fading -------------------------------------------------------------
+    def pinned(self) -> bool:
+        return self.buttons["pin"].isChecked()
+
+    def revealed(self) -> bool:
+        """Whether the toolbar is (fading to) fully shown."""
+        return self._revealed
+
+    def reveal(self, on: bool, *, animate: bool = True) -> None:
+        """Fade the toolbar in (``on``) or out to its idle opacity; a pinned toolbar stays shown."""
+        on = on or self.pinned()
+        if on == self._revealed and self._fade.state() != QPropertyAnimation.State.Running:
+            return
+        self._revealed = on
+        target = 1.0 if on else IDLE_OPACITY
+        self._fade.stop()
+        if not animate:
+            self._effect.setOpacity(target)
+            return
+        self._fade.setStartValue(self._effect.opacity())
+        self._fade.setEndValue(target)
+        self._fade.start()
+
+    def is_near(self, point: QPoint) -> bool:
+        """Whether ``point`` (plot widget coordinates) is over the toolbar or just around it."""
+        zone = self.geometry().adjusted(-NEAR // 2, -NEAR // 2, NEAR, NEAR)
+        return zone.contains(point)
+
+    def _on_pin(self, on: bool) -> None:
+        self._settings.set("pinned", bool(on))
+        self.reveal(on or self.underMouse())
+
+    def enterEvent(self, event: Any) -> None:
+        super().enterEvent(event)
+        self.reveal(True)
+
+    def leaveEvent(self, event: Any) -> None:
+        super().leaveEvent(event)
+        self.reveal(self.is_near(self._plot.mapFromGlobal(QCursor.pos())))
+
     # -- placing and the cursor ---------------------------------------------
     def place(self) -> None:
         """Keep the toolbar at the top left of the plotting area and the readout at its bottom left."""
@@ -370,6 +450,7 @@ class PlotToolbar(QFrame):
         self._readout.raise_()
 
     def _on_moved(self, position: Any) -> None:
+        self.reveal(self.is_near(self._plot.mapFromScene(position)))
         view = self._view
         if not view.sceneBoundingRect().contains(position):
             self._readout.hide()
@@ -397,6 +478,7 @@ class PlotToolbar(QFrame):
         if kind == QEvent.Type.Resize:
             self.place()
         elif kind == QEvent.Type.Leave:
+            self.reveal(self.underMouse())
             self._readout.hide()
             for line in self._lines:
                 line.setVisible(False)
@@ -411,9 +493,12 @@ def attach_toolbar(plot: pg.PlotWidget, view: NavigationViewBox, **kwargs: Any) 
 
 
 __all__ = [
+    "FADE_MS",
     "HISTORY",
+    "IDLE_OPACITY",
     "MIN_DRAG",
     "MODES",
+    "NEAR",
     "STEP",
     "NavigationViewBox",
     "PlotToolbar",

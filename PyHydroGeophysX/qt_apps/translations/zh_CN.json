@@ -1044,6 +1044,7 @@
  "Keep frequencies": "保留频率",
  "Keep original errors (fraction)": "保留原始误差（比例）",
  "Keep sign reversals": "保留符号反转",
+ "Keep the tools shown (off: they fade out until the mouse comes near)": "固定显示工具栏（关闭时工具栏自动半透明，鼠标移近才显示）",
  "Keep these notes with the run.": "将这些备注与本次运行一同保存。",
  "Keep using the default folder without asking. File › New Project… still makes a project.": "继续使用默认文件夹，不再询问。“文件 › 新建工程…”仍可创建工程。",
  "Keep {0} on the limits typed beside this instead of rescaling to each plot. Two surveys, time steps or lines can only be compared on one scale. Unticked, the boxes show the limits in use, so ticking it keeps what is on screen.": "将 {0} 固定在旁边输入的范围内，而不是随每幅图自动缩放。两次测量、时间步或测线只有在同一刻度下才能比较。未勾选时，输入框显示当前使用的范围，因此勾选后会保持屏幕上的显示。",
