@@ -7668,8 +7668,229 @@ B：{1}
       <translation>只显示拟深度不超过此值的点（全部：显示所有点）</translation>
     </message>
     <message>
+      <source>Choose…</source>
+      <extracomment>Returns the view on screen as (x min, x max, y min, y max) in metres.</extracomment>
+      <translation>选择…</translation>
+    </message>
+    <message>
+      <source>Choose a colour</source>
+      <translation>选择颜色</translation>
+    </message>
+    <message>
+      <source>Reset to defaults</source>
+      <translation>恢复默认</translation>
+    </message>
+    <message>
+      <source>Title and labels</source>
+      <translation>标题与轴标题</translation>
+    </message>
+    <message>
+      <source>No title</source>
+      <translation>无标题</translation>
+    </message>
+    <message>
+      <source>Automatic</source>
+      <translation>自动</translation>
+    </message>
+    <message>
+      <source>Title</source>
+      <translation>图名</translation>
+    </message>
+    <message>
+      <source>Title size</source>
+      <translation>图名字号</translation>
+    </message>
+    <message>
+      <source>X-axis label</source>
+      <translation>X 轴标题</translation>
+    </message>
+    <message>
+      <source>Y-axis label</source>
+      <translation>Y 轴标题</translation>
+    </message>
+    <message>
+      <source>Label size</source>
+      <translation>轴标题字号</translation>
+    </message>
+    <message>
+      <source>Axes and ticks</source>
+      <translation>坐标轴与刻度</translation>
+    </message>
+    <message>
+      <source>Ticks inside the plot</source>
+      <translation>刻度线朝内</translation>
+    </message>
+    <message>
+      <source>Closed frame (top and right axes)</source>
+      <translation>闭合图框（显示上、右坐标轴）</translation>
+    </message>
+    <message>
+      <source>Tick label size</source>
+      <translation>刻度标注字号</translation>
+    </message>
+    <message>
+      <source>Tick length</source>
+      <translation>刻度线长度</translation>
+    </message>
+    <message>
+      <source>Vertical exaggeration of the plot</source>
+      <translation>图的垂向夸大倍数</translation>
+    </message>
+    <message>
+      <source>Aspect</source>
+      <translation>纵横比</translation>
+    </message>
+    <message>
       <source>Exaggeration</source>
       <translation>纵向夸大</translation>
+    </message>
+    <message>
+      <source>Ranges and tick intervals</source>
+      <translation>坐标范围与刻度间隔</translation>
+    </message>
+    <message>
+      <source>X axis</source>
+      <translation>X 轴</translation>
+    </message>
+    <message>
+      <source>Y axis</source>
+      <translation>Y 轴</translation>
+    </message>
+    <message>
+      <source>Automatic range</source>
+      <translation>自动范围</translation>
+    </message>
+    <message>
+      <source>Minor ticks: divisions of a major interval</source>
+      <translation>次刻度：每个主刻度间隔的等分数</translation>
+    </message>
+    <message>
+      <source>Reversed</source>
+      <translation>反向</translation>
+    </message>
+    <message>
+      <source>To</source>
+      <translation>到</translation>
+    </message>
+    <message>
+      <source>Major interval</source>
+      <translation>主刻度间隔</translation>
+    </message>
+    <message>
+      <source>Minor ticks</source>
+      <translation>次刻度</translation>
+    </message>
+    <message>
+      <source>Use the view on screen</source>
+      <translation>取当前视图范围</translation>
+    </message>
+    <message>
+      <source>Fix both ranges to what the plot shows now</source>
+      <translation>把两个坐标轴的范围固定为图上当前显示的范围</translation>
+    </message>
+    <message>
+      <source>Vertical lines</source>
+      <translation>竖向网格线</translation>
+    </message>
+    <message>
+      <source>Horizontal lines</source>
+      <translation>横向网格线</translation>
+    </message>
+    <message>
+      <source>Opacity</source>
+      <translation>不透明度</translation>
+    </message>
+    <message>
+      <source>Symbols</source>
+      <translation>符号</translation>
+    </message>
+    <message>
+      <source>Hollow</source>
+      <translation>空心</translation>
+    </message>
+    <message>
+      <source>No edge</source>
+      <translation>无边线</translation>
+    </message>
+    <message>
+      <source>Element</source>
+      <translation>图元</translation>
+    </message>
+    <message>
+      <source>Shape</source>
+      <translation>形状</translation>
+    </message>
+    <message>
+      <source>Fill</source>
+      <translation>填充</translation>
+    </message>
+    <message>
+      <source>Edge</source>
+      <translation>边线</translation>
+    </message>
+    <message>
+      <source>Style</source>
+      <translation>线型</translation>
+    </message>
+    <message>
+      <source>Point labels</source>
+      <translation>点号标注</translation>
+    </message>
+    <message>
+      <source>Label electrodes and stations</source>
+      <translation>标注电极与测点号</translation>
+    </message>
+    <message>
+      <source>every </source>
+      <translation>每隔 </translation>
+    </message>
+    <message>
+      <source>Legend and colour bar</source>
+      <translation>图例与色标条</translation>
+    </message>
+    <message>
+      <source>Legend</source>
+      <translation>图例</translation>
+    </message>
+    <message>
+      <source>Framed</source>
+      <translation>加边框</translation>
+    </message>
+    <message>
+      <source>Colour bar</source>
+      <translation>色标条</translation>
+    </message>
+    <message>
+      <source>Position</source>
+      <translation>位置</translation>
+    </message>
+    <message>
+      <source>Text size</source>
+      <translation>字号</translation>
+    </message>
+    <message>
+      <source>Columns</source>
+      <translation>列数</translation>
+    </message>
+    <message>
+      <source>Colour bar title</source>
+      <translation>色标条标题</translation>
+    </message>
+    <message>
+      <source>Colours</source>
+      <translation>颜色</translation>
+    </message>
+    <message>
+      <source>Background</source>
+      <translation>背景</translation>
+    </message>
+    <message>
+      <source>Axes and text</source>
+      <translation>坐标轴与文字</translation>
+    </message>
+    <message>
+      <source>2D options</source>
+      <translation>二维选项</translation>
     </message>
     <message>
       <source>Point size</source>
@@ -7760,8 +7981,12 @@ B：{1}
       <translation>距离：{0:.2f} m</translation>
     </message>
     <message>
+      <source>Plan</source>
+      <extracomment>Tab keys, in order. The 2-D plots, in their order in the split. The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it).</extracomment>
+      <translation>平面</translation>
+    </message>
+    <message>
       <source>2D</source>
-      <extracomment>Tab keys, in order. The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it).</extracomment>
       <translation>二维</translation>
     </message>
     <message>
@@ -7775,6 +8000,14 @@ B：{1}
     <message>
       <source>Three-dimensional view</source>
       <translation>三维视图</translation>
+    </message>
+    <message>
+      <source>Show or hide the plan</source>
+      <translation>显示或隐藏平面图</translation>
+    </message>
+    <message>
+      <source>Show or hide the section</source>
+      <translation>显示或隐藏断面图</translation>
     </message>
     <message>
       <source>Layout</source>
@@ -7826,8 +8059,8 @@ B：{1}
       <translation>地形</translation>
     </message>
     <message>
-      <source>Drag a box to select the readings inside it</source>
-      <translation>拖出方框，选中框内的测量</translation>
+      <source>Distance</source>
+      <translation>距离</translation>
     </message>
     <message>
       <source>Distance along the line</source>
@@ -7843,7 +8076,7 @@ B：{1}
     </message>
     <message>
       <source>Colour the points by one of their values</source>
-      <extracomment>Role names as a legend shows them (English source text, translated when shown). The user picked a point: its key (a tuple) and its group.</extracomment>
+      <extracomment>Point labels drawn at most (every n-th of the line's points beyond this is too dense to read). Role names as a legend shows them (English source text, translated when shown). The user picked a point: its key (a tuple) and its group.</extracomment>
       <translation>按点的某项数值着色</translation>
     </message>
     <message>
@@ -7863,11 +8096,8 @@ B：{1}
       <translation>淡色显示其他组的供电点</translation>
     </message>
     <message>
-      <source>Drag a box to select the points inside it</source>
-      <translation>拖出方框，选中框内的点</translation>
-    </message>
-    <message>
       <source>Colour by</source>
+      <extracomment>The colouring and layer choices; a workbench may show them in its own row.</extracomment>
       <translation>着色依据</translation>
     </message>
     <message>
@@ -7942,6 +8172,43 @@ B：{1}
     <message>
       <source>Load a survey on the Data tab to see its layout.</source>
       <translation>在“数据”选项卡中载入测量后，即可查看其布设。</translation>
+    </message>
+    <message>
+      <source>Lines</source>
+      <translation>测线</translation>
+    </message>
+    <message>
+      <source>Grid</source>
+      <translation>网格</translation>
+    </message>
+    <message>
+      <source>Colour</source>
+      <translation>颜色</translation>
+    </message>
+    <message>
+      <source>Electrode</source>
+      <translation>电极</translation>
+    </message>
+    <message>
+      <source>Pseudo-depth points</source>
+      <translation>拟深度点</translation>
+    </message>
+    <message>
+      <source>Crosshair: lines through the cursor</source>
+      <extracomment>Left-button modes. A drag shorter than this (pixels, both ways) is taken for a click and changes nothing. Views remembered for stepping back. Wheel steps closer together than this (seconds) are one view in the history. Zoom of one press of the toolbar's zoom in / zoom out. The left-button mode changed (``zoom``, ``pan`` or ``select``). What "full view" means for the plot (fixed axis ranges, or fitting the data). Toolbar buttons: key, icon, tooltip (English source text). Modes first. The plot asks to fill the space of the views beside it (True) or to share it again.</extracomment>
+      <translation>十字光标：显示过鼠标位置的十字线</translation>
+    </message>
+    <message>
+      <source>Wheel zoom: the mouse wheel zooms (off: the wheel does nothing)</source>
+      <translation>滚轮缩放：鼠标滚轮缩放图形（关闭时滚轮不起作用，防止误操作）</translation>
+    </message>
+    <message>
+      <source>Fill the space of both plots, or share it again</source>
+      <translation>本图占满上下两幅图的空间，或恢复为两图并列</translation>
+    </message>
+    <message>
+      <source>{0} {1:.2f}   {2} {3:.2f}  ({4})</source>
+      <translation>{0} {1:.2f}   {2} {3:.2f}  （{4}）</translation>
     </message>
     <message>
       <source>Workflow</source>
@@ -9776,16 +10043,8 @@ See seismic3d_input_format.md for details.</source>
 详见 seismic3d_input_format.md。</translation>
     </message>
     <message>
-      <source>Lines</source>
-      <translation>测线</translation>
-    </message>
-    <message>
       <source>Structure</source>
       <translation>结构</translation>
-    </message>
-    <message>
-      <source>Grid</source>
-      <translation>网格</translation>
     </message>
     <message>
       <source>Build</source>
@@ -10082,10 +10341,6 @@ See seismic3d_input_format.md for details.</source>
     <message>
       <source>Depths (m)</source>
       <translation>深度 (m)</translation>
-    </message>
-    <message>
-      <source>Colour</source>
-      <translation>颜色</translation>
     </message>
     <message>
       <source>Label</source>
@@ -10526,16 +10781,164 @@ This choice holds wherever the model is fitted: the data errors when they are ta
       <translation>测量电极 N</translation>
     </message>
     <message>
-      <source>Electrode</source>
-      <translation>电极</translation>
-    </message>
-    <message>
       <source>Transmitter</source>
       <translation>发射</translation>
     </message>
     <message>
       <source>Receiver</source>
       <translation>接收</translation>
+    </message>
+    <message>
+      <source>Circle</source>
+      <translation>圆形</translation>
+    </message>
+    <message>
+      <source>Square</source>
+      <translation>正方形</translation>
+    </message>
+    <message>
+      <source>Triangle up</source>
+      <translation>正三角形</translation>
+    </message>
+    <message>
+      <source>Triangle down</source>
+      <translation>倒三角形</translation>
+    </message>
+    <message>
+      <source>Triangle right</source>
+      <translation>右三角形</translation>
+    </message>
+    <message>
+      <source>Triangle left</source>
+      <translation>左三角形</translation>
+    </message>
+    <message>
+      <source>Diamond</source>
+      <translation>菱形</translation>
+    </message>
+    <message>
+      <source>Pentagon</source>
+      <translation>五边形</translation>
+    </message>
+    <message>
+      <source>Hexagon</source>
+      <translation>六边形</translation>
+    </message>
+    <message>
+      <source>Star</source>
+      <translation>五角星</translation>
+    </message>
+    <message>
+      <source>Plus</source>
+      <translation>十字</translation>
+    </message>
+    <message>
+      <source>Cross</source>
+      <translation>叉形</translation>
+    </message>
+    <message>
+      <source>Solid line</source>
+      <translation>实线</translation>
+    </message>
+    <message>
+      <source>Dashed line</source>
+      <translation>虚线</translation>
+    </message>
+    <message>
+      <source>Dotted line</source>
+      <translation>点线</translation>
+    </message>
+    <message>
+      <source>Dash-dot line</source>
+      <translation>点划线</translation>
+    </message>
+    <message>
+      <source>Top right</source>
+      <translation>右上</translation>
+    </message>
+    <message>
+      <source>Top left</source>
+      <translation>左上</translation>
+    </message>
+    <message>
+      <source>Bottom right</source>
+      <translation>右下</translation>
+    </message>
+    <message>
+      <source>Bottom left</source>
+      <translation>左下</translation>
+    </message>
+    <message>
+      <source>Fit the window</source>
+      <translation>随窗口自适应</translation>
+    </message>
+    <message>
+      <source>Equal scales (1:1)</source>
+      <translation>等比例（1:1）</translation>
+    </message>
+    <message>
+      <source>Vertical exaggeration</source>
+      <translation>垂向夸大</translation>
+    </message>
+    <message>
+      <source>Current shot ring</source>
+      <translation>当前炮标记圈</translation>
+    </message>
+    <message>
+      <source>Selected points</source>
+      <translation>选中点</translation>
+    </message>
+    <message>
+      <source>Current pair A-B</source>
+      <translation>供电电极对 A-B</translation>
+    </message>
+    <message>
+      <source>Potential pair M-N</source>
+      <translation>测量电极对 M-N</translation>
+    </message>
+    <message>
+      <source>Ex dipole</source>
+      <translation>Ex 偶极</translation>
+    </message>
+    <message>
+      <source>Ey dipole</source>
+      <translation>Ey 偶极</translation>
+    </message>
+    <message>
+      <source>Transmitter loop</source>
+      <translation>发射线框</translation>
+    </message>
+    <message>
+      <source>Zoom: drag a box right (top left to bottom right) to zoom in, left (bottom right to top left) to show everything</source>
+      <translation>缩放：从左上向右下拉框放大；从右下向左上反向拉框复位到全图</translation>
+    </message>
+    <message>
+      <source>Pan: drag to move the plot (the middle button pans in every mode)</source>
+      <translation>平移：拖动移动图形（任何模式下按住鼠标中键都可平移）</translation>
+    </message>
+    <message>
+      <source>Select: drag a box to select the points inside it</source>
+      <translation>框选：拉框选中框内的点</translation>
+    </message>
+    <message>
+      <source>Zoom in</source>
+      <translation>放大</translation>
+    </message>
+    <message>
+      <source>Zoom out</source>
+      <translation>缩小</translation>
+    </message>
+    <message>
+      <source>Full view (also: double-click, or drag a box to the left)</source>
+      <translation>全图（也可双击，或向左反向拉框）</translation>
+    </message>
+    <message>
+      <source>Previous view</source>
+      <translation>上一视图</translation>
+    </message>
+    <message>
+      <source>Next view</source>
+      <translation>下一视图</translation>
     </message>
     <message>
       <source>Pseudo-depth: |AM|/2 (pole-dipole), |AB-MN midpoints|/2 (B on the line)</source>
@@ -10580,10 +10983,6 @@ This choice holds wherever the model is fitted: the data errors when they are ta
     <message>
       <source>Current and potential pairs</source>
       <translation>供电与测量电极对</translation>
-    </message>
-    <message>
-      <source>Pseudo-depth points</source>
-      <translation>拟深度点</translation>
     </message>
     <message>
       <source>Labels</source>

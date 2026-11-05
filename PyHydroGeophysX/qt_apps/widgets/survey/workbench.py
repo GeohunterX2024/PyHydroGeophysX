@@ -5,6 +5,10 @@ the workbench a :class:`~PyHydroGeophysX.survey.provider.SurveyProvider`. The
 workbench shows the tabs the provider has data for, draws only the tab on
 screen (the others when they are opened), and shares one
 :class:`~.selection.SurveySelection` between its views and the page.
+
+In 2-D the plan's colouring choices share the row of the 2-D/3-D switch, the
+plan and section split the height (the divider is dragged, either plot can be
+hidden or fill the space) and the 2-D options fold out at the right.
 """
 
 from __future__ import annotations
@@ -32,9 +36,18 @@ from PySide6.QtWidgets import (
 from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings
 from PyHydroGeophysX.qt_apps.widgets.survey.plan_view import SurveyPlanView
+from PyHydroGeophysX.qt_apps.widgets.survey.plot_style import (
+    PLAN_LINE_NAMES,
+    PLAN_SYMBOL_NAMES,
+    SECTION_LINE_NAMES,
+    SECTION_SYMBOL_NAMES,
+    plan_default,
+    section_default,
+)
 from PyHydroGeophysX.qt_apps.widgets.survey.section_view import SurveySectionView
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.qt_apps.widgets.survey.spectrum_view import SurveySpectrumView
+from PyHydroGeophysX.qt_apps.widgets.survey.style_panel import PlotStyleEditor, TwoDOptions
 from PyHydroGeophysX.qt_apps.widgets.survey.trace_view import SurveyTraceView
 from PyHydroGeophysX.qt_apps.widgets.survey.view3d import Survey3DView
 from PyHydroGeophysX.survey.layout import SurveyLayout
@@ -46,6 +59,8 @@ _logger = logging.getLogger(__name__)
 
 #: Tab keys, in order.
 TABS = ("layout", "traces", "spectrum")
+#: The 2-D plots, in their order in the split.
+PLOTS = ("plan", "section")
 
 
 class SurveyWorkbench(QWidget):
@@ -71,19 +86,63 @@ class SurveyWorkbench(QWidget):
         self._pseudo: PseudoPoints | None = None
         self._traces: TraceSet | None = None
         self._dirty = set(TABS)
-        self.plan = SurveyPlanView(self.selection, colormaps=colormaps)
+        self.plan = SurveyPlanView(self.selection, colormaps=colormaps, controls_outside=True)
         self.section = SurveySectionView(self.selection, colormaps=colormaps)
         self.view3d = Survey3DView(self.selection, colormaps=colormaps, settings_key=f"{settings_key}/3d")
         self.traces = SurveyTraceView()
         self.spectrum = SurveySpectrumView()
 
-        split = QSplitter(Qt.Orientation.Vertical)
-        split.addWidget(self.plan)
-        split.addWidget(self.section)
-        split.setStretchFactor(0, 3)
-        split.setStretchFactor(1, 2)
+        self.split = QSplitter(Qt.Orientation.Vertical)
+        self.split.setObjectName("surveySplit")
+        self.split.setStyleSheet(
+            "QSplitter#surveySplit::handle { background: rgba(100, 116, 139, 70); margin: 1px 40px;"
+            " border-radius: 2px; }"
+            "QSplitter#surveySplit::handle:hover { background: rgba(37, 99, 235, 150); }"
+        )
+        self.split.setHandleWidth(7)
+        self.split.setChildrenCollapsible(False)
+        self.split.addWidget(self.plan)
+        self.split.addWidget(self.section)
+        self.split.setStretchFactor(0, 3)
+        self.split.setStretchFactor(1, 2)
+        self.split.splitterMoved.connect(lambda _pos, _index: self._remember_split())
+        self.options2d = TwoDOptions(f"{settings_key}/2d")
+        for key, view, default, symbols, lines, title in (
+            (
+                "plan",
+                self.plan,
+                plan_default,
+                PLAN_SYMBOL_NAMES,
+                PLAN_LINE_NAMES,
+                QCoreApplication.translate("PHGX", "Plan"),
+            ),
+            (
+                "section",
+                self.section,
+                section_default,
+                SECTION_SYMBOL_NAMES,
+                SECTION_LINE_NAMES,
+                QCoreApplication.translate("PHGX", "Section"),
+            ),
+        ):
+            editor = PlotStyleEditor(
+                view.style(),
+                default,
+                symbol_names=symbols,
+                line_names=lines,
+                view_range=view.view_range,
+                point_labels=key == "plan",
+            )
+            editor.styleChanged.connect(view.set_style)
+            self.options2d.add_editor(key, title, editor)
+            view.toolbar.maximizeToggled.connect(lambda on, k=key: self._on_maximize(k, on))
+        two_d = QWidget()
+        two_d_row = QHBoxLayout(two_d)
+        two_d_row.setContentsMargins(0, 0, 0, 0)
+        two_d_row.addWidget(self.split, 1)
+        two_d_row.addWidget(self.options2d)
         self._stack = QStackedWidget()
-        self._stack.addWidget(split)
+        self._stack.addWidget(two_d)
         self._stack.addWidget(self.view3d)
         self._mode = QButtonGroup(self)
         switch = QHBoxLayout()
@@ -106,8 +165,40 @@ class SurveyWorkbench(QWidget):
             button.setToolTip(tip)  # i18n: as written
             button.setProperty("segment", "first" if index == 0 else "last")
             self._mode.addButton(button, index)
-            switch.addWidget(button)
-        switch.addStretch(1)
+            switch.addWidget(button, 0, Qt.AlignmentFlag.AlignTop)
+        switch.addSpacing(10)
+        switch.addWidget(self.plan.controls, 1)
+        self._shown: dict[str, QToolButton] = {}
+        toggles = QWidget()
+        toggle_row = QHBoxLayout(toggles)
+        toggle_row.setContentsMargins(6, 0, 0, 0)
+        toggle_row.setSpacing(2)
+        for key, icon, text, tip in (
+            (
+                "plan",
+                "fa5s.map",
+                QCoreApplication.translate("PHGX", "Plan"),
+                QCoreApplication.translate("PHGX", "Show or hide the plan"),
+            ),
+            (
+                "section",
+                "mdi.chart-scatter-plot",
+                QCoreApplication.translate("PHGX", "Section"),
+                QCoreApplication.translate("PHGX", "Show or hide the section"),
+            ),
+        ):
+            toggle = QToolButton()
+            toggle.setCheckable(True)
+            toggle.setIcon(theme.icon(icon))
+            toggle.setText(text)  # i18n: as written
+            toggle.setToolTip(tip)  # i18n: as written
+            toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            toggle.setChecked(self._settings.get(f"show_{key}", True))
+            toggle.toggled.connect(lambda _on, k=key: self._on_shown(k))
+            toggle_row.addWidget(toggle)
+            self._shown[key] = toggle
+        self._toggles = toggles
+        switch.addWidget(toggles, 0, Qt.AlignmentFlag.AlignTop)
         self._mode.idToggled.connect(self._on_mode)
         layout_page = QWidget()
         column = QVBoxLayout(layout_page)
@@ -143,7 +234,10 @@ class SurveyWorkbench(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.addWidget(self.tabs)
         self.selection.groupChanged.connect(self._on_group)
+        self._restore_split()
+        self._apply_shown()
         self._mode.button(int(self._settings.get("mode", 0))).setChecked(True)
+        self._sync_mode_row()
 
     # -- what the page sets -------------------------------------------------
     def set_provider(self, provider: SurveyProvider | None) -> None:
@@ -234,9 +328,72 @@ class SurveyWorkbench(QWidget):
             return
         self._stack.setCurrentIndex(index)
         self._settings.set("mode", index)
+        self._sync_mode_row()
         self._dirty.add("layout")
         self._refresh_visible()
         self.viewChanged.emit()
+
+    def _sync_mode_row(self) -> None:
+        two_d = self._stack.currentIndex() == 0
+        self.plan.controls.setVisible(two_d and self._shown["plan"].isChecked())
+        self._toggles.setVisible(two_d)
+
+    # -- the 2-D split --------------------------------------------------------
+    def shown_plots(self) -> tuple[str, ...]:
+        """The 2-D plots on screen (``plan``, ``section``)."""
+        return tuple(key for key in PLOTS if self._shown[key].isChecked())
+
+    def show_plots(self, *keys: str) -> None:
+        """Show only the 2-D plots ``keys`` (at least one)."""
+        wanted = [key for key in keys if key in PLOTS] or list(PLOTS)
+        for key in PLOTS:
+            toggle = self._shown[key]
+            toggle.blockSignals(True)
+            toggle.setChecked(key in wanted)
+            toggle.blockSignals(False)
+        self._apply_shown()
+
+    def _on_shown(self, key: str) -> None:
+        if not self.shown_plots():
+            toggle = self._shown[key]
+            toggle.blockSignals(True)
+            toggle.setChecked(True)
+            toggle.blockSignals(False)
+        self._apply_shown()
+
+    def _apply_shown(self) -> None:
+        shown = self.shown_plots()
+        for key, view in (("plan", self.plan), ("section", self.section)):
+            on = key in shown
+            view.setVisible(on)
+            view.toolbar.set_maximized(on and len(shown) == 1)
+            self._settings.set(f"show_{key}", on)
+        self._sync_mode_row()
+        self.options2d.show_editor(shown[0] if len(shown) == 1 else self.options2d_key())
+
+    def options2d_key(self) -> str:
+        index = self.options2d.tabs.currentIndex()
+        return PLOTS[index] if 0 <= index < len(PLOTS) else "plan"
+
+    def _on_maximize(self, key: str, on: bool) -> None:
+        if on:
+            self.show_plots(key)
+        else:
+            self.show_plots(*PLOTS)
+
+    def _remember_split(self) -> None:
+        sizes = self.split.sizes()
+        if all(size > 0 for size in sizes):
+            self._settings.set("split", ",".join(str(size) for size in sizes))
+
+    def _restore_split(self) -> None:
+        stored = str(self._settings.get("split", "") or "")
+        try:
+            sizes = [int(part) for part in stored.split(",")] if stored else []
+        except ValueError:
+            sizes = []
+        if len(sizes) == len(PLOTS) and all(size > 0 for size in sizes):
+            self.split.setSizes(sizes)
 
     # -- report figures -----------------------------------------------------
     def export_figure(self, key: str, path: str | Path | None = None) -> Path | None:
