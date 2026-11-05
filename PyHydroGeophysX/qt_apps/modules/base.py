@@ -456,6 +456,9 @@ class BaseModule(QWidget):
     activityChanged = Signal(str)
     module_key = "base"
     module_title = "Module"
+    #: Attribute names of the page's run buttons, one per step: the main
+    #: toolbar's Run repeats the one on screen (:meth:`toolbar_run_buttons`).
+    toolbar_run_attrs: Tuple[str, ...] = ()
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(parent)
@@ -586,6 +589,38 @@ class BaseModule(QWidget):
         runs the single offer directly or asks when there is more than one.
         """
         return []
+
+    # -- main toolbar --------------------------------------------------------
+    def toolbar_run_buttons(self) -> Tuple[Any, ...]:
+        """The page's own run buttons, one per step, for the main toolbar.
+
+        When exactly one of them is on screen the toolbar repeats it: its
+        caption, its enabled state, and a click on it. With none on screen, or
+        more than one, the toolbar shows no Run button, since it could not say
+        which run it starts. By default the buttons are the attributes named in
+        :attr:`toolbar_run_attrs`.
+        """
+        found = (getattr(self, name, None) for name in self.toolbar_run_attrs)
+        return tuple(button for button in found if button is not None)
+
+    def toolbar_view_tools(self) -> frozenset:
+        """Which main-toolbar plot tools apply to what the page shows now.
+
+        ``"pan"`` and ``"zoom"`` act on pyqtgraph plots and ``"pick"`` on an
+        :class:`~PyHydroGeophysX.qt_apps.widgets.array_viewer.ArrayViewer`, so
+        by default they are offered while such a plot is on screen. A page
+        whose plots take these tools differently overrides this.
+        """
+        import pyqtgraph as pg
+
+        from PyHydroGeophysX.qt_apps.widgets.array_viewer import ArrayViewer
+
+        tools = set()
+        if any(view.isVisible() for view in self.findChildren(pg.GraphicsView)):
+            tools.update(("pan", "zoom"))
+        if any(viewer.isVisible() for viewer in self.findChildren(ArrayViewer)):
+            tools.add("pick")
+        return frozenset(tools)
 
     def add_to_map(self) -> None:
         """Save and open an explicitly located survey snapshot in Project Map."""

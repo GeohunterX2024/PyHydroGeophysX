@@ -174,6 +174,9 @@ def _add_to_tree(tree: list[tuple[str, list[tuple[str, str]]]], page: ModulePage
         if group == page.group:
             if all(key != page.key for _, key in items):
                 items.append((label, page.key))
+            from PyHydroGeophysX.qt_apps.widgets.project_tree import sort_group_items
+
+            sort_group_items(group, items)
             return
     position = next((i for i, (group, _) in enumerate(tree) if group == "Project"), len(tree))
     tree.insert(position, (page.group, [(label, page.key)]))

@@ -155,6 +155,7 @@ _INPUT_FORMAT_FALLBACK = (
 class HydroGeophysicsModule(BaseModule):
     module_key = "hydro_geophysics"
     module_title = "Hydro → Geophysics"
+    toolbar_run_attrs = ("_run_btn",)
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

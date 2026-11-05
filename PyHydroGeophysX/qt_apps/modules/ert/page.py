@@ -74,6 +74,7 @@ from .presenter import _Presenter
 class ERTProcessingModule(_ManualQC, _QCPanel, _InversionPanel, _ImportPanel, _MeshPanel, _TimelapsePanel, _ResultsPanel, _Presenter, BaseModule):
     module_key = "ert_processing"
     module_title = "ERT Processing"
+    toolbar_run_attrs = ("_invert_btn", "_tl_btn")
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

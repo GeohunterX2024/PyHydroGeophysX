@@ -85,6 +85,7 @@ class JointInversionModule(BaseModule):
 
     module_key = "joint_inversion"
     module_title = "Joint Inversion"
+    toolbar_run_attrs = ("_run_button",)
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

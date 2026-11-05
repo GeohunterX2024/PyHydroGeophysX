@@ -215,7 +215,6 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
     </message>
     <message>
       <source>Assistant</source>
-      <extracomment>Longest activity phrase the status bar shows; the label never wraps, and a long one would push the output folder off the bar.</extracomment>
       <translation>助手</translation>
     </message>
     <message>
@@ -343,7 +342,7 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
     </message>
     <message>
       <source>Geophysical Data Processing</source>
-      <translation>地球物理数据处理</translation>
+      <translation>地球物理数据处理与反演</translation>
     </message>
     <message>
       <source>Hydro → Geophysics</source>
@@ -374,8 +373,13 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
       <translation>关于</translation>
     </message>
     <message>
-      <source>New Project</source>
-      <translation>新建工程</translation>
+      <source>Show or hide the project panel</source>
+      <extracomment>Longest activity phrase the status bar shows; the label never wraps, and a long one would push the output folder off the bar.</extracomment>
+      <translation>显示或隐藏左侧工程区</translation>
+    </message>
+    <message>
+      <source>{0} — the run button of the step on screen</source>
+      <translation>{0} — 即当前步骤的运行按钮</translation>
     </message>
     <message>
       <source>Open Project</source>
@@ -384,14 +388,6 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
     <message>
       <source>Save</source>
       <translation>保存</translation>
-    </message>
-    <message>
-      <source>Export</source>
-      <translation>导出</translation>
-    </message>
-    <message>
-      <source>Select</source>
-      <translation>选择</translation>
     </message>
     <message>
       <source>Pan</source>
@@ -410,22 +406,6 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
       <translation>删除</translation>
     </message>
     <message>
-      <source>Light</source>
-      <translation>浅色</translation>
-    </message>
-    <message>
-      <source>Dark</source>
-      <translation>深色</translation>
-    </message>
-    <message>
-      <source>Switch to the light appearance</source>
-      <translation>切换到浅色外观</translation>
-    </message>
-    <message>
-      <source>Switch to the dark appearance</source>
-      <translation>切换到深色外观</translation>
-    </message>
-    <message>
       <source>Module: {0}</source>
       <translation>模块：{0}</translation>
     </message>
@@ -434,8 +414,45 @@ This signs {1} out on this computer, including where you use it in a terminal. Y
       <translation>正在处理…</translation>
     </message>
     <message>
+      <source>Save Runs to Project (Ctrl+S)</source>
+      <translation>将运行保存到工程（Ctrl+S）</translation>
+    </message>
+    <message>
+      <source>Export Results… (Ctrl+E)</source>
+      <translation>导出结果…（Ctrl+E）</translation>
+    </message>
+    <message>
+      <source>Pan: drag to move the plot</source>
+      <translation>平移：拖动以移动图件</translation>
+    </message>
+    <message>
+      <source>Zoom: drag a box to zoom into it</source>
+      <translation>缩放：拖出方框放大该区域</translation>
+    </message>
+    <message>
+      <source>Pick: click a section to place a marker</source>
+      <translation>拾取：在剖面上单击放置标记</translation>
+    </message>
+    <message>
+      <source>Show or hide the assistant panel</source>
+      <extracomment>The page button the toolbar's Run repeats, or None.</extracomment>
+      <translation>显示或隐藏右侧助手区</translation>
+    </message>
+    <message>
+      <source>Quit the Studio (Ctrl+Q)</source>
+      <translation>退出软件（Ctrl+Q）</translation>
+    </message>
+    <message>
+      <source> (+{0})</source>
+      <translation>（另 {0} 项）</translation>
+    </message>
+    <message>
       <source>Working: {0}</source>
       <translation>正在处理：{0}</translation>
+    </message>
+    <message>
+      <source>Click to open the page.</source>
+      <translation>单击打开该页面。</translation>
     </message>
     <message>
       <source>Independent processing tool · These settings do not change the {0} workflow. Use Data &amp; reports → Data to edit and check its run configuration.</source>
@@ -562,7 +579,7 @@ Click to open full size.</source>
     </message>
     <message>
       <source>Add to Map…</source>
-      <extracomment>Ask the main window to open the Mesh 3D module and load a mesh/volume file. Ask the main window to switch to another module by key (cross-module handoff). Ask the main window to open another module and apply one of its ``agent_apply`` actions there: ``(module key, action, args)``. How a page hands its work to another, such as the ERT page's electrodes to the 3D Mesh Builder and the mesh built there back. What the page is busy with changed: the new :meth:`activity`, "" once idle. What each registered worker is doing, by id(): the phrase it was registered with, then its latest progress line. Work on the GUI thread the page announced itself (set_activity). time.monotonic() when the page last went from idle to busy. (handle, operation, RunLog, closing) for each run whose log is open. The lines logged in the current event-loop turn, so a run started in it keeps what was logged while it was being prepared. ``(message, level)`` callables told every line the page logs.</extracomment>
+      <extracomment>Ask the main window to open the Mesh 3D module and load a mesh/volume file. Ask the main window to switch to another module by key (cross-module handoff). Ask the main window to open another module and apply one of its ``agent_apply`` actions there: ``(module key, action, args)``. How a page hands its work to another, such as the ERT page's electrodes to the 3D Mesh Builder and the mesh built there back. What the page is busy with changed: the new :meth:`activity`, "" once idle. Attribute names of the page's run buttons, one per step: the main toolbar's Run repeats the one on screen (:meth:`toolbar_run_buttons`). What each registered worker is doing, by id(): the phrase it was registered with, then its latest progress line. Work on the GUI thread the page announced itself (set_activity). time.monotonic() when the page last went from idle to busy. (handle, operation, RunLog, closing) for each run whose log is open. The lines logged in the current event-loop turn, so a run started in it keeps what was logged while it was being prepared. ``(message, level)`` callables told every line the page logs.</extracomment>
       <translation>添加到地图…</translation>
     </message>
     <message>
@@ -7629,20 +7646,20 @@ B：{1}
       <translation>数据与报告</translation>
     </message>
     <message>
-      <source>Seismic</source>
-      <translation>地震</translation>
+      <source>EM</source>
+      <translation>EM</translation>
     </message>
     <message>
       <source>ERT</source>
       <translation>ERT</translation>
     </message>
     <message>
-      <source>EM</source>
-      <translation>EM</translation>
-    </message>
-    <message>
       <source>GPR</source>
       <translation>GPR</translation>
+    </message>
+    <message>
+      <source>Seismic</source>
+      <translation>地震</translation>
     </message>
     <message>
       <source>Project</source>
@@ -7821,6 +7838,14 @@ Find out why before you answer: apply_action get_status on the Workflow page (mo
     <message>
       <source>Match System</source>
       <translation>跟随系统</translation>
+    </message>
+    <message>
+      <source>Light</source>
+      <translation>浅色</translation>
+    </message>
+    <message>
+      <source>Dark</source>
+      <translation>深色</translation>
     </message>
     <message>
       <source>The assistant</source>

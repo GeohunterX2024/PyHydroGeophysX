@@ -142,6 +142,7 @@ def _plan_map_job(result: Dict[str, Any], folder: Path, source: Optional[Path], 
 class EMProcessingModule(BaseModule):
     module_key = "em_processing"
     module_title = "EM Processing"
+    toolbar_run_attrs = ("_inv_btn",)
 
     #: Width the control panel may not exceed even if its widest row wants more.
     #: Past this the row scrolls rather than eating the space the section needs.

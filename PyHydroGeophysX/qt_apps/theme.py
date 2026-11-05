@@ -558,6 +558,18 @@ def build_qss() -> str:
         font-weight: 600;
         border: none;
     }}
+    QWidget#dockToggleTitle {{ background-color: {p['bg']}; }}
+    QToolButton#dockToggleTitleButton {{
+        border: none;
+        background: transparent;
+        padding: 3px 8px;
+        font-weight: 600;
+    }}
+    QToolButton#dockToggleTitleButton:hover {{ background-color: {p['hover']}; }}
+    QToolButton#dockToggleTitleButton:pressed, QToolButton#dockToggleTitleButton:checked {{
+        background-color: {p['select_bg']};
+        color: {p['select_text']};
+    }}
 
     /* Tree / lists / tables */
     QTreeWidget, QTreeView, QListView, QTableView {{
@@ -578,8 +590,28 @@ def build_qss() -> str:
     /* Toolbar / menus */
     QToolBar {{ background-color: {p['card']}; border: none; border-bottom: 1px solid {p['border']}; spacing: 4px; padding: 4px; }}
     QToolButton {{ background: transparent; color: {p['text']}; border-radius: 6px; padding: 5px 8px; font-weight: 500; }}
-    QToolBar#main_toolbar {{ spacing: 2px; padding: 2px 4px; }}
-    QToolBar#main_toolbar QToolButton {{ padding: 3px 8px; }}
+    QToolBar#main_toolbar {{ spacing: 2px; padding: 4px 8px; }}
+    QToolBar#main_toolbar QToolButton {{ padding: 6px; min-width: 20px; min-height: 20px; }}
+    QToolBar#main_toolbar QToolButton#toolbarProject {{ padding: 6px 10px; font-weight: 600; }}
+    QToolBar#main_toolbar QToolButton#toolbarProject::menu-indicator {{ subcontrol-position: right center; right: 2px; }}
+    QToolBar#main_toolbar QToolButton#toolbarRun {{
+        background-color: {p['primary']};
+        color: {p['on_primary']};
+        border: 1px solid {p['primary']};
+        padding: 5px 12px;
+        font-weight: 600;
+        border-radius: 7px;
+    }}
+    QToolBar#main_toolbar QToolButton#toolbarRun:hover {{ background-color: {p['accent']}; border-color: {p['accent']}; }}
+    QToolBar#main_toolbar QToolButton#toolbarRun:pressed {{ background-color: {p['primary_dark']}; }}
+    QToolBar#main_toolbar QToolButton#toolbarRun:disabled {{
+        background-color: {p['track']};
+        border-color: {p['track']};
+        color: {p['disabled_text']};
+    }}
+    QToolBar#main_toolbar QToolButton#toolbarActivity {{ padding: 6px 10px; color: {p['text']}; font-weight: 600; }}
+    QToolBar#main_toolbar QLabel {{ padding: 0 6px; }}
+    QToolBar#main_toolbar::separator {{ background: {p['border']}; width: 1px; margin: 6px 8px; }}
     QToolButton:hover {{ background-color: {p['hover']}; }}
     QToolButton:pressed, QToolButton:checked {{ background-color: {p['select_bg']}; color: {p['select_text']}; }}
     QMenuBar {{ background-color: {p['card']}; border: none; }}

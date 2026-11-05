@@ -207,6 +207,7 @@ def _pick_shots(shots: List[Dict[str, Any]], settings: Dict[str, Any], log=None)
 class SeismicProcessingModule(BaseModule):
     module_key = "seismic_processing"
     module_title = "Seismic Processing"
+    toolbar_run_attrs = ("_srt_btn", "_refl_btn")
 
     def __init__(self, state: Any, log: LogFn, parent=None) -> None:
         super().__init__(state, log, parent)

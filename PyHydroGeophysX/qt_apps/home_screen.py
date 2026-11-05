@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from PyHydroGeophysX.agents import assistants as assistant_registry
 from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.layout_fit import elide_label
-from PyHydroGeophysX.qt_apps.widgets.project_tree import TREE_STRUCTURE, item_icon
+from PyHydroGeophysX.qt_apps.widgets.project_tree import TREE_STRUCTURE, item_icon, navigator_icon
 
 #: The model-data loop, one card per navigator group, in the order the loop
 #: runs: (direction, title, what it does, tree group).
@@ -408,7 +408,7 @@ class StudioHome(QWidget):
         if role == "chip":
             # The navigator's own icon, so a card's link reads as that tree item;
             # the space keeps the caption off the icon, which QSS cannot pad.
-            button.setIcon(theme.icon(item_icon(text)))
+            button.setIcon(navigator_icon(text))
             button.setIconSize(QSize(13, 13))
             button.setText(" " + text)
         button.setCursor(Qt.PointingHandCursor)
