@@ -81,6 +81,7 @@ Full 打包环境见 `packaging/conda/`。
 | `docs/yuem/compute_isolation.md` | 哪些计算在子进程中运行，判据与清单 |
 | `docs/yuem/datastore.md` | 工程数据库 `phgx-dataset-v1`：结构、版本与外链、原始文件、适配器 |
 | `docs/yuem/qc.md` | 质控：剔除、恢复、记录 |
+| `docs/yuem/survey.md` | 共用测量视图：布设图（二维 / 三维）、曲线、频谱，数据约定与方法适配 |
 | `docs/yuem/i18n.md` | 界面中文化与字体：约定与维护流程 |
 | `docs/yuem/standards.md` | 各方法参数与行业规程的对应 |
 | `docs/yuem/verification.md` | 数值验证报告（自动生成） |

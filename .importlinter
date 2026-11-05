@@ -17,7 +17,7 @@ containers =
 layers =
     qt_apps : agents : gui : gui_mesh3d : mcp_server : plugins : doctor : em1d : gravmag
     workflows
-    inversion : forward : data_processing : datastore : results : petrophysics : visualization : model_output : model_input : uncertainty : analysis : assimilation : Hydro_modular : Geophy_modular : joint_api : data_access : table_io
+    inversion : forward : data_processing : datastore : results : petrophysics : visualization : model_output : model_input : uncertainty : analysis : assimilation : Hydro_modular : Geophy_modular : joint_api : data_access : table_io : survey
     core : solvers : errors
     _internal : _utils : _deprecations : _optional_dependencies
 ; Upstream cross-layer imports at the fork base (16930bb). Ratchet: may only shrink.
@@ -43,6 +43,7 @@ source_modules =
     PyHydroGeophysX.datastore
     PyHydroGeophysX.results
     PyHydroGeophysX.errors
+    PyHydroGeophysX.survey
 forbidden_modules =
     PySide6
 allow_indirect_imports = True
