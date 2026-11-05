@@ -1539,6 +1539,10 @@ Both are written next to the section automatically. This writes a second copy to
       <translation>数据</translation>
     </message>
     <message>
+      <source>Survey layout</source>
+      <translation>测量布设</translation>
+    </message>
+    <message>
       <source>Reciprocal errors</source>
       <translation>互易误差</translation>
     </message>
@@ -6422,7 +6426,7 @@ Click to show, double-click to open.</source>
     </message>
     <message>
       <source>Reverse the colour map, so the colours run the other way along the colour bar.</source>
-      <extracomment>Maps for a quantity read from low to high. ``Spectral_r`` is the ERT convention and stays in this group, where the resistivity views look for it. Maps for a signed quantity read either side of a centre value. The seismic gather's own blue-white-red: nearly white over the middle 4 % so the zero crossings stay quiet and only the arrivals carry colour. It is not a matplotlib map, so it is built here, and offered by the view that uses it. Maps defined here rather than by matplotlib: name -&gt; (stops, RGBA bytes, label). ERT resistivity sections time-lapse % change from the baseline ERT coverage (log10 sensitivity) the ERT QC pseudosection seismic velocity sections and volumes a shot gather's amplitude image EM resistivity: sections, volume, slices the EM survey QC station map gravity / magnetic anomaly maps gravity density-contrast models magnetic susceptibility models ground-penetrating radar radargrams Project Map plan layers hydrological model maps a saved 2-D array a 3-D volume read from a file mesh region markers How a tooltip names each key: "resistivity sections", ... PyVista takes the same as matplotlib. The full map name - ``viridis``, ``viridis_r`` - after the user picked one, or after another page changed the shared choice while this one was hidden.</extracomment>
+      <extracomment>Maps for a quantity read from low to high. ``Spectral_r`` is the ERT convention and stays in this group, where the resistivity views look for it. Maps for a signed quantity read either side of a centre value. The seismic gather's own blue-white-red: nearly white over the middle 4 % so the zero crossings stay quiet and only the arrivals carry colour. It is not a matplotlib map, so it is built here, and offered by the view that uses it. Maps defined here rather than by matplotlib: name -&gt; (stops, RGBA bytes, label). ERT resistivity sections time-lapse % change from the baseline ERT coverage (log10 sensitivity) the ERT QC pseudosection seismic velocity sections and volumes a shot gather's amplitude image EM resistivity: sections, volume, slices the EM survey QC station map gravity / magnetic anomaly maps gravity density-contrast models magnetic susceptibility models ground-penetrating radar radargrams Project Map plan layers hydrological model maps a saved 2-D array a 3-D volume read from a file mesh region markers survey layouts and pseudo-depth points How a tooltip names each key: "resistivity sections", ... PyVista takes the same as matplotlib. The full map name - ``viridis``, ``viridis_r`` - after the user picked one, or after another page changed the shared choice while this one was hidden.</extracomment>
       <translation>反转色标，使颜色沿色标条反向排列。</translation>
     </message>
     <message>
@@ -7347,8 +7351,49 @@ B：{1}
       <translation>校正后断面所对应的参考温度。25 °C 是岩石物理关系标定时的实验室惯例；场地年平均温度是另一个合理选择，且可使校正量较小。</translation>
     </message>
     <message>
+      <source>Window the spectrum is taken over; a steady part of the record avoids switching leakage</source>
+      <extracomment>Power-line frequencies offered (Hz). Noise measures of the channels shown, after each redraw.</extracomment>
+      <translation>计算频谱所用的时间窗；选记录中平稳的一段，可避免通断跳变造成的频谱泄漏</translation>
+    </message>
+    <message>
+      <source>Power-line frequency whose harmonics are marked</source>
+      <translation>标出其谐波的工频</translation>
+    </message>
+    <message>
+      <source>Reference spectrum</source>
+      <translation>参考曲线频谱</translation>
+    </message>
+    <message>
+      <source>Overlay the spectrum of the reference curve (such as the current)</source>
+      <translation>叠加参考曲线（如供电电流）的频谱</translation>
+    </message>
+    <message>
+      <source>Line frequency</source>
+      <translation>工频</translation>
+    </message>
+    <message>
+      <source>Choose a group and its channels to see their spectra.</source>
+      <translation>选择一组及其通道以查看频谱。</translation>
+    </message>
+    <message>
       <source>Reference</source>
       <translation>参考</translation>
+    </message>
+    <message>
+      <source>{0:g} Hz harmonic, seen at {1:g} Hz</source>
+      <translation>{0:g} Hz 谐波，出现在 {1:g} Hz</translation>
+    </message>
+    <message>
+      <source>PSD ({0})</source>
+      <translation>功率谱密度（{0}）</translation>
+    </message>
+    <message>
+      <source>Welch, Hann window · Nyquist {0:g} Hz · window: {1}</source>
+      <translation>Welch 法，汉宁窗 · 奈奎斯特频率 {0:g} Hz · 时间窗：{1}</translation>
+    </message>
+    <message>
+      <source>whole record</source>
+      <translation>全段记录</translation>
     </message>
     <message>
       <source>Hayley et al. 2007 (≈2.0 %/°C)</source>
@@ -7604,6 +7649,299 @@ B：{1}
       <source>Standard</source>
       <extracomment>Code -&gt; (Chinese title, English title), as published. Page key -&gt; control attribute -&gt; (standards, subject in Chinese, subject in English).</extracomment>
       <translation>规程</translation>
+    </message>
+    <message>
+      <source>3D options</source>
+      <extracomment>What a renderer raises when its window or a draw fails (VTK reports GL failures as RuntimeError). Camera preset names (English source text, translated when shown). Layer switches: option field -&gt; (label, default) (English source text).</extracomment>
+      <translation>三维选项</translation>
+    </message>
+    <message>
+      <source>Vertical exaggeration of elevations and depths</source>
+      <translation>高程与深度的纵向夸大倍数</translation>
+    </message>
+    <message>
+      <source>All</source>
+      <translation>全部</translation>
+    </message>
+    <message>
+      <source>Show pseudo-depth points down to this depth (All: every point)</source>
+      <translation>只显示拟深度不超过此值的点（全部：显示所有点）</translation>
+    </message>
+    <message>
+      <source>Exaggeration</source>
+      <translation>纵向夸大</translation>
+    </message>
+    <message>
+      <source>Point size</source>
+      <translation>点大小</translation>
+    </message>
+    <message>
+      <source>Max pseudo-depth</source>
+      <translation>最大拟深度</translation>
+    </message>
+    <message>
+      <source>View</source>
+      <translation>视角</translation>
+    </message>
+    <message>
+      <source>Parallel projection</source>
+      <translation>平行投影</translation>
+    </message>
+    <message>
+      <source>Tools</source>
+      <translation>工具</translation>
+    </message>
+    <message>
+      <source>Measure distance</source>
+      <translation>测距</translation>
+    </message>
+    <message>
+      <source>Screenshot…</source>
+      <translation>截图…</translation>
+    </message>
+    <message>
+      <source>Export VTK…</source>
+      <translation>导出 VTK…</translation>
+    </message>
+    <message>
+      <source>Use simple 3D (no graphics card)</source>
+      <translation>使用简易三维（不需要显卡）</translation>
+    </message>
+    <message>
+      <source>Draw with Matplotlib, not PyVista: slower, but works without a graphics driver</source>
+      <translation>用 Matplotlib 代替 PyVista 绘制：较慢，但没有显卡驱动也能用</translation>
+    </message>
+    <message>
+      <source>Needs the PyVista 3D view</source>
+      <translation>需要 PyVista 三维视图</translation>
+    </message>
+    <message>
+      <source>Drag to rotate, scroll to zoom; right-click a point to select it.</source>
+      <translation>拖动旋转，滚轮缩放；右键单击点可选中。</translation>
+    </message>
+    <message>
+      <source>Drag to rotate; click a point to select it.</source>
+      <translation>拖动旋转；单击点可选中。</translation>
+    </message>
+    <message>
+      <source>Simple 3D view: {0}</source>
+      <translation>简易三维视图：{0}</translation>
+    </message>
+    <message>
+      <source>East ({0})</source>
+      <translation>东（{0}）</translation>
+    </message>
+    <message>
+      <source>North ({0})</source>
+      <translation>北（{0}）</translation>
+    </message>
+    <message>
+      <source>Elevation ({0})</source>
+      <translation>高程（{0}）</translation>
+    </message>
+    <message>
+      <source>The 3D view could not draw: {0}</source>
+      <translation>三维视图无法绘制：{0}</translation>
+    </message>
+    <message>
+      <source>{0}: {1:.2f} km from the line centre</source>
+      <translation>{0}：距测线中心 {1:.2f} km</translation>
+    </message>
+    <message>
+      <source>Save screenshot</source>
+      <translation>保存截图</translation>
+    </message>
+    <message>
+      <source>Export VTK</source>
+      <translation>导出 VTK</translation>
+    </message>
+    <message>
+      <source>Distance: {0:.2f} m</source>
+      <translation>距离：{0:.2f} m</translation>
+    </message>
+    <message>
+      <source>2D</source>
+      <extracomment>Tab keys, in order. The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it).</extracomment>
+      <translation>二维</translation>
+    </message>
+    <message>
+      <source>Plan and section</source>
+      <translation>平面图与剖面图</translation>
+    </message>
+    <message>
+      <source>3D</source>
+      <translation>三维</translation>
+    </message>
+    <message>
+      <source>Three-dimensional view</source>
+      <translation>三维视图</translation>
+    </message>
+    <message>
+      <source>Layout</source>
+      <translation>布设图</translation>
+    </message>
+    <message>
+      <source>Curves</source>
+      <translation>曲线</translation>
+    </message>
+    <message>
+      <source>Spectrum</source>
+      <translation>频谱</translation>
+    </message>
+    <message>
+      <source>Plan figure…</source>
+      <translation>平面图…</translation>
+    </message>
+    <message>
+      <source>Section figure…</source>
+      <translation>剖面图…</translation>
+    </message>
+    <message>
+      <source>Curve figure…</source>
+      <translation>曲线图…</translation>
+    </message>
+    <message>
+      <source>Spectrum figure…</source>
+      <translation>频谱图…</translation>
+    </message>
+    <message>
+      <source>Save figure</source>
+      <translation>保存图件</translation>
+    </message>
+    <message>
+      <source>PDF (*.pdf);;PNG (*.png);;SVG (*.svg)</source>
+      <translation>PDF (*.pdf);;PNG (*.png);;SVG (*.svg)</translation>
+    </message>
+    <message>
+      <source>Colour the pseudo-depth points by one of their values</source>
+      <extracomment>Legends of the pseudo-depth conventions (English source text; see survey.pseudo.CONVENTIONS). Attributes usually drawn on a log scale.</extracomment>
+      <translation>按拟深度点的某项数值着色</translation>
+    </message>
+    <message>
+      <source>Log scale</source>
+      <translation>对数刻度</translation>
+    </message>
+    <message>
+      <source>Terrain</source>
+      <translation>地形</translation>
+    </message>
+    <message>
+      <source>Drag a box to select the readings inside it</source>
+      <translation>拖出方框，选中框内的测量</translation>
+    </message>
+    <message>
+      <source>Distance along the line</source>
+      <translation>沿测线距离</translation>
+    </message>
+    <message>
+      <source>Elevation</source>
+      <translation>高程</translation>
+    </message>
+    <message>
+      <source>Show or hide the view options</source>
+      <translation>显示或隐藏视图选项</translation>
+    </message>
+    <message>
+      <source>Colour the points by one of their values</source>
+      <extracomment>Role names as a legend shows them (English source text, translated when shown). The user picked a point: its key (a tuple) and its group.</extracomment>
+      <translation>按点的某项数值着色</translation>
+    </message>
+    <message>
+      <source>Include remote B</source>
+      <translation>包含远端 B</translation>
+    </message>
+    <message>
+      <source>Show a remote electrode where it is (rescales the plan); otherwise an arrow points to it.</source>
+      <translation>按实际位置画出远端电极（平面图会随之缩放）；否则用箭头指向它。</translation>
+    </message>
+    <message>
+      <source>Other shots</source>
+      <translation>其他炮</translation>
+    </message>
+    <message>
+      <source>Show the sources of the other groups, faded</source>
+      <translation>淡色显示其他组的供电点</translation>
+    </message>
+    <message>
+      <source>Drag a box to select the points inside it</source>
+      <translation>拖出方框，选中框内的点</translation>
+    </message>
+    <message>
+      <source>Colour by</source>
+      <translation>着色依据</translation>
+    </message>
+    <message>
+      <source>Role</source>
+      <translation>类型</translation>
+    </message>
+    <message>
+      <source>East</source>
+      <translation>东</translation>
+    </message>
+    <message>
+      <source>North</source>
+      <translation>北</translation>
+    </message>
+    <message>
+      <source>No survey layout to show.</source>
+      <translation>没有可显示的布设。</translation>
+    </message>
+    <message>
+      <source>CRS: {0}</source>
+      <translation>坐标系：{0}</translation>
+    </message>
+    <message>
+      <source>{0} {1}: {2:.2f} km away ({3:.0f}, {4:.0f})</source>
+      <translation>{0} {1}：距离 {2:.2f} km（{3:.0f}, {4:.0f}）</translation>
+    </message>
+    <message>
+      <source>Zoom the time axis to a window of the record</source>
+      <extracomment>Window names the adapters use (English source text, translated when shown). Shading of each window kind.</extracomment>
+      <translation>把时间轴缩放到记录的某个时间窗</translation>
+    </message>
+    <message>
+      <source>Shade windows</source>
+      <translation>标出时间窗</translation>
+    </message>
+    <message>
+      <source>Reference curve</source>
+      <translation>参考曲线</translation>
+    </message>
+    <message>
+      <source>Draw the reference curve (such as the current) on the right axis</source>
+      <translation>在右纵轴上画参考曲线（如供电电流）</translation>
+    </message>
+    <message>
+      <source>Choose a group and its channels to see their curves.</source>
+      <translation>选择一组及其通道以查看曲线。</translation>
+    </message>
+    <message>
+      <source>{0} channels · {1} samples · {2:g} samples/s</source>
+      <translation>{0} 个通道 · {1} 个样点 · 每秒 {2:g} 个样点</translation>
+    </message>
+    <message>
+      <source>Field units (mV/km, nT)</source>
+      <translation>场值单位（mV/km、nT）</translation>
+    </message>
+    <message>
+      <source>Remove the instrument response before drawing the curves</source>
+      <translation>绘制曲线前先去除仪器响应</translation>
+    </message>
+    <message>
+      <source>{0:g} Hz · {1:.1f} min</source>
+      <translation>{0:g} Hz · {1:.1f} 分钟</translation>
+    </message>
+    <message>
+      <source>Current injections</source>
+      <translation>供电电极对</translation>
+    </message>
+    <message>
+      <source>{0} ({1} readings)</source>
+      <translation>{0}（{1} 个测量）</translation>
+    </message>
+    <message>
+      <source>Load a survey on the Data tab to see its layout.</source>
+      <translation>在“数据”选项卡中载入测量后，即可查看其布设。</translation>
     </message>
     <message>
       <source>Workflow</source>
@@ -7870,10 +8208,6 @@ Find out why before you answer: apply_action get_status on the Workflow page (mo
     <message>
       <source>With data</source>
       <translation>有数据</translation>
-    </message>
-    <message>
-      <source>All</source>
-      <translation>全部</translation>
     </message>
     <message>
       <source>water levels</source>
@@ -8378,16 +8712,8 @@ time window it reports.&lt;/li&gt;
       <translation>处理后的雷达剖面</translation>
     </message>
     <message>
-      <source>Spectrum</source>
-      <translation>频谱</translation>
-    </message>
-    <message>
       <source>Time</source>
       <translation>时间</translation>
-    </message>
-    <message>
-      <source>Elevation</source>
-      <translation>高程</translation>
     </message>
     <message>
       <source>the model's ground surface</source>
@@ -9214,6 +9540,10 @@ See hydro_input_format.md for details.</source>
     <message>
       <source>2D section</source>
       <translation>2D 断面</translation>
+    </message>
+    <message>
+      <source>Sites and data quality</source>
+      <translation>测站与数据质量</translation>
     </message>
     <message>
       <source>Hx</source>
@@ -10134,6 +10464,146 @@ This choice holds wherever the model is fitted: the data errors when they are ta
     <message>
       <source>Traditional wiggle</source>
       <translation>传统波形</translation>
+    </message>
+    <message>
+      <source>Apparent resistivity (ohm.m)</source>
+      <translation>视电阻率 (Ω·m)</translation>
+    </message>
+    <message>
+      <source>Chargeability (%)</source>
+      <translation>视极化率 (%)</translation>
+    </message>
+    <message>
+      <source>Geometric factor (m)</source>
+      <translation>装置系数 (m)</translation>
+    </message>
+    <message>
+      <source>Rejected (1) or kept (0)</source>
+      <translation>已剔除 (1) / 保留 (0)</translation>
+    </message>
+    <message>
+      <source>Error (%)</source>
+      <translation>误差 (%)</translation>
+    </message>
+    <message>
+      <source>Line peak (dB)</source>
+      <translation>工频峰值 (dB)</translation>
+    </message>
+    <message>
+      <source>Noise RMS</source>
+      <translation>噪声均方根</translation>
+    </message>
+    <message>
+      <source>SNR (dB)</source>
+      <translation>信噪比 (dB)</translation>
+    </message>
+    <message>
+      <source>Elevation (m)</source>
+      <translation>高程 (m)</translation>
+    </message>
+    <message>
+      <source>Current (A)</source>
+      <translation>电流 (A)</translation>
+    </message>
+    <message>
+      <source>Primary voltage Vp</source>
+      <translation>一次场电压 Vp</translation>
+    </message>
+    <message>
+      <source>Current electrode A</source>
+      <translation>供电电极 A</translation>
+    </message>
+    <message>
+      <source>Current electrode B</source>
+      <translation>供电电极 B</translation>
+    </message>
+    <message>
+      <source>Potential electrode M</source>
+      <translation>测量电极 M</translation>
+    </message>
+    <message>
+      <source>Potential electrode N</source>
+      <translation>测量电极 N</translation>
+    </message>
+    <message>
+      <source>Electrode</source>
+      <translation>电极</translation>
+    </message>
+    <message>
+      <source>Transmitter</source>
+      <translation>发射</translation>
+    </message>
+    <message>
+      <source>Receiver</source>
+      <translation>接收</translation>
+    </message>
+    <message>
+      <source>Pseudo-depth: |AM|/2 (pole-dipole), |AB-MN midpoints|/2 (B on the line)</source>
+      <translation>拟深度：三极装置取 |AM|/2；B 在测线上时取 AB 与 MN 中点距离的一半</translation>
+    </message>
+    <message>
+      <source>Pseudo-depth: 0.19 x electrode spread (Edwards 1977)</source>
+      <translation>拟深度：电极跨度的 0.19 倍（Edwards 1977）</translation>
+    </message>
+    <message>
+      <source>Channel</source>
+      <translation>通道</translation>
+    </message>
+    <message>
+      <source>Floor</source>
+      <translation>噪声底</translation>
+    </message>
+    <message>
+      <source>Whole record</source>
+      <translation>全段</translation>
+    </message>
+    <message>
+      <source>On-time (steady)</source>
+      <translation>供电段（平稳）</translation>
+    </message>
+    <message>
+      <source>End of on-time</source>
+      <translation>供电段末</translation>
+    </message>
+    <message>
+      <source>Late off-time</source>
+      <translation>断电段后段</translation>
+    </message>
+    <message>
+      <source>First minute</source>
+      <translation>第一分钟</translation>
+    </message>
+    <message>
+      <source>Last minute</source>
+      <translation>最后一分钟</translation>
+    </message>
+    <message>
+      <source>Current and potential pairs</source>
+      <translation>供电与测量电极对</translation>
+    </message>
+    <message>
+      <source>Pseudo-depth points</source>
+      <translation>拟深度点</translation>
+    </message>
+    <message>
+      <source>Labels</source>
+      <translation>标签</translation>
+    </message>
+    <message>
+      <source>Top</source>
+      <translation>俯视</translation>
+    </message>
+    <message>
+      <source>Along the line</source>
+      <translation>沿测线</translation>
+    </message>
+    <message>
+      <source>Across the line</source>
+      <translation>垂直测线</translation>
+    </message>
+    <message>
+      <source>Oblique</source>
+      <translation>斜视</translation>
     </message>
     <message>
       <source>Rows of date, depth and temperature, or one column per sensor depth. Without a date column the profile is held constant in time.</source>

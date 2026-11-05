@@ -48,7 +48,7 @@ __all__ = [
     "APPARENT_RESISTIVITY", "ARRAY", "COVERAGE", "DENSITY", "DIVERGING",
     "EM_SECTION", "EM_STATIONS", "GATHER", "GRAVMAG", "HYDRO", "MAP_LAYER",
     "MESH_REGIONS", "MODEL3D", "RESISTIVITY", "RESISTIVITY_CHANGE",
-    "SEISMIC_GATHER", "SEQUENTIAL", "SUSCEPTIBILITY", "VELOCITY",
+    "SEISMIC_GATHER", "SEQUENTIAL", "SURVEY", "SUSCEPTIBILITY", "VELOCITY",
     "ColormapChooser", "colormap_entries", "colormap_settings", "gradient_icon",
     "is_reversed", "lookup_table", "matplotlib_colormap", "reversed_name",
     "to_matplotlib", "to_pyqtgraph", "to_pyvista", "apply_to_histogram",
@@ -102,6 +102,7 @@ HYDRO = "hydro_model"                        #: hydrological model maps
 ARRAY = "array"                              #: a saved 2-D array
 MODEL3D = "model3d"                          #: a 3-D volume read from a file
 MESH_REGIONS = "mesh_regions"                #: mesh region markers
+SURVEY = "survey"                            #: survey layouts and pseudo-depth points
 
 #: How a tooltip names each key: "resistivity sections", ...
 _WHAT: Dict[str, str] = {
@@ -122,6 +123,7 @@ _WHAT: Dict[str, str] = {
     ARRAY: "saved arrays",
     MODEL3D: "3-D volumes",
     MESH_REGIONS: "mesh regions",
+    SURVEY: "survey layouts and pseudo-depth points",
 }
 
 

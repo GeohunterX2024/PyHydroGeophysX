@@ -297,6 +297,7 @@ module = [
     "PyHydroGeophysX._internal.simpeg_compat",
     "PyHydroGeophysX._internal.plugin_loader",
     "PyHydroGeophysX.visualization.styles.*",
+    "PyHydroGeophysX.survey.*",
 ]
 ignore_errors = false
 

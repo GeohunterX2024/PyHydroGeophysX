@@ -213,6 +213,33 @@ def _check_vtk() -> Check:
     return Check("VTK / OpenGL", "ok", f"VTK {vtkVersion.GetVTKVersion()} with the OpenGL2 backend")
 
 
+def _check_survey_3d() -> Check:
+    """Which 3-D view the survey tabs use: PyVista, or the simple Matplotlib one and why."""
+    name = "Survey 3D view"
+    forced = os.environ.get("PHGX_SURVEY_3D", "").strip().lower()
+    if forced in ("simple", "matplotlib", "mpl", "off", "0"):
+        return Check(name, "ok", "simple (Matplotlib), set by PHGX_SURVEY_3D")
+    if importlib.util.find_spec("PySide6") is not None:
+        from PySide6.QtCore import QSettings
+
+        chosen = QSettings("PyHydroGeophysX", "Studio").value("survey/3d/simple", False)
+        if chosen in (True, "true", "1", 1):
+            return Check(name, "ok", "simple (Matplotlib), chosen in the 3D options")
+    missing = [m for m in ("pyvista", "pyvistaqt") if importlib.util.find_spec(m) is None]
+    if missing:
+        return Check(
+            name,
+            "warn",
+            f"simple (Matplotlib): {', '.join(missing)} not installed",
+            OPTIONAL_ENGINES[2][2],
+        )
+    return Check(
+        name,
+        "ok",
+        "PyVista; if the Studio closes when a 3D tab opens, set PHGX_SURVEY_3D=simple",
+    )
+
+
 def _check_cjk_font() -> Check:
     try:
         from matplotlib import font_manager
@@ -290,6 +317,7 @@ def run_checks(*, project: Path | None = None, network: bool = False) -> list[Ch
         lambda: _check_certificates(network),
         _check_qt,
         _check_vtk,
+        _check_survey_3d,
         _check_cjk_font,
         lambda: _check_project(project),
         _check_plugins,

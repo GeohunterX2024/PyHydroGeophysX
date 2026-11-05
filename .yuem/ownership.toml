@@ -33,6 +33,7 @@ own = [
     "PyHydroGeophysX/_internal/native_paths.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
+    "PyHydroGeophysX/survey/",
     "packaging/",
     ".github/workflows/yuem-ci.yml",
     ".pre-commit-config.yaml",
@@ -133,6 +134,8 @@ strict = [
     "PyHydroGeophysX/_internal/native_paths.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
+    "PyHydroGeophysX/survey/",
+    "PyHydroGeophysX/qt_apps/widgets/survey/",
 ]
 # Subset type-checked with mypy --strict (tests are excluded).
 typed = [
@@ -151,6 +154,7 @@ typed = [
     "PyHydroGeophysX/_internal/native_paths.py",
     "PyHydroGeophysX/_internal/plugin_loader.py",
     "PyHydroGeophysX/visualization/styles/",
+    "PyHydroGeophysX/survey/",
 ]
 # New or edited Python files may not exceed this many lines; existing longer
 # files may only shrink.
