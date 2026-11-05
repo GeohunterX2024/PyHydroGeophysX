@@ -12,7 +12,14 @@ from PyHydroGeophysX.survey.pseudo import (
     pygimli_coordinates,
     zond_coordinates,
 )
-from PyHydroGeophysX.survey.scene import LineLayer, PointLayer, SceneOptions, SurfaceLayer, build_scene
+from PyHydroGeophysX.survey.scene import (
+    LabelLayer,
+    LineLayer,
+    PointLayer,
+    SceneOptions,
+    SurfaceLayer,
+    build_scene,
+)
 from PyHydroGeophysX.survey.spectra import (
     apparent_frequency,
     line_harmonics,
@@ -202,7 +209,9 @@ def test_scene_moves_the_remote_b_to_the_edge_unless_asked() -> None:
     assert isinstance(remote, PointLayer)
     distance = np.hypot(remote.xyz[0, 0], remote.xyz[0, 1] - 80.0)
     assert distance < 400.0
-    assert scene.notes and "km" in scene.notes[0]
+    assert scene.remote and scene.remote[0][0] == "B" and scene.remote[0][2] > 6000
+    label = scene.layer("remote-label")
+    assert isinstance(label, LabelLayer) and "km" in label.texts[0]
     full = build_scene(layout, None, SceneOptions(group="s1", include_remote=True))
     remote = full.layer("remote")
     assert isinstance(remote, PointLayer)

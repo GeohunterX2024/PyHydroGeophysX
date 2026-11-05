@@ -130,6 +130,8 @@ class Scene3D:
     value_name: str = ""
     value_range: tuple[float, float] | None = None
     notes: tuple[str, ...] = field(default_factory=tuple)
+    #: Remote points: ``(role, label, distance from the line centre in m)``.
+    remote: tuple[tuple[str, str, float], ...] = field(default_factory=tuple)
 
     def names(self) -> tuple[str, ...]:
         return tuple(layer.name for layer in self.layers)
@@ -145,11 +147,13 @@ def _lift(xyz: FloatArray, z_reference: float, exaggeration: float) -> FloatArra
     return out
 
 
-def _remote_positions(layout: SurveyLayout, include_remote: bool) -> tuple[FloatArray, tuple[str, ...]]:
+def _remote_positions(
+    layout: SurveyLayout, include_remote: bool
+) -> tuple[FloatArray, tuple[tuple[str, str, float], ...]]:
     """Display positions of all points; remote ones moved to the edge unless ``include_remote``."""
     points = layout.points
     xyz = np.array(points.xyz, dtype=np.float64, copy=True)
-    notes: list[str] = []
+    notes: list[tuple[str, str, float]] = []
     remote = points.is_remote()
     if not remote.any():
         return xyz, ()
@@ -161,9 +165,7 @@ def _remote_positions(layout: SurveyLayout, include_remote: bool) -> tuple[Float
     for index in np.flatnonzero(remote):
         offset = xyz[index, :2] - centre
         distance = float(np.hypot(*offset))
-        notes.append(
-            f"{points.role[index]} {points.label[index]}: {distance / 1000.0:.2f} km from the line centre"
-        )
+        notes.append((points.role[index], points.label[index], distance))
         if include_remote or distance == 0:
             continue
         xyz[index, :2] = centre + offset / distance * radius * 1.25
@@ -234,7 +236,7 @@ def build_scene(
     """The layers of ``layout`` (and ``pseudo``) as ``options`` asks for them."""
     options = options or SceneOptions()
     points = layout.points
-    xyz, notes = _remote_positions(layout, options.include_remote)
+    xyz, remote_info = _remote_positions(layout, options.include_remote)
     line = layout.line_points()
     z_reference = float(np.median(points.xyz[line, 2])) if line.any() else 0.0
     ex = max(float(options.exaggeration), 0.01)
@@ -286,10 +288,11 @@ def build_scene(
             )
         remote = points.is_remote() & (current | ~grouped)
         if remote.any():
+            lifted = _lift(xyz[remote], z_reference, ex)
             layers.append(
                 PointLayer(
                     "remote",
-                    _lift(xyz[remote], z_reference, ex),
+                    lifted,
                     ROLE_STYLE["B"][0],
                     12.0 * options.point_scale,
                     "triangle",
@@ -297,6 +300,11 @@ def build_scene(
                     keys=_subset_keys(points.keys, remote),
                 )
             )
+            if not options.include_remote:
+                texts = tuple(f"{role} {distance / 1000.0:.2f} km" for role, _label, distance in remote_info)
+                layers.append(
+                    LabelLayer("remote-label", lifted, texts[: lifted.shape[0]], ROLE_STYLE["B"][0])
+                )
 
     links = layout.links
     if options.show_links and links.size:
@@ -361,7 +369,7 @@ def build_scene(
             )
 
     bounds = _bounds(layers, z_reference)
-    return Scene3D(tuple(layers), bounds, z_reference, ex, options.colour_by, value_range, notes)
+    return Scene3D(tuple(layers), bounds, z_reference, ex, options.colour_by, value_range, (), remote_info)
 
 
 def _bounds(layers: Sequence[Layer], z_reference: float) -> tuple[float, float, float, float, float, float]:

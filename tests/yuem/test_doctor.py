@@ -19,6 +19,14 @@ def test_every_check_runs_and_reports_a_known_status(tmp_path: Path) -> None:
     assert {check.status for check in checks} <= {"ok", "warn", "error"}
 
 
+def test_survey_3d_check_names_the_simple_view_when_forced(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PHGX_SURVEY_3D", "simple")
+    check = doctor._check_survey_3d()
+    assert check.status == "ok" and "PHGX_SURVEY_3D" in check.detail
+    monkeypatch.delenv("PHGX_SURVEY_3D")
+    assert doctor._check_survey_3d().name == "Survey 3D view"
+
+
 def test_exit_code_reflects_the_worst_status() -> None:
     assert exit_code([Check("a", "ok", "")]) == 0
     assert exit_code([Check("a", "ok", ""), Check("b", "warn", "")]) == 1
