@@ -270,7 +270,12 @@ class Survey3DView(QWidget):
 
     # -- data ---------------------------------------------------------------
     def set_data(self, layout: SurveyLayout | None, pseudo: PseudoPoints | None) -> None:
+        from PyHydroGeophysX.qt_apps.widgets.survey.plan_view import has_grouped_sources
+
         self._layout, self._pseudo = layout, pseudo
+        self._switches["show_other_groups"].setVisible(has_grouped_sources(layout))
+        self._switches["show_pseudo"].setVisible(pseudo is not None)
+        self._depth.setEnabled(pseudo is not None)
         self._key_groups = {}
         if layout is not None and layout.points.keys:
             self._key_groups.update(

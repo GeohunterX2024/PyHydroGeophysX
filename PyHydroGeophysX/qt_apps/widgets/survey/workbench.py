@@ -158,6 +158,11 @@ class SurveyWorkbench(QWidget):
             self._dirty.update(("traces", "spectrum"))
             self._refresh_visible()
 
+    def refresh_traces(self) -> None:
+        """Ask for the current group's curves again (the page chose another recording of it)."""
+        self._dirty.update(("traces", "spectrum"))
+        self._refresh_visible()
+
     def refresh(self) -> None:
         """Ask the provider again (after a new line, version or QC decision)."""
         provider = self._provider

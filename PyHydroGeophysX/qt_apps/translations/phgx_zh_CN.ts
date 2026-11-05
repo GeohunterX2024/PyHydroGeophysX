@@ -7916,6 +7916,18 @@ B：{1}
       <translation>{0} 个通道 · {1} 个样点 · 每秒 {2:g} 个样点</translation>
     </message>
     <message>
+      <source>Field units (mV/km, nT)</source>
+      <translation>场值单位（mV/km、nT）</translation>
+    </message>
+    <message>
+      <source>Remove the instrument response before drawing the curves</source>
+      <translation>绘制曲线前先去除仪器响应</translation>
+    </message>
+    <message>
+      <source>{0:g} Hz · {1:.1f} min</source>
+      <translation>{0:g} Hz · {1:.1f} 分钟</translation>
+    </message>
+    <message>
       <source>Workflow</source>
       <translation>工作流</translation>
     </message>
@@ -9514,6 +9526,10 @@ See hydro_input_format.md for details.</source>
       <translation>2D 断面</translation>
     </message>
     <message>
+      <source>Sites and data quality</source>
+      <translation>测站与数据质量</translation>
+    </message>
+    <message>
       <source>Hx</source>
       <translation>Hx</translation>
     </message>
@@ -10536,6 +10552,14 @@ This choice holds wherever the model is fitted: the data errors when they are ta
     <message>
       <source>Late off-time</source>
       <translation>断电段后段</translation>
+    </message>
+    <message>
+      <source>First minute</source>
+      <translation>第一分钟</translation>
+    </message>
+    <message>
+      <source>Last minute</source>
+      <translation>最后一分钟</translation>
     </message>
     <message>
       <source>Current and potential pairs</source>

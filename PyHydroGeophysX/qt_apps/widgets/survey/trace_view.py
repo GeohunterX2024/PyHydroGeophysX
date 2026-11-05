@@ -19,7 +19,16 @@ from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings
 from PyHydroGeophysX.survey.traces import TraceSet, Window
 
 #: Window names the adapters use (English source text, translated when shown).
-WINDOW_NAMES = ("Whole record", "On-time (steady)", "End of on-time", "Off-time", "Late off-time", "Gates")
+WINDOW_NAMES = (
+    "Whole record",
+    "On-time (steady)",
+    "End of on-time",
+    "Off-time",
+    "Late off-time",
+    "Gates",
+    "First minute",
+    "Last minute",
+)
 #: Shading of each window kind.
 _SHADES = {
     "on": (59, 130, 246, 22),

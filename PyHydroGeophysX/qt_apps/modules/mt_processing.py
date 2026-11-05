@@ -62,6 +62,7 @@ from PyHydroGeophysX.qt_apps.qt_utils import (
 )
 from PyHydroGeophysX.qt_apps.widgets import length_units
 from PyHydroGeophysX.qt_apps.modules.mt_qc import MTFrequencyQC
+from PyHydroGeophysX.qt_apps.modules.mt_survey_tab import MTSurveyTab
 from PyHydroGeophysX.qt_apps.widgets.figure_pane import FigurePane as _FigurePane
 from PyHydroGeophysX.qt_apps.widgets.run_controls import StopButton, progress_with_stop
 from PyHydroGeophysX.qt_apps.workers import ProcessWorkflowWorker, TaskWorker
@@ -75,8 +76,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-_RECORDING_FILTER = ("MT time series (*.bin *.td_* *.ats *.z3d *.Z3D *.tbl *.TBL *.txt *.TXT);;"
-                     "All files (*)")
+_RECORDING_FILTER = "MT time series (*.bin *.td_* *.ats *.z3d *.Z3D *.tbl *.TBL *.txt *.TXT);;All files (*)"
 _TF_FILTER = "MT transfer functions (*.edi *.EDI *.xml *.zss *.zrr *.zmm *.j);;All files (*)"
 _TEM_FILTER = "TEM sounding (*.csv *.txt *.dat *.npz);;All files (*)"
 #: Periods (s) looked for as a receiver's own interference when a recording is
@@ -261,7 +261,7 @@ class MTProcessingModule(BaseModule):
         # then the profile - its phase tensors (to choose the strike) and its section.
         for pane, title in ((self._series_pane, "Time series"), (self._sounding_pane, "Sounding"),
                             (self._dimension_pane, "Dimensionality"), (self._model_pane, "1D model"),
-                            (self._profile_pane, "Phase tensors"), (self._section_pane, "2D section")):
+                            (self._profile_pane, "Phase tensors"), (self._section_pane, "2D section"), (MTSurveyTab(self), "Sites and data quality")):
             self._tabs.addTab(pane, i18n.tr(title))
         self._series_pane.message(QCoreApplication.translate("PHGX", "Open a recording to see its channels."))
         self._sounding_pane.message(QCoreApplication.translate("PHGX", "Process a recording, or add EDI / XML sites in the panel on the right."))

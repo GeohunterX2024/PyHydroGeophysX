@@ -68,6 +68,18 @@ class SelectViewBox(pg.ViewBox):
             self.updateScaleBox(ev.buttonDownPos(), ev.pos())
 
 
+class ThinLogAxis(pg.AxisItem):
+    """A log axis labelling only the 1, 2 and 5 times 10^n ticks (as the curve viewer's)."""
+
+    def logTickStrings(self, values: Any, scale: Any, spacing: Any) -> list[str]:
+        strings = super().logTickStrings(values, scale, spacing)
+        out = []
+        for value, text in zip(values, strings, strict=False):
+            mantissa = round((10.0 ** float(value)) / (10.0 ** np.floor(float(value) + 1e-9)))
+            out.append(text if mantissa in (1, 2, 5) else "")
+        return out
+
+
 def inside(xy: np.ndarray, rect: QRectF) -> np.ndarray:
     """Indices of the ``(n, 2)`` points inside ``rect`` (view coordinates)."""
     if xy.size == 0:
@@ -194,6 +206,7 @@ __all__ = [
     "ColorBar",
     "SelectViewBox",
     "Settings",
+    "ThinLogAxis",
     "inside",
     "keys_at",
     "make_plot",

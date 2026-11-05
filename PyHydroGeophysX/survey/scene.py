@@ -40,6 +40,8 @@ LINK_COLOURS = {
     "dipole_ey": "#0891b2",
     "tx_loop": "#ea580c",
 }
+#: Roles drawn whatever the current group (it selects the sources and dipoles of one group).
+ALWAYS_SHOWN = ("site", "rx")
 #: Links drawn for "all groups" before the view keeps to the current group only.
 _ALL_LINKS_LIMIT = 400
 
@@ -249,8 +251,10 @@ def build_scene(
             tz = z_reference + (tz - z_reference) * ex
             layers.append(SurfaceLayer("terrain", tx, ty, tz))
 
-    current = np.array([g == options.group or not g for g in points.group], bool)
-    grouped = np.array([bool(g) for g in points.group], bool)
+    # Sites and receivers are always drawn: a group (a shot) selects sources and dipoles only.
+    always = points.where(ALWAYS_SHOWN)
+    current = np.array([g == options.group or not g for g in points.group], bool) | always
+    grouped = np.array([bool(g) for g in points.group], bool) & ~always
     if not options.group:
         current = np.ones(points.size, bool)
     if options.show_points:
@@ -389,6 +393,7 @@ def _bounds(layers: Sequence[Layer], z_reference: float) -> tuple[float, float, 
 
 
 __all__ = [
+    "ALWAYS_SHOWN",
     "FADED",
     "LINK_COLOURS",
     "ROLE_STYLE",

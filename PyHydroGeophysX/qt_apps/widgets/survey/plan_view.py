@@ -32,7 +32,7 @@ from PyHydroGeophysX.qt_apps.widgets.survey.common import (
 )
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.survey.layout import SurveyLayout
-from PyHydroGeophysX.survey.scene import FADED, LINK_COLOURS, ROLE_STYLE
+from PyHydroGeophysX.survey.scene import ALWAYS_SHOWN, FADED, LINK_COLOURS, ROLE_STYLE
 
 #: Role names as a legend shows them (English source text, translated when shown).
 ROLE_NAMES = dict(
@@ -47,6 +47,14 @@ ROLE_NAMES = dict(
         ("rx", "Receiver"),
     )
 )
+
+
+def has_grouped_sources(layout: SurveyLayout | None) -> bool:
+    """Whether ``layout`` has sources that belong to groups (the shots of a DC/IP line)."""
+    if layout is None:
+        return False
+    points = layout.points
+    return bool((points.where(("A", "B", "tx")) & np.array([bool(g) for g in points.group], bool)).any())
 
 
 class SurveyPlanView(QWidget):
@@ -118,6 +126,7 @@ class SurveyPlanView(QWidget):
     # -- data ---------------------------------------------------------------
     def set_layout(self, layout: SurveyLayout | None) -> None:
         self._layout = layout
+        self._others.setVisible(has_grouped_sources(layout))
         names = sorted(layout.points.attrs) if layout is not None else []
         current = self._colour.currentData()
         self._colour.blockSignals(True)
@@ -152,6 +161,7 @@ class SurveyPlanView(QWidget):
         include_remote = self._remote.isChecked()
         current_group = self._selection.group()
         in_group = np.array([g in ("", current_group) or not current_group for g in points.group], bool)
+        in_group |= points.where(ALWAYS_SHOWN)
         remote = points.is_remote()
         attribute = str(self._colour.currentData() or "")
         values = points.attrs.get(attribute) if attribute else None
@@ -178,6 +188,17 @@ class SurveyPlanView(QWidget):
         notes = self._draw_remote(layout, include_remote, in_group)
         if values is not None and limits is not None:
             self._bar.show(self._colormap.colormap(), limits, i18n.tr(attribute))
+        here = points.where(ALWAYS_SHOWN, current_group) if current_group else np.zeros(points.size, bool)
+        if here.any():
+            ring = pg.ScatterPlotItem(
+                points.xyz[here, 0],
+                points.xyz[here, 1],
+                symbol="o",
+                size=22,
+                brush=None,
+                pen=pg.mkPen("#f59e0b", width=2.5),
+            )
+            plot.addItem(ring)
         plot.addItem(self._selected)
         self._mark_selected()
         if layout.crs:
@@ -299,4 +320,4 @@ class SurveyPlanView(QWidget):
         self.redraw()
 
 
-__all__ = ["ROLE_NAMES", "SurveyPlanView"]
+__all__ = ["ROLE_NAMES", "SurveyPlanView", "has_grouped_sources"]

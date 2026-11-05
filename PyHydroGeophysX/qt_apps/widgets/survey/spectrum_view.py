@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
 
 from PyHydroGeophysX.qt_apps import i18n, theme
 from PyHydroGeophysX.qt_apps.widgets.flow_layout import FlowLayout, group
-from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings
+from PyHydroGeophysX.qt_apps.widgets.survey.common import Settings, ThinLogAxis
 from PyHydroGeophysX.qt_apps.widgets.survey.trace_view import REFERENCE_COLOUR
 from PyHydroGeophysX.survey.spectra import (
     NoiseMetrics,
@@ -92,10 +92,11 @@ class SurveySpectrumView(QWidget):
         )
         self._reference.setChecked(self._settings.get("reference", False))
         self._reference.toggled.connect(self._on_reference)
-        self._plot = pg.PlotWidget()
+        self._plot = pg.PlotWidget(axisItems={"left": ThinLogAxis("left")})
         self._plot.showGrid(x=True, y=True, alpha=0.2)
         self._plot.setMenuEnabled(False)
         self._plot.setLogMode(x=False, y=True)
+        self._plot.getAxis("left").setStyle(hideOverlappingLabels=True)
         self._plot.getAxis("left").enableAutoSIPrefix(False)
         self._plot.setLabel("bottom", QCoreApplication.translate("PHGX", "Frequency (Hz)"))
         self._legend = self._plot.addLegend(offset=(8, 8))
