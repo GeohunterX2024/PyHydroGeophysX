@@ -84,14 +84,22 @@ class SurveyTraceView(QWidget):
             QCoreApplication.translate("PHGX", "Align every group on its time origin (a shot's switch-off)")
         )
         self._time_mode.setVisible(False)
-        self._time_mode.currentIndexChanged.connect(lambda _i: self.redraw())
+        self._time_mode.currentIndexChanged.connect(self._on_time_mode)
         self._normalize = QCheckBox(QCoreApplication.translate("PHGX", "Normalise by window mean"))
         self._normalize.setToolTip(
             QCoreApplication.translate(
-                "PHGX", "Divide each curve by its mean absolute value inside the chosen window"
+                "PHGX", "Divide each curve by its mean inside the window chosen beside it, keeping the sign"
             )
         )
         self._normalize.toggled.connect(self._on_normalize)
+        self._norm_window = QComboBox()
+        self._norm_window.setToolTip(
+            QCoreApplication.translate(
+                "PHGX", "Window the mean is taken over; the steady on-time gives V/Vp for a DC/IP shot"
+            )
+        )
+        self._norm_window.setEnabled(False)
+        self._norm_window.currentIndexChanged.connect(self._on_norm_window)
         self._draw = QComboBox()
         self._draw.addItem(QCoreApplication.translate("PHGX", "Each curve"), "curves")
         self._draw.addItem(QCoreApplication.translate("PHGX", "Median and 10-90% band"), "band")
@@ -129,6 +137,7 @@ class SurveyTraceView(QWidget):
         controls.addWidget(self._reference)
         controls.addWidget(group(QCoreApplication.translate("PHGX", "Time axis"), self._time_mode))
         controls.addWidget(self._normalize)
+        controls.addWidget(self._norm_window)
         controls.addWidget(group(QCoreApplication.translate("PHGX", "Curves drawn"), self._draw))
         controls.addWidget(group(QCoreApplication.translate("PHGX", "Up to"), self._limit))
         layout = QVBoxLayout(self)
@@ -172,6 +181,18 @@ class SurveyTraceView(QWidget):
         index = self._window.findData(wanted)
         self._window.setCurrentIndex(max(index, 0))
         self._window.blockSignals(False)
+        windows = focus.windows if focus is not None else ()
+        steady = next((window.name for window in windows if window.kind == "on"), "")
+        wanted = self._norm_window.currentData() or self._settings.get("norm_window", "") or steady
+        self._norm_window.blockSignals(True)
+        self._norm_window.clear()
+        for window in windows:
+            self._norm_window.addItem(i18n.tr(window.name), window.name)
+        index = self._norm_window.findData(wanted)
+        if index < 0:
+            index = self._norm_window.findData(steady)
+        self._norm_window.setCurrentIndex(max(index, 0))
+        self._norm_window.blockSignals(False)
         self._sync_band()
         self.redraw()
 
@@ -197,10 +218,19 @@ class SurveyTraceView(QWidget):
         compact = len(styles) > COMPACT_LEGEND
         band = self._draw.currentData() == "band" and self._draw.isEnabled()
         if band:
-            self._draw_band(collection, drawn)
+            drawn = styles
+            self._draw_band(collection, styles)
         else:
             self._draw_curves(drawn, compact)
-        self._plot.setLabel("left", focus.unit or QCoreApplication.translate("PHGX", "Value"))
+        if self._normalize.isChecked():
+            self._plot.setLabel(
+                "left",
+                QCoreApplication.translate("PHGX", "Ratio to the mean over {0}").format(
+                    i18n.tr(str(self._norm_window.currentData() or ""))
+                ),
+            )
+        else:
+            self._plot.setLabel("left", focus.unit or QCoreApplication.translate("PHGX", "Value"))
         self._draw_reference(focus)
         if self._shade.isChecked():
             shift = self._shift()
@@ -329,7 +359,7 @@ class SurveyTraceView(QWidget):
     def _values(self, traces: TraceSet) -> np.ndarray:
         if not self._normalize.isChecked():
             return traces.values
-        window = traces.window(str(self._window.currentData() or ""))
+        window = traces.window(str(self._norm_window.currentData() or ""))
         return normalized(traces.values, window_mask(traces.t, window))
 
     def _sync_band(self) -> None:
@@ -352,15 +382,21 @@ class SurveyTraceView(QWidget):
             return
         shift = self._shift()
         if window is not None and window.kind != "record":
-            self._plot.setXRange(window.start - shift, window.end - shift, padding=0.02)
-            mask = traces.mask(window)
-            if mask.any() and traces.size:
-                values = traces.values[:, mask]
-                finite = values[np.isfinite(values)]
-                if finite.size:
-                    lo, hi = float(finite.min()), float(finite.max())
-                    pad = 0.05 * (hi - lo or abs(hi) or 1.0)
-                    self._plot.setYRange(lo - pad, hi + pad, padding=0)
+            start, end = window.start - shift, window.end - shift
+            self._plot.setXRange(start, end, padding=0.02)
+            sets = self._collection.sets if self._collection is not None else (traces,)
+            parts = []
+            for item in sets:
+                times = self._times(item)
+                inside = (times >= start) & (times <= end)
+                if inside.any() and item.size:
+                    values = self._values(item)[:, inside]
+                    parts.append(values[np.isfinite(values)])
+            finite = np.concatenate(parts) if parts else np.zeros(0)
+            if finite.size:
+                lo, hi = float(finite.min()), float(finite.max())
+                pad = 0.05 * (hi - lo or abs(hi) or 1.0)
+                self._plot.setYRange(lo - pad, hi + pad, padding=0)
         else:
             self._plot.getPlotItem().enableAutoRange()
 
@@ -378,9 +414,19 @@ class SurveyTraceView(QWidget):
         self._settings.set("reference", bool(on))
         self.redraw()
 
-    def _on_normalize(self, _on: bool) -> None:
+    def _on_time_mode(self, _index: int) -> None:
         self._sync_band()
         self.redraw()
+
+    def _on_normalize(self, on: bool) -> None:
+        self._norm_window.setEnabled(bool(on))
+        self._sync_band()
+        self.redraw()
+
+    def _on_norm_window(self, _index: int) -> None:
+        self._settings.set("norm_window", str(self._norm_window.currentData() or ""))
+        if self._normalize.isChecked():
+            self.redraw()
 
     def _on_limit(self, value: int) -> None:
         self._settings.set("limit", int(value))

@@ -8110,6 +8110,7 @@ B：{1}
     </message>
     <message>
       <source>Role</source>
+      <extracomment>The A points of the other groups on screen (None when there are none).</extracomment>
       <translation>类型</translation>
     </message>
     <message>
@@ -8166,8 +8167,12 @@ B：{1}
       <translation>按时间窗均值归一化</translation>
     </message>
     <message>
-      <source>Divide each curve by its mean absolute value inside the chosen window</source>
-      <translation>每条曲线除以所选时间窗内的绝对值均值</translation>
+      <source>Divide each curve by its mean inside the window chosen beside it, keeping the sign</source>
+      <translation>每条曲线除以右侧所选时间窗内的均值（带符号，一次场反号的炮也得到同号比值）</translation>
+    </message>
+    <message>
+      <source>Window the mean is taken over; the steady on-time gives V/Vp for a DC/IP shot</source>
+      <translation>求均值的时间窗；DCIP 炮选稳定供电段即为 V/Vp</translation>
     </message>
     <message>
       <source>Each curve</source>
@@ -8200,6 +8205,10 @@ B：{1}
     <message>
       <source>Choose a group and its channels to see their curves.</source>
       <translation>选择一组及其通道以查看曲线。</translation>
+    </message>
+    <message>
+      <source>Ratio to the mean over {0}</source>
+      <translation>与{0}均值之比</translation>
     </message>
     <message>
       <source>{0} channels · {1} samples · {2:g} samples/s</source>

@@ -151,6 +151,8 @@ class SurveyPlanView(QWidget):
         selection.groupsChanged.connect(lambda _g: self.redraw())
         length_units.notifier().changed.connect(lambda _u: self._label_axes())
         self._selected = pg.ScatterPlotItem()
+        #: The A points of the other groups on screen (None when there are none).
+        self._shown: pg.ScatterPlotItem | None = None
         self._label_axes()
 
     # -- data ---------------------------------------------------------------
@@ -210,6 +212,7 @@ class SurveyPlanView(QWidget):
         plot.clear()
         self._legend.clear()
         self._spots = []
+        self._shown = None
         self._bar.hide()
         layout = self._layout
         if layout is None or layout.points.size == 0:
@@ -273,16 +276,15 @@ class SurveyPlanView(QWidget):
             )
             if mask.any():
                 symbol = style.symbol("shown")
-                plot.addItem(
-                    pg.ScatterPlotItem(
-                        points.xyz[mask, 0],
-                        points.xyz[mask, 1],
-                        symbol=symbol.symbol,
-                        size=symbol.size,
-                        brush=symbol.brush(),
-                        pen=symbol.pen(),
-                    )
+                self._shown = pg.ScatterPlotItem(
+                    points.xyz[mask, 0],
+                    points.xyz[mask, 1],
+                    symbol=symbol.symbol,
+                    size=symbol.size,
+                    brush=symbol.brush(),
+                    pen=symbol.pen(),
                 )
+                plot.addItem(self._shown)
         plot.addItem(self._selected)
         self._mark_selected()
         if layout.crs:

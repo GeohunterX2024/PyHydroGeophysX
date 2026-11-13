@@ -84,12 +84,25 @@ def window_mask(t: np.ndarray, window: Window | None) -> np.ndarray:
     return np.asarray((t >= window.start) & (t <= window.end), dtype=bool)
 
 
+#: Below this fraction of the mean absolute value, a window's signed mean counts as zero.
+SIGNED_MEAN_FLOOR = 1e-3
+
+
 def normalized(values: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    """Each row divided by its mean absolute value on ``mask`` (1 where that mean is 0)."""
+    """Each row divided by its signed mean on ``mask``: V/Vp over the steady on-time.
+
+    The sign makes a reversed primary (the source on the other side of the
+    receiver) give the same ratio. A window whose mean is about zero (it crosses
+    zero, like a noise window) divides by its mean absolute value instead, and
+    a row that is zero there is left as it is.
+    """
     used = mask if mask.any() else np.ones(values.shape[1], dtype=bool)
     with np.errstate(invalid="ignore"):
-        scale = np.nanmean(np.abs(values[:, used]), axis=1)
-    scale = np.where(np.isfinite(scale) & (scale > 0), scale, 1.0)
+        signed = np.nanmean(values[:, used], axis=1)
+        absolute = np.nanmean(np.abs(values[:, used]), axis=1)
+    ok_abs = np.isfinite(absolute) & (absolute > 0)
+    ok_signed = ok_abs & np.isfinite(signed) & (np.abs(signed) > SIGNED_MEAN_FLOOR * absolute)
+    scale = np.where(ok_signed, signed, np.where(ok_abs, absolute, 1.0))
     return values / scale[:, None]
 
 
@@ -109,6 +122,7 @@ __all__ = [
     "COLOURS",
     "DASHES",
     "MAX_DASH_GROUPS",
+    "SIGNED_MEAN_FLOOR",
     "SeriesStyle",
     "encode",
     "normalized",

@@ -69,6 +69,11 @@ def test_normalising_uses_the_window_mean_and_the_band_resamples() -> None:
     mask = np.array([False, True, True, False])
     out = normalized(values, mask)
     assert out[:, 1] == pytest.approx([1.0, 1.0])
+    reversed_primary = np.array([[3.0, 3.0, 0.3, 0.1], [-6.0, -6.0, -0.6, -0.2]])
+    on = np.array([True, True, False, False])
+    np.testing.assert_allclose(normalized(reversed_primary, on), [[1.0, 1.0, 0.1, 1 / 30]] * 2)
+    crossing = np.array([[1.0, -1.0, 5.0], [0.0, 0.0, 7.0]])
+    np.testing.assert_allclose(normalized(crossing, np.array([True, True, False])), [[1, -1, 5], [0, 0, 7]])
     grid = np.array([0.0, 1.0])
     median, low, high = percentile_band(
         ((np.array([0.0, 1.0]), np.array([0.0, 2.0])), (np.array([0.0, 1.0]), np.array([0.0, 4.0]))),

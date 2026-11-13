@@ -14,7 +14,9 @@ hidden or fill the space) and the 2-D options fold out at the right.
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -89,6 +91,7 @@ class SurveyWorkbench(QWidget):
         self._traces: TraceSet | None = None
         self._collection: TraceCollection | None = None
         self._dirty = set(TABS)
+        self._batch = 0
         self.plan = SurveyPlanView(self.selection, colormaps=colormaps, controls_outside=True)
         self.section = SurveySectionView(self.selection, colormaps=colormaps)
         self.view3d = Survey3DView(self.selection, colormaps=colormaps, settings_key=f"{settings_key}/3d")
@@ -272,6 +275,17 @@ class SurveyWorkbench(QWidget):
         self._dirty = set(TABS)
         self._refresh_visible()
 
+    @contextmanager
+    def batch(self) -> Iterator[None]:
+        """Several changes (group, groups, channels, display keys) redrawn once, when the block ends."""
+        self._batch += 1
+        try:
+            yield
+        finally:
+            self._batch -= 1
+            if self._batch == 0:
+                self._refresh_visible()
+
     def show_tab(self, key: str, *, three_d: bool | None = None) -> None:
         """Bring tab ``key`` (``layout``, ``traces``, ``spectrum``) forward; optionally choose 2-D or 3-D."""
         self.tabs.setCurrentIndex(TABS.index(key))
@@ -302,7 +316,7 @@ class SurveyWorkbench(QWidget):
     # -- drawing ------------------------------------------------------------
     def _refresh_visible(self) -> None:
         tab = self.current_tab()
-        if tab not in self._dirty:
+        if self._batch or tab not in self._dirty:
             return
         self._dirty.discard(tab)
         if tab == "layout":
@@ -332,6 +346,13 @@ class SurveyWorkbench(QWidget):
             and isinstance(provider, MultiGroupProvider)
         ):
             collection = provider.survey_trace_sets(groups, self._channels)
+            focus = self.selection.group()
+            if (
+                collection is not None
+                and focus != collection.focus
+                and any(item.group == focus for item in collection.sets)
+            ):
+                collection = replace(collection, focus=focus)
         else:
             one = provider.survey_traces(groups[0], self._channels)
             collection = TraceCollection.single(one) if one is not None else None

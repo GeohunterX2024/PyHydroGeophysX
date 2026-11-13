@@ -13,7 +13,10 @@ shows at 100 Hz, on top of the second harmonic.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import hashlib
+from collections import OrderedDict
+from dataclasses import dataclass, replace
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -209,11 +212,185 @@ def noise_metrics(
     return tuple(results)
 
 
+def _digest(values: FloatArray) -> bytes:
+    return hashlib.sha256(np.ascontiguousarray(values).tobytes()).digest()
+
+
+def _bounds(window: Window | None) -> tuple[float, float] | None:
+    return None if window is None else (float(window.start), float(window.end))
+
+
+class SpectrumCache:
+    """Spectra and noise measures per channel, kept while the channel's samples stay the same.
+
+    An entry is keyed by a digest of the channel's samples and of the time axis
+    and by the windows' bounds, never by names: a redraw that adds channels or
+    shots, changes the line frequency or toggles the reference reuses what was
+    computed, and data that change (denoised, another version) are recomputed.
+    Channels missing from the cache are computed together, as :func:`trace_spectrum`
+    and :func:`noise_metrics` would. The oldest entries go past ``max_entries``.
+    """
+
+    def __init__(self, max_entries: int = 30000) -> None:
+        self.max_entries = int(max_entries)
+        self.hits = 0
+        self.misses = 0
+        self._entries: OrderedDict[tuple[Any, ...], Any] = OrderedDict()
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def clear(self) -> None:
+        self._entries.clear()
+        self.hits = self.misses = 0
+
+    def spectrum(self, traces: TraceSet, window: Window | None = None) -> Spectrum:
+        """:func:`trace_spectrum` (default segment length), from cached channels where it can."""
+        return self._spectrum(traces, window, *self._digests(traces))
+
+    def metrics(
+        self,
+        traces: TraceSet,
+        window: Window | None = None,
+        *,
+        line_frequency: float | None = None,
+        signal_window: Window | None = None,
+        noise_window: Window | None = None,
+        harmonics: int = 4,
+    ) -> tuple[NoiseMetrics, ...]:
+        """:func:`noise_metrics` of the spectrum over ``window``, from cached channels where it can."""
+        return self._metrics(
+            traces, window, *self._digests(traces), line_frequency, signal_window, noise_window, harmonics
+        )
+
+    def measure(
+        self,
+        traces: TraceSet,
+        window: Window | None = None,
+        *,
+        line_frequency: float | None = None,
+        signal_window: Window | None = None,
+        noise_window: Window | None = None,
+        harmonics: int = 4,
+    ) -> tuple[Spectrum, tuple[NoiseMetrics, ...]]:
+        """Both :meth:`spectrum` and :meth:`metrics`, reading the samples once."""
+        time, rows = self._digests(traces)
+        return (
+            self._spectrum(traces, window, time, rows),
+            self._metrics(traces, window, time, rows, line_frequency, signal_window, noise_window, harmonics),
+        )
+
+    def _digests(self, traces: TraceSet) -> tuple[bytes, tuple[bytes, ...]]:
+        return _digest(traces.t), tuple(_digest(row) for row in traces.values)
+
+    def _get(self, key: tuple[Any, ...]) -> Any:
+        found = self._entries.get(key)
+        if found is not None:
+            self._entries.move_to_end(key)
+            self.hits += 1
+        return found
+
+    def _put(self, key: tuple[Any, ...], value: Any) -> None:
+        self._entries[key] = value
+        self._entries.move_to_end(key)
+        while len(self._entries) > self.max_entries:
+            self._entries.popitem(last=False)
+
+    def _spectrum(
+        self, traces: TraceSet, window: Window | None, time: bytes, rows: tuple[bytes, ...]
+    ) -> Spectrum:
+        mask = traces.mask(window)
+        rate = traces.sample_rate
+        base = ("psd", time, _bounds(window))
+        frequency = self._get((*base, "frequency"))
+        found = [self._get((*base, digest)) if frequency is not None else None for digest in rows]
+        missing = [index for index, row in enumerate(found) if row is None]
+        if missing:
+            self.misses += len(missing)
+            frequency, power = psd(traces.values[missing][:, mask], rate)
+            self._put((*base, "frequency"), frequency)
+            for index, row in zip(missing, power, strict=True):
+                found[index] = row
+                self._put((*base, rows[index]), row)
+        if frequency is None:
+            frequency, _ = psd(np.zeros((1, int(mask.sum()))), rate)
+        power = np.vstack(found) if found else np.zeros((0, frequency.size))
+        reference = None
+        if traces.reference is not None:
+            key = (*base, "reference", _digest(traces.reference))
+            reference = self._get(key)
+            if reference is None:
+                _, ref_power = psd(traces.reference[mask], rate)
+                reference = ref_power[0] if ref_power.size else None
+                if reference is not None:
+                    self._put(key, reference)
+        return Spectrum(
+            frequency,
+            power,
+            traces.channels,
+            traces.labels,
+            traces.unit,
+            rate,
+            window.name if window is not None else "",
+            reference,
+        )
+
+    def _metrics(
+        self,
+        traces: TraceSet,
+        window: Window | None,
+        time: bytes,
+        rows: tuple[bytes, ...],
+        line_frequency: float | None,
+        signal_window: Window | None,
+        noise_window: Window | None,
+        harmonics: int,
+    ) -> tuple[NoiseMetrics, ...]:
+        f0 = float(line_frequency or traces.line_frequency or DEFAULT_LINE_FREQUENCY)
+        base = (
+            "metrics",
+            time,
+            _bounds(window),
+            _bounds(signal_window),
+            _bounds(noise_window),
+            f0,
+            harmonics,
+        )
+        found: list[NoiseMetrics | None] = [self._get((*base, digest)) for digest in rows]
+        missing = [index for index, item in enumerate(found) if item is None]
+        if missing:
+            self.misses += len(missing)
+            part = replace(
+                traces,
+                values=traces.values[missing],
+                channels=tuple(traces.channels[i] for i in missing),
+                labels=tuple(traces.labels[i] for i in missing),
+                keys=tuple(traces.keys[i] for i in missing) if traces.keys else (),
+            )
+            spectrum = self._spectrum(part, window, time, tuple(rows[i] for i in missing))
+            computed = noise_metrics(
+                part,
+                spectrum,
+                line_frequency=f0,
+                signal_window=signal_window,
+                noise_window=noise_window,
+                harmonics=harmonics,
+            )
+            for index, item in zip(missing, computed, strict=True):
+                found[index] = item
+                self._put((*base, rows[index]), item)
+        return tuple(
+            item if item.channel == name else replace(item, channel=name)
+            for item, name in zip((m for m in found if m is not None), traces.channels, strict=True)
+        )
+
+
 __all__ = [
     "DEFAULT_LINE_FREQUENCY",
     "Harmonic",
     "NoiseMetrics",
     "Spectrum",
+    "SpectrumCache",
     "apparent_frequency",
     "line_harmonics",
     "noise_metrics",
