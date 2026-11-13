@@ -3,7 +3,9 @@
 The points sit at the ground elevation minus their pseudo-depth, coloured by a
 value of theirs; the current group's points are ringed. The legend names the
 pseudo-depth convention, which is a display convention, not a depth of
-investigation. A box (with "Box select") selects the keys of the points inside it.
+investigation. A box in the toolbar's Select mode selects the keys of the points inside it.
+Symbols, the terrain line, axes, legend and colour bar follow the view's
+:class:`~.plot_style.PlotStyle`.
 """
 
 from __future__ import annotations
@@ -26,11 +28,18 @@ from PyHydroGeophysX.qt_apps.widgets.survey.common import (
     default_attribute,
     inside,
     keys_at,
-    make_plot,
     value_brushes,
     value_range,
     widen_combo,
 )
+from PyHydroGeophysX.qt_apps.widgets.survey.plot_style import (
+    PlotStyle,
+    apply_frame,
+    apply_ranges,
+    load_style,
+    section_default,
+)
+from PyHydroGeophysX.qt_apps.widgets.survey.plot_tools import attach_toolbar, make_navigable_plot
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.survey import attributes
 from PyHydroGeophysX.survey.layout import SurveyLayout
@@ -54,6 +63,8 @@ class SurveySectionView(QWidget):
         super().__init__(parent)
         self._selection = selection
         self._settings = Settings("section")
+        self._style = load_style(section_default(), self._settings.get("style", ""))
+        self._labels = ("", "")
         self._layout: SurveyLayout | None = None
         self._pseudo: PseudoPoints | None = None
         self._colour = widen_combo(QComboBox(), 16)
@@ -70,14 +81,19 @@ class SurveySectionView(QWidget):
         self._terrain = QCheckBox(QCoreApplication.translate("PHGX", "Terrain"))
         self._terrain.setChecked(self._settings.get("terrain", True))
         self._terrain.toggled.connect(self._on_terrain)
-        self._box = QCheckBox(QCoreApplication.translate("PHGX", "Box select"))
-        self._box.setToolTip(
-            QCoreApplication.translate("PHGX", "Drag a box to select the readings inside it")
-        )
-        self._plot, self._view = make_plot(self)
+        self._plot, self._view = make_navigable_plot(self)
         self._view.sigBoxSelected.connect(self._on_box)
-        self._box.toggled.connect(self._view.set_selecting)
+        self._view.home_action = self.full_view
         self._bar = ColorBar(self._plot.getPlotItem())
+        self._key = self._plot.addLegend(offset=(-10, 10))
+        self.toolbar = attach_toolbar(
+            self._plot,
+            self._view,
+            axis_names=(
+                QCoreApplication.translate("PHGX", "Distance"),
+                QCoreApplication.translate("PHGX", "Elevation"),
+            ),
+        )
         self._legend = QLabel()
         self._legend.setWordWrap(True)
         controls = FlowLayout(spacing=6)
@@ -86,16 +102,13 @@ class SurveySectionView(QWidget):
         controls.addWidget(self._colormap)
         controls.addWidget(self._range)
         controls.addWidget(self._terrain)
-        controls.addWidget(self._box)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(controls)
         layout.addWidget(self._plot, 1)
         layout.addWidget(self._legend)
-        self._selected = pg.ScatterPlotItem(
-            size=11, pen=pg.mkPen("#111827", width=1.6), brush=None, symbol="o"
-        )
-        self._current = pg.ScatterPlotItem(size=9, pen=pg.mkPen("#f59e0b", width=1.6), brush=None, symbol="o")
+        self._selected = pg.ScatterPlotItem()
+        self._current = pg.ScatterPlotItem()
         selection.groupChanged.connect(lambda _g: self._mark())
         selection.keysChanged.connect(lambda _k: self._mark())
         length_units.notifier().changed.connect(lambda _u: self._label_axes())
@@ -128,34 +141,68 @@ class SurveySectionView(QWidget):
     def log_scale(self) -> bool:
         return self._log.isChecked()
 
+    # -- style --------------------------------------------------------------
+    def style(self) -> PlotStyle:
+        return self._style
+
+    def set_style(self, style: PlotStyle) -> None:
+        """Draw with ``style`` from now on, and remember it."""
+        self._style = style
+        self._settings.set("style", style.to_json())
+        self._apply_frame()
+        apply_ranges(self._plot, style)
+        self.redraw()
+
+    def view_range(self) -> tuple[float, float, float, float]:
+        (x0, x1), (y0, y1) = self._view.viewRange()
+        return float(x0), float(x1), float(y0), float(y1)
+
+    def full_view(self) -> None:
+        """The style's fixed ranges, or every point."""
+        if not apply_ranges(self._plot, self._style):
+            self._view.autoRange()
+
+    def _apply_frame(self) -> None:
+        apply_frame(self._plot, self._style, *self._labels, legend=self._key)
+
     def _label_axes(self) -> None:
-        length_units.pyqtgraph_axis(
-            self._plot, "bottom", QCoreApplication.translate("PHGX", "Distance along the line")
+        self._labels = (
+            length_units.pyqtgraph_axis(
+                self._plot, "bottom", QCoreApplication.translate("PHGX", "Distance along the line")
+            ),
+            length_units.pyqtgraph_axis(self._plot, "left", QCoreApplication.translate("PHGX", "Elevation")),
         )
-        length_units.pyqtgraph_axis(self._plot, "left", QCoreApplication.translate("PHGX", "Elevation"))
+        self._apply_frame()
 
     def redraw(self) -> None:
         plot = self._plot
         plot.clear()
+        self._key.clear()
         self._bar.hide()
         layout, pseudo = self._layout, self._pseudo
         if layout is None:
             self._legend.setText(QCoreApplication.translate("PHGX", "No survey layout to show."))
             return
+        style = self._style
         if self._terrain.isChecked() and layout.topography is not None and layout.topography.distance.size:
             plot.plot(
-                layout.topography.distance, layout.topography.elevation, pen=pg.mkPen("#4d7c0f", width=1.6)
+                layout.topography.distance,
+                layout.topography.elevation,
+                pen=style.line("terrain").pen(),
+                name=QCoreApplication.translate("PHGX", "Terrain"),
             )
         along = layout.along()
         line = layout.line_points()
+        electrode = style.symbol("electrode")
         plot.addItem(
             pg.ScatterPlotItem(
                 along[line],
                 layout.points.xyz[line, 2],
-                symbol="t",
-                size=7,
-                brush=pg.mkBrush("#1f2937"),
-                pen=None,
+                symbol=electrode.symbol,
+                size=electrode.size,
+                brush=electrode.brush(),
+                pen=electrode.pen(),
+                name=QCoreApplication.translate("PHGX", "Electrode"),
             )
         )
         legend = ""
@@ -163,14 +210,26 @@ class SurveySectionView(QWidget):
             attribute = str(self._colour.currentData() or "")
             values = pseudo.attrs.get(attribute) if attribute else None
             log = self._log.isChecked()
-            brushes: Any = pg.mkBrush("#6b7280")
+            point = style.symbol("pseudo")
+            brushes: Any = point.brush() or pg.mkBrush("#6b7280")
             auto = value_range(values, log)
             if values is not None and auto is not None:
                 limits = self._range.limits(*auto)
                 brushes = value_brushes(values, self._colormap.colormap(), limits, log)
-                label = i18n.tr(attribute) + (" [log10]" if log else "")
-                self._bar.show(self._colormap.colormap(), limits, label)
-            plot.addItem(pg.ScatterPlotItem(pseudo.along, pseudo.elevation, size=7, brush=brushes, pen=None))
+                label = style.colour_bar_label or i18n.tr(attribute) + (" [log10]" if log else "")
+                if style.colour_bar:
+                    self._bar.show(self._colormap.colormap(), limits, label)
+            plot.addItem(
+                pg.ScatterPlotItem(
+                    pseudo.along,
+                    pseudo.elevation,
+                    symbol=point.symbol,
+                    size=point.size,
+                    brush=brushes,
+                    pen=point.pen(),
+                    name=QCoreApplication.translate("PHGX", "Pseudo-depth points"),
+                )
+            )
             legend = i18n.tr(pseudo.legend)
         plot.addItem(self._current)
         plot.addItem(self._selected)
@@ -190,14 +249,30 @@ class SurveySectionView(QWidget):
             if current_group
             else np.zeros(pseudo.size, bool)
         )
-        self._current.setData(pseudo.along[mine], pseudo.elevation[mine])
+        current = self._style.symbol("current")
+        self._current.setData(
+            pseudo.along[mine],
+            pseudo.elevation[mine],
+            symbol=current.symbol,
+            size=current.size,
+            pen=current.pen(),
+            brush=current.brush(),
+        )
         chosen = set(self._selection.keys())
         picked = (
             np.array([k in chosen for k in pseudo.keys], bool)
             if chosen and pseudo.keys
             else np.zeros(pseudo.size, bool)
         )
-        self._selected.setData(pseudo.along[picked], pseudo.elevation[picked])
+        selected = self._style.symbol("selected")
+        self._selected.setData(
+            pseudo.along[picked],
+            pseudo.elevation[picked],
+            symbol=selected.symbol,
+            size=selected.size,
+            pen=selected.pen(),
+            brush=selected.brush(),
+        )
 
     def _on_box(self, rect: QRectF) -> None:
         pseudo = self._pseudo

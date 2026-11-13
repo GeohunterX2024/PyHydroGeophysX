@@ -3,7 +3,9 @@
 The current group (shot, injection, site) is drawn in full and the other
 groups' sources faded; a remote point is an arrow at the edge with its distance
 unless "Include remote B" scales the plan to it. A click picks the group of the
-point and its key; a box (with "Box select") picks the keys inside it.
+point and its key; a box in the toolbar's Select mode picks the keys inside it.
+Symbols, lines, axes, legend and colour bar follow the view's
+:class:`~.plot_style.PlotStyle`.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from typing import Any
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QCoreApplication, QRectF, Signal
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QVBoxLayout, QWidget
 
 from PyHydroGeophysX.qt_apps import i18n
@@ -25,15 +28,24 @@ from PyHydroGeophysX.qt_apps.widgets.survey.common import (
     Settings,
     inside,
     keys_at,
-    make_plot,
-    symbol_of,
     value_brushes,
     value_range,
     widen_combo,
 )
+from PyHydroGeophysX.qt_apps.widgets.survey.plot_style import (
+    PlotStyle,
+    apply_frame,
+    apply_ranges,
+    load_style,
+    plan_default,
+)
+from PyHydroGeophysX.qt_apps.widgets.survey.plot_tools import attach_toolbar, make_navigable_plot
 from PyHydroGeophysX.qt_apps.widgets.survey.selection import SurveySelection
 from PyHydroGeophysX.survey.layout import SurveyLayout
-from PyHydroGeophysX.survey.scene import ALWAYS_SHOWN, FADED, LINK_COLOURS, ROLE_STYLE
+from PyHydroGeophysX.survey.scene import ALWAYS_SHOWN, ROLE_STYLE
+
+#: Point labels drawn at most (every n-th of the line's points beyond this is too dense to read).
+MAX_LABELS = 400
 
 #: Role names as a legend shows them (English source text, translated when shown).
 ROLE_NAMES = dict(
@@ -65,13 +77,20 @@ class SurveyPlanView(QWidget):
     pointPicked = Signal(object, str)
 
     def __init__(
-        self, selection: SurveySelection, parent: QWidget | None = None, *, colormaps: Any = None
+        self,
+        selection: SurveySelection,
+        parent: QWidget | None = None,
+        *,
+        colormaps: Any = None,
+        controls_outside: bool = False,
     ) -> None:
         super().__init__(parent)
         self._selection = selection
         self._settings = Settings("plan")
+        self._style = load_style(plan_default(), self._settings.get("style", ""))
         self._layout: SurveyLayout | None = None
         self._spots: list[tuple[np.ndarray, list[Any], list[str]]] = []
+        self._labels = ("", "")
         self._colour = widen_combo(QComboBox(), 10)
         self._colour.setToolTip(
             QCoreApplication.translate("PHGX", "Colour the points by one of their values")
@@ -96,32 +115,41 @@ class SurveyPlanView(QWidget):
         )
         self._others.setChecked(self._settings.get("others", True))
         self._others.toggled.connect(self._on_others)
-        self._box = QCheckBox(QCoreApplication.translate("PHGX", "Box select"))
-        self._box.setToolTip(QCoreApplication.translate("PHGX", "Drag a box to select the points inside it"))
-        self._plot, self._view = make_plot(self)
-        self._plot.setAspectLocked(True)
+        self._plot, self._view = make_navigable_plot(self)
         self._view.sigBoxSelected.connect(self._on_box)
-        self._box.toggled.connect(self._view.set_selecting)
+        self._view.home_action = self.full_view
         self._bar = ColorBar(self._plot.getPlotItem())
-        self._legend = self._plot.addLegend(offset=(8, 8))
+        self._legend = self._plot.addLegend(offset=(-10, 10))
+        self.toolbar = attach_toolbar(
+            self._plot,
+            self._view,
+            axis_names=(
+                QCoreApplication.translate("PHGX", "East"),
+                QCoreApplication.translate("PHGX", "North"),
+            ),
+        )
         self._note = QLabel()
         self._note.setWordWrap(True)
 
-        controls = FlowLayout(spacing=6)
+        #: The colouring and layer choices; a workbench may show them in its own row.
+        self.controls = QWidget()
+        controls = FlowLayout(self.controls, spacing=6)
+        controls.setContentsMargins(0, 0, 0, 0)
         controls.addWidget(group(QCoreApplication.translate("PHGX", "Colour by"), self._colour))
         controls.addWidget(self._colormap)
         controls.addWidget(self._range)
-        for widget in (self._others, self._remote, self._box):
+        for widget in (self._others, self._remote):
             controls.addWidget(widget)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(controls)
+        if not controls_outside:
+            layout.addWidget(self.controls)
         layout.addWidget(self._plot, 1)
         layout.addWidget(self._note)
         selection.groupChanged.connect(lambda _g: self.redraw())
         selection.keysChanged.connect(lambda _k: self._mark_selected())
         length_units.notifier().changed.connect(lambda _u: self._label_axes())
-        self._selected = pg.ScatterPlotItem(size=16, pen=pg.mkPen("#f59e0b", width=2), brush=None)
+        self._selected = pg.ScatterPlotItem()
         self._label_axes()
 
     # -- data ---------------------------------------------------------------
@@ -144,10 +172,37 @@ class SurveyPlanView(QWidget):
     def plot_widget(self) -> pg.PlotWidget:
         return self._plot
 
+    # -- style --------------------------------------------------------------
+    def style(self) -> PlotStyle:
+        return self._style
+
+    def set_style(self, style: PlotStyle) -> None:
+        """Draw with ``style`` from now on, and remember it."""
+        self._style = style
+        self._settings.set("style", style.to_json())
+        self._apply_frame()
+        apply_ranges(self._plot, style)
+        self.redraw()
+
+    def view_range(self) -> tuple[float, float, float, float]:
+        (x0, x1), (y0, y1) = self._view.viewRange()
+        return float(x0), float(x1), float(y0), float(y1)
+
+    def full_view(self) -> None:
+        """The style's fixed ranges, or every point."""
+        if not apply_ranges(self._plot, self._style):
+            self._view.autoRange()
+
+    def _apply_frame(self) -> None:
+        apply_frame(self._plot, self._style, *self._labels, legend=self._legend)
+
     # -- drawing ------------------------------------------------------------
     def _label_axes(self) -> None:
-        length_units.pyqtgraph_axis(self._plot, "bottom", QCoreApplication.translate("PHGX", "East"))
-        length_units.pyqtgraph_axis(self._plot, "left", QCoreApplication.translate("PHGX", "North"))
+        self._labels = (
+            length_units.pyqtgraph_axis(self._plot, "bottom", QCoreApplication.translate("PHGX", "East")),
+            length_units.pyqtgraph_axis(self._plot, "left", QCoreApplication.translate("PHGX", "North")),
+        )
+        self._apply_frame()
 
     def redraw(self) -> None:
         plot = self._plot
@@ -171,36 +226,41 @@ class SurveyPlanView(QWidget):
         if values is not None:
             auto = value_range(values)
             limits = self._range.limits(*auto) if auto is not None else None
+        style = self._style
         for role in dict.fromkeys(points.role):
             mask = points.where(role) & in_group & (~remote | include_remote)
             if not mask.any():
                 continue
-            colour, symbol, size = ROLE_STYLE[role]
-            brushes: Any = pg.mkBrush(colour)
+            symbol = style.symbol(role)
+            brushes: Any = symbol.brush()
             if values is not None and limits is not None:
                 brushes = value_brushes(values[mask], self._colormap.colormap(), limits)
-            self._add_points(mask, symbol_of(symbol), size, brushes, i18n.tr(ROLE_NAMES.get(role, role)))
+            self._add_points(mask, symbol, brushes, i18n.tr(ROLE_NAMES.get(role, role)))
         if self._others.isChecked() and current_group:
             other = ~in_group & points.where(("A", "B", "tx")) & ~remote
             if other.any():
+                others = style.symbol("others")
                 self._add_points(
-                    other, "t1", 7.0, pg.mkBrush(FADED), QCoreApplication.translate("PHGX", "Other shots")
+                    other, others, others.brush(), QCoreApplication.translate("PHGX", "Other shots")
                 )
         self._draw_links(layout, in_group, include_remote)
         notes = self._draw_remote(layout, include_remote, in_group)
-        if values is not None and limits is not None:
-            self._bar.show(self._colormap.colormap(), limits, i18n.tr(attribute))
+        if values is not None and limits is not None and style.colour_bar:
+            self._bar.show(self._colormap.colormap(), limits, style.colour_bar_label or i18n.tr(attribute))
         here = points.where(ALWAYS_SHOWN, current_group) if current_group else np.zeros(points.size, bool)
         if here.any():
+            current = style.symbol("current")
             ring = pg.ScatterPlotItem(
                 points.xyz[here, 0],
                 points.xyz[here, 1],
-                symbol="o",
-                size=22,
-                brush=None,
-                pen=pg.mkPen("#f59e0b", width=2.5),
+                symbol=current.symbol,
+                size=current.size,
+                brush=current.brush(),
+                pen=current.pen(),
             )
             plot.addItem(ring)
+        if style.point_labels:
+            self._draw_labels(layout, in_group & (~remote | include_remote))
         plot.addItem(self._selected)
         self._mark_selected()
         if layout.crs:
@@ -208,7 +268,7 @@ class SurveyPlanView(QWidget):
         self._note.setText("    ".join(notes))  # i18n: as written
         self._note.setVisible(bool(notes))
 
-    def _add_points(self, mask: np.ndarray, symbol: str, size: float, brushes: Any, name: str) -> None:
+    def _add_points(self, mask: np.ndarray, symbol: Any, brushes: Any, name: str) -> None:
         points = self._layout.points if self._layout is not None else None
         if points is None:
             return
@@ -216,15 +276,28 @@ class SurveyPlanView(QWidget):
         item = pg.ScatterPlotItem(
             points.xyz[index, 0],
             points.xyz[index, 1],
-            symbol=symbol,
-            size=size,
+            symbol=symbol.symbol,
+            size=symbol.size,
             brush=brushes,
-            pen=pg.mkPen("#1f2937", width=0.6),
+            pen=symbol.pen(),
             data=index,
             name=name,
         )
         item.sigClicked.connect(self._on_clicked)
         self._plot.addItem(item)
+
+    def _draw_labels(self, layout: SurveyLayout, shown: np.ndarray) -> None:
+        points = layout.points
+        index = np.flatnonzero(shown & np.array([bool(label) for label in points.label], bool))
+        index = index[:: max(1, int(self._style.label_every))][:MAX_LABELS]
+        font = QFont()
+        font.setPointSize(max(5, int(self._style.point_label_size)))
+        colour = self._style.foreground or "#1f2937"
+        for i in index:
+            label = pg.TextItem(str(points.label[i]), color=colour, anchor=(0.5, 1.3))
+            label.setFont(font)
+            label.setPos(float(points.xyz[i, 0]), float(points.xyz[i, 1]))
+            self._plot.addItem(label)
 
     def _draw_links(self, layout: SurveyLayout, in_group: np.ndarray, include_remote: bool) -> None:
         links = layout.links
@@ -248,8 +321,7 @@ class SurveyPlanView(QWidget):
             y = np.empty(2 * len(rows))
             x[0::2], x[1::2] = xyz[links.start[rows], 0], xyz[links.end[rows], 0]
             y[0::2], y[1::2] = xyz[links.start[rows], 1], xyz[links.end[rows], 1]
-            pen = pg.mkPen(LINK_COLOURS.get(kind, "#374151"), width=2)
-            self._plot.plot(x, y, pen=pen, connect="pairs")
+            self._plot.plot(x, y, pen=self._style.line(kind).pen(), connect="pairs")
 
     def _draw_remote(self, layout: SurveyLayout, include_remote: bool, in_group: np.ndarray) -> list[str]:
         points = layout.points
@@ -272,12 +344,13 @@ class SurveyPlanView(QWidget):
             if include_remote or distance == 0:
                 continue
             direction = offset / distance
+            colour = self._style.symbol("B").fill or ROLE_STYLE["B"][0]
             tip = centre + direction * half * 1.1
             # ArrowItem angles are in screen pixels (y down), with 0 pointing left.
             angle = 180.0 - float(np.degrees(np.arctan2(direction[1], direction[0])))
-            arrow = pg.ArrowItem(pos=(tip[0], tip[1]), angle=angle, headLen=16, brush=ROLE_STYLE["B"][0])
+            arrow = pg.ArrowItem(pos=(tip[0], tip[1]), angle=angle, headLen=16, brush=colour)
             self._plot.addItem(arrow)
-            label = pg.TextItem(f"{points.role[index]} {distance / 1000.0:.2f} km", color=ROLE_STYLE["B"][0])
+            label = pg.TextItem(f"{points.role[index]} {distance / 1000.0:.2f} km", color=colour)
             label.setPos(tip[0], tip[1])
             self._plot.addItem(label)
         return notes
@@ -290,7 +363,15 @@ class SurveyPlanView(QWidget):
         chosen = set(self._selection.keys())
         index = [i for i, key in enumerate(layout.points.keys) if key in chosen] if chosen else []
         xy = layout.points.xyz[index, :2] if index else np.zeros((0, 2))
-        self._selected.setData(xy[:, 0], xy[:, 1], symbol="o")
+        selected = self._style.symbol("selected")
+        self._selected.setData(
+            xy[:, 0],
+            xy[:, 1],
+            symbol=selected.symbol,
+            size=selected.size,
+            pen=selected.pen(),
+            brush=selected.brush(),
+        )
 
     # -- picking ---------------------------------------------------------------
     def _on_clicked(self, _item: Any, spots: Any) -> None:
@@ -315,7 +396,7 @@ class SurveyPlanView(QWidget):
     def _on_remote(self, on: bool) -> None:
         self._settings.set("include_remote", bool(on))
         self.redraw()
-        self._plot.autoRange()
+        self._view.home()
 
     def _on_others(self, on: bool) -> None:
         self._settings.set("others", bool(on))
