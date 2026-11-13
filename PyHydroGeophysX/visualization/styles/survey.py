@@ -17,8 +17,9 @@ import numpy as np
 from PyHydroGeophysX.survey.layout import SurveyLayout
 from PyHydroGeophysX.survey.pseudo import PseudoPoints
 from PyHydroGeophysX.survey.scene import LINK_COLOURS, ROLE_STYLE
-from PyHydroGeophysX.survey.spectra import Spectrum, line_harmonics
-from PyHydroGeophysX.survey.traces import TraceSet
+from PyHydroGeophysX.survey.series import COLOURS, DASHES, encode
+from PyHydroGeophysX.survey.spectra import Spectrum, line_harmonics, trace_spectrum
+from PyHydroGeophysX.survey.traces import TraceCollection, TraceSet
 
 from .figures import _finish
 from .publication import (
@@ -177,14 +178,16 @@ def survey_section_figure(
 
 
 def trace_figure(
-    traces: TraceSet,
+    traces: TraceSet | TraceCollection,
     *,
     window: str = "",
     language: str = "zh",
     title: str = "",
     size: tuple[float, float] = (7.5, 3.4),
 ) -> Any:
-    """The channels over time; the reference curve on the right axis."""
+    """The channels over time; the reference curve of the focused group on the right axis."""
+    if isinstance(traces, TraceCollection):
+        return _collection_traces(traces, window=window, language=language, title=title, size=size)
     from matplotlib.figure import Figure
 
     extra = _words(language)
@@ -216,8 +219,61 @@ def trace_figure(
     return _finish(fig, language)
 
 
+def _collection_traces(
+    collection: TraceCollection,
+    *,
+    window: str,
+    language: str,
+    title: str,
+    size: tuple[float, float],
+) -> Any:
+    from matplotlib.figure import Figure
+
+    extra = _words(language)
+    focus = collection.focus_set()
+    styles = encode(collection)
+    with publication_style(language):
+        fig = Figure(figsize=size)
+        ax = fig.add_subplot(111)
+        for style in styles:
+            owner = next(item for item in collection.sets if item.group == style.group)
+            row = owner.channels.index(style.channel)
+            ax.plot(
+                owner.t,
+                owner.values[row],
+                color=COLOURS[style.colour % len(COLOURS)],
+                ls=DASHES[style.dash % len(DASHES)],
+                lw=0.8,
+                label=style.label,
+            )
+        if focus is not None and focus.reference is not None:
+            twin = ax.twinx()
+            twin.plot(focus.t, focus.reference, color="#9a3412", lw=1.0, ls="--")
+            twin.set_ylabel(
+                f"{focus.reference_label} ({focus.reference_unit})"
+                if focus.reference_unit
+                else focus.reference_label,
+                color="#9a3412",
+            )
+            ax.set_zorder(twin.get_zorder() + 1)
+            ax.patch.set_visible(False)
+        chosen = focus.window(window) if focus is not None and window else None
+        if chosen is not None:
+            ax.set_xlim(chosen.start, chosen.end)
+        ax.set_xlabel(f"{extra['time']} (s)")
+        ax.set_ylabel(focus.unit if focus is not None else "")
+        ax.grid(True, alpha=0.3)
+        if styles:
+            ax.legend(
+                fontsize=6, ncol=1 if len(styles) > 12 else 4, loc="upper left", bbox_to_anchor=(1.02, 1)
+            )
+        ax.set_title(title or collection.title)
+        fig.tight_layout()
+    return _finish(fig, language)
+
+
 def spectrum_figure(
-    spectrum: Spectrum,
+    spectrum: Spectrum | TraceCollection,
     *,
     line_frequency: float = 50.0,
     language: str = "zh",
@@ -225,6 +281,10 @@ def spectrum_figure(
     size: tuple[float, float] = (7.5, 3.4),
 ) -> Any:
     """Power spectral density on a log axis, the line harmonics marked (dashed where folded)."""
+    if isinstance(spectrum, TraceCollection):
+        return _collection_spectrum(
+            spectrum, line_frequency=line_frequency, language=language, title=title, size=size
+        )
     from matplotlib.figure import Figure
 
     extra = _words(language)
@@ -245,6 +305,61 @@ def spectrum_figure(
         if spectrum.labels:
             ax.legend(fontsize=7, ncol=4)
         ax.set_title(title)
+    return _finish(fig, language)
+
+
+def _collection_spectrum(
+    collection: TraceCollection,
+    *,
+    line_frequency: float,
+    language: str,
+    title: str,
+    size: tuple[float, float],
+) -> Any:
+    from matplotlib.figure import Figure
+
+    extra = _words(language)
+    focus = collection.focus_set()
+    name = ""
+    styles = encode(collection)
+    with publication_style(language):
+        fig = Figure(figsize=size)
+        ax = fig.add_subplot(111)
+        focus_spectrum = None
+        for style in styles:
+            owner = next(item for item in collection.sets if item.group == style.group)
+            spectrum = trace_spectrum(owner, owner.window(name) if name else None)
+            if owner is focus:
+                focus_spectrum = spectrum
+            row = owner.channels.index(style.channel)
+            keep = spectrum.frequency > 0
+            ax.semilogy(
+                spectrum.frequency[keep],
+                spectrum.power[row, keep],
+                color=COLOURS[style.colour % len(COLOURS)],
+                ls=DASHES[style.dash % len(DASHES)],
+                lw=0.8,
+                label=style.label,
+            )
+        if focus_spectrum is not None:
+            for harmonic in line_harmonics(focus_spectrum.sample_rate, line_frequency):
+                ax.axvline(
+                    harmonic.apparent,
+                    color="#dc2626",
+                    lw=0.7,
+                    ls="--" if harmonic.aliased else "-",
+                    alpha=0.7,
+                )
+            ax.set_xlim(0, focus_spectrum.nyquist)
+        ax.set_xlabel(f"{extra['frequency']} (Hz)")
+        ax.set_ylabel(extra["psd"])
+        ax.grid(True, which="both", alpha=0.25)
+        if styles:
+            ax.legend(
+                fontsize=6, ncol=1 if len(styles) > 12 else 4, loc="upper left", bbox_to_anchor=(1.02, 1)
+            )
+        ax.set_title(title or collection.title)
+        fig.tight_layout()
     return _finish(fig, language)
 
 

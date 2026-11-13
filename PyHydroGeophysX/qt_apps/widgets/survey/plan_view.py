@@ -148,6 +148,7 @@ class SurveyPlanView(QWidget):
         layout.addWidget(self._note)
         selection.groupChanged.connect(lambda _g: self.redraw())
         selection.keysChanged.connect(lambda _k: self._mark_selected())
+        selection.groupsChanged.connect(lambda _g: self.redraw())
         length_units.notifier().changed.connect(lambda _u: self._label_axes())
         self._selected = pg.ScatterPlotItem()
         self._label_axes()
@@ -261,6 +262,27 @@ class SurveyPlanView(QWidget):
             plot.addItem(ring)
         if style.point_labels:
             self._draw_labels(layout, in_group & (~remote | include_remote))
+        others = [name for name in self._selection.groups() if name and name != current_group]
+        if others:
+            mask = np.array(
+                [
+                    group in others and role == "A"
+                    for group, role in zip(points.group, points.role, strict=True)
+                ],
+                bool,
+            )
+            if mask.any():
+                symbol = style.symbol("shown")
+                plot.addItem(
+                    pg.ScatterPlotItem(
+                        points.xyz[mask, 0],
+                        points.xyz[mask, 1],
+                        symbol=symbol.symbol,
+                        size=symbol.size,
+                        brush=symbol.brush(),
+                        pen=symbol.pen(),
+                    )
+                )
         plot.addItem(self._selected)
         self._mark_selected()
         if layout.crs:

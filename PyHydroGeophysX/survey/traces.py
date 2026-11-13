@@ -8,7 +8,7 @@ own axis (the transmitter current of a DC/IP shot), and named time windows
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -51,6 +51,10 @@ class TraceSet:
     windows: tuple[Window, ...] = ()
     title: str = ""
     line_frequency: float | None = None
+    #: The shot, site or record these channels belong to (empty for a set used on its own).
+    group: str = ""
+    #: Time-axis origin, in the same units as ``t`` (a DC/IP shot's switch-off). None: no origin.
+    origin: float | None = None
 
     def __post_init__(self) -> None:
         t = np.asarray(self.t, dtype=np.float64).ravel()
@@ -115,7 +119,55 @@ class TraceSet:
             self.windows,
             self.title,
             self.line_frequency,
+            self.group,
+            self.origin,
         )
+
+
+@dataclass(frozen=True)
+class TraceCollection:
+    """The curves of several groups drawn together. ``focus`` is the group the page is working on."""
+
+    sets: tuple[TraceSet, ...]
+    focus: str = ""
+    title: str = ""
+
+    def __post_init__(self) -> None:
+        sets = tuple(self.sets)
+        groups: list[str] = []
+        for item in sets:
+            if not item.group:
+                raise ValueError("every trace set of a collection needs a group")
+            if item.group in groups:
+                raise ValueError(f"duplicate group {item.group!r}")
+            groups.append(item.group)
+        focus = self.focus if self.focus in groups else (groups[0] if groups else "")
+        object.__setattr__(self, "sets", sets)
+        object.__setattr__(self, "focus", focus)
+
+    @classmethod
+    def single(cls, traces: TraceSet, title: str = "") -> TraceCollection:
+        """One set, as the views used to be given. An empty group becomes ``group``."""
+        group = traces.group or "group"
+        if traces.group != group:
+            traces = replace(traces, group=group)
+        return cls((traces,), focus=group, title=title or traces.title)
+
+    def focus_set(self) -> TraceSet | None:
+        return next((item for item in self.sets if item.group == self.focus), None)
+
+    @property
+    def size(self) -> int:
+        return sum(item.size for item in self.sets)
+
+    def pairs(self) -> tuple[tuple[str, str, Key], ...]:
+        """``(group, channel, key)`` of every curve, in draw order."""
+        found: list[tuple[str, str, Key]] = []
+        for item in self.sets:
+            for row, channel in enumerate(item.channels):
+                key: Key = item.keys[row] if item.keys else ("trace", item.group, channel)
+                found.append((item.group, channel, key))
+        return tuple(found)
 
 
 def windows_from_cycle(on_seconds: float, off_seconds: float, *, settle: float = 0.2) -> tuple[Window, ...]:
@@ -142,4 +194,11 @@ def as_trace_values(values: ArrayLike, n_samples: int) -> FloatArray:
     return np.asarray(array, dtype=np.float64)
 
 
-__all__ = ["WINDOW_KINDS", "TraceSet", "Window", "as_trace_values", "windows_from_cycle"]
+__all__ = [
+    "WINDOW_KINDS",
+    "TraceCollection",
+    "TraceSet",
+    "Window",
+    "as_trace_values",
+    "windows_from_cycle",
+]

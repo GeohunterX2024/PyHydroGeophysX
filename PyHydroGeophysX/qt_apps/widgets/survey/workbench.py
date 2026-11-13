@@ -51,9 +51,9 @@ from PyHydroGeophysX.qt_apps.widgets.survey.style_panel import PlotStyleEditor, 
 from PyHydroGeophysX.qt_apps.widgets.survey.trace_view import SurveyTraceView
 from PyHydroGeophysX.qt_apps.widgets.survey.view3d import Survey3DView
 from PyHydroGeophysX.survey.layout import SurveyLayout
-from PyHydroGeophysX.survey.provider import SurveyProvider
+from PyHydroGeophysX.survey.provider import MultiGroupProvider, SurveyProvider
 from PyHydroGeophysX.survey.pseudo import PseudoPoints
-from PyHydroGeophysX.survey.traces import TraceSet
+from PyHydroGeophysX.survey.traces import TraceCollection, TraceSet
 
 _logger = logging.getLogger(__name__)
 
@@ -68,6 +68,8 @@ class SurveyWorkbench(QWidget):
 
     #: The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it).
     viewChanged = Signal()
+    #: More curves than the curve view draws: ``(available, drawn)``.
+    limitReached = Signal(int, int)
 
     def __init__(
         self,
@@ -85,6 +87,7 @@ class SurveyWorkbench(QWidget):
         self._layout: SurveyLayout | None = None
         self._pseudo: PseudoPoints | None = None
         self._traces: TraceSet | None = None
+        self._collection: TraceCollection | None = None
         self._dirty = set(TABS)
         self.plan = SurveyPlanView(self.selection, colormaps=colormaps, controls_outside=True)
         self.section = SurveySectionView(self.selection, colormaps=colormaps)
@@ -284,8 +287,17 @@ class SurveyWorkbench(QWidget):
     def layout_data(self) -> tuple[SurveyLayout | None, PseudoPoints | None]:
         return self._layout, self._pseudo
 
+    def set_groups(self, groups: Sequence[str]) -> None:
+        """Draw these groups together (the focused group stays whatever the page last picked)."""
+        self.selection.set_groups(groups)
+        self._dirty.update(("traces", "spectrum"))
+        self._refresh_visible()
+
     def current_traces(self) -> TraceSet | None:
         return self._traces
+
+    def current_collection(self) -> TraceCollection | None:
+        return self._collection
 
     # -- drawing ------------------------------------------------------------
     def _refresh_visible(self) -> None:
@@ -300,18 +312,32 @@ class SurveyWorkbench(QWidget):
                 self.plan.set_layout(self._layout)
                 self.section.set_data(self._layout, self._pseudo)
             return
-        self._traces = self._fetch_traces()
+        self._collection = self._fetch_traces()
+        self._traces = None if self._collection is None else self._collection.focus_set()
+        shown = self._collection if self._collection is not None else self._traces
         if tab == "traces":
-            self.traces.set_traces(self._traces)
+            self.traces.set_traces(shown)
         else:
-            self.spectrum.set_traces(self._traces)
+            self.spectrum.set_traces(shown)
 
-    def _fetch_traces(self) -> TraceSet | None:
+    def _fetch_traces(self) -> TraceCollection | None:
         provider = self._provider
-        group = self.selection.group()
-        if provider is None or not group or "traces" not in provider.survey_capabilities():
+        groups = self.selection.groups()
+        if provider is None or not groups or "traces" not in provider.survey_capabilities():
             return None
-        return provider.survey_traces(group, self._channels)
+        collection: TraceCollection | None
+        if (
+            len(groups) > 1
+            and "multi_traces" in provider.survey_capabilities()
+            and isinstance(provider, MultiGroupProvider)
+        ):
+            collection = provider.survey_trace_sets(groups, self._channels)
+        else:
+            one = provider.survey_traces(groups[0], self._channels)
+            collection = TraceCollection.single(one) if one is not None else None
+        if collection is not None and collection.size > self.traces.curve_limit():
+            self.limitReached.emit(collection.size, self.traces.curve_limit())
+        return collection
 
     def _on_group(self, _group: str) -> None:
         self._dirty.update(("traces", "spectrum"))
@@ -415,18 +441,17 @@ class SurveyWorkbench(QWidget):
                 language=language,
             )
         elif key == "traces":
-            traces = self._traces or self._fetch_traces()
-            if traces is not None:
+            collection = self._collection or self._fetch_traces()
+            if collection is not None:
                 window = self.traces.window()
-                figure = figures.trace_figure(traces, window=window.name if window else "", language=language)
+                figure = figures.trace_figure(
+                    collection, window=window.name if window else "", language=language
+                )
         elif key == "spectrum":
-            spectrum = self.spectrum.spectrum()
-            if spectrum is None:
-                self.spectrum.set_traces(self._traces or self._fetch_traces())
-                spectrum = self.spectrum.spectrum()
-            if spectrum is not None:
+            collection = self._collection or self._fetch_traces()
+            if collection is not None:
                 figure = figures.spectrum_figure(
-                    spectrum, line_frequency=self.spectrum.line_frequency(), language=language
+                    collection, line_frequency=self.spectrum.line_frequency(), language=language
                 )
         if figure is None:
             return None
