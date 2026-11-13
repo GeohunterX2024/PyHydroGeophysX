@@ -109,8 +109,10 @@ class SurveySectionView(QWidget):
         layout.addWidget(self._legend)
         self._selected = pg.ScatterPlotItem()
         self._current = pg.ScatterPlotItem()
+        self._shown = pg.ScatterPlotItem()
         selection.groupChanged.connect(lambda _g: self._mark())
         selection.keysChanged.connect(lambda _k: self._mark())
+        selection.displayChanged.connect(lambda _k: self._mark())
         length_units.notifier().changed.connect(lambda _u: self._label_axes())
         self._label_axes()
 
@@ -231,6 +233,7 @@ class SurveySectionView(QWidget):
                 )
             )
             legend = i18n.tr(pseudo.legend)
+        plot.addItem(self._shown)
         plot.addItem(self._current)
         plot.addItem(self._selected)
         self._mark()
@@ -240,10 +243,32 @@ class SurveySectionView(QWidget):
     def _mark(self) -> None:
         pseudo = self._pseudo
         if pseudo is None or not pseudo.size:
+            self._shown.setData([], [])
             self._current.setData([], [])
             self._selected.setData([], [])
             return
         current_group = self._selection.group()
+        wanted = set(self._selection.display_keys())
+        shown = (
+            np.array(
+                [
+                    key in wanted and group != current_group
+                    for key, group in zip(pseudo.keys, pseudo.group, strict=True)
+                ],
+                bool,
+            )
+            if wanted and pseudo.keys
+            else np.zeros(pseudo.size, bool)
+        )
+        symbol = self._style.symbol("shown")
+        self._shown.setData(
+            pseudo.along[shown],
+            pseudo.elevation[shown],
+            symbol=symbol.symbol,
+            size=symbol.size,
+            pen=symbol.pen(),
+            brush=symbol.brush(),
+        )
         mine = (
             np.array([g == current_group for g in pseudo.group], bool)
             if current_group

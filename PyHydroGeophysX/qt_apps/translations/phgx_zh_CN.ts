@@ -7352,7 +7352,7 @@ B：{1}
     </message>
     <message>
       <source>Window the spectrum is taken over; a steady part of the record avoids switching leakage</source>
-      <extracomment>Power-line frequencies offered (Hz). Noise measures of the channels shown, after each redraw.</extracomment>
+      <extracomment>Power-line frequencies offered (Hz). Noise measures of the channels shown, after each redraw. A click on the table: the group's name and the channel's key.</extracomment>
       <translation>计算频谱所用的时间窗；选记录中平稳的一段，可避免通断跳变造成的频谱泄漏</translation>
     </message>
     <message>
@@ -7394,6 +7394,14 @@ B：{1}
     <message>
       <source>whole record</source>
       <translation>全段记录</translation>
+    </message>
+    <message>
+      <source>Sample rates differ; harmonics follow the focused group</source>
+      <translation>采样率不同；谐波线按焦点组</translation>
+    </message>
+    <message>
+      <source>Showing {0} of {1}</source>
+      <translation>显示 {0} / {1}</translation>
     </message>
     <message>
       <source>Hayley et al. 2007 (≈2.0 %/°C)</source>
@@ -7982,7 +7990,7 @@ B：{1}
     </message>
     <message>
       <source>Plan</source>
-      <extracomment>Tab keys, in order. The 2-D plots, in their order in the split. The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it).</extracomment>
+      <extracomment>Tab keys, in order. The 2-D plots, in their order in the split. The tab on screen or the 2-D/3-D choice changed (a page refreshes its toolbar on it). More curves than the curve view draws: ``(available, drawn)``.</extracomment>
       <translation>平面</translation>
     </message>
     <message>
@@ -8126,7 +8134,7 @@ B：{1}
     </message>
     <message>
       <source>Zoom the time axis to a window of the record</source>
-      <extracomment>Window names the adapters use (English source text, translated when shown). Shading of each window kind.</extracomment>
+      <extracomment>Curves drawn per plot; the spin box stays inside this. A legend listing every curve stops being readable past this many. Window names the adapters use (English source text, translated when shown). Shading of each window kind. A click on a curve: its group and its key. The page decides what that selects.</extracomment>
       <translation>把时间轴缩放到记录的某个时间窗</translation>
     </message>
     <message>
@@ -8142,12 +8150,68 @@ B：{1}
       <translation>在右纵轴上画参考曲线（如供电电流）</translation>
     </message>
     <message>
+      <source>Record time</source>
+      <translation>记录时间</translation>
+    </message>
+    <message>
+      <source>Relative to time origin</source>
+      <translation>相对时间原点</translation>
+    </message>
+    <message>
+      <source>Align every group on its time origin (a shot's switch-off)</source>
+      <translation>把各组对齐到各自的时间原点（一炮的断电时刻）</translation>
+    </message>
+    <message>
+      <source>Normalise by window mean</source>
+      <translation>按时间窗均值归一化</translation>
+    </message>
+    <message>
+      <source>Divide each curve by its mean absolute value inside the chosen window</source>
+      <translation>每条曲线除以所选时间窗内的绝对值均值</translation>
+    </message>
+    <message>
+      <source>Each curve</source>
+      <translation>逐条</translation>
+    </message>
+    <message>
+      <source>Median and 10-90% band</source>
+      <translation>中位数与 10–90% 分位带</translation>
+    </message>
+    <message>
+      <source>The band needs curves aligned on their time origin and normalised</source>
+      <translation>分位带要求曲线已对齐时间原点并做了归一化</translation>
+    </message>
+    <message>
+      <source>Curves drawn at once; the rest stay listed</source>
+      <translation>一次画出的曲线条数，其余仍留在列表里</translation>
+    </message>
+    <message>
+      <source>Time axis</source>
+      <translation>时间轴</translation>
+    </message>
+    <message>
+      <source>Curves drawn</source>
+      <translation>曲线</translation>
+    </message>
+    <message>
+      <source>Up to</source>
+      <translation>最多</translation>
+    </message>
+    <message>
       <source>Choose a group and its channels to see their curves.</source>
       <translation>选择一组及其通道以查看曲线。</translation>
     </message>
     <message>
       <source>{0} channels · {1} samples · {2:g} samples/s</source>
       <translation>{0} 个通道 · {1} 个样点 · 每秒 {2:g} 个样点</translation>
+    </message>
+    <message>
+      <source>{0} · {1}</source>
+      <translation>{0} · {1}</translation>
+    </message>
+    <message>
+      <source>{0} curves</source>
+      <translation>{0} 条曲线</translation>
     </message>
     <message>
       <source>Field units (mV/km, nT)</source>
@@ -10893,6 +10957,10 @@ This choice holds wherever the model is fitted: the data errors when they are ta
       <translation>选中点</translation>
     </message>
     <message>
+      <source>Shots on screen</source>
+      <translation>画面上的炮</translation>
+    </message>
+    <message>
       <source>Current pair A-B</source>
       <translation>供电电极对 A-B</translation>
     </message>
@@ -10911,6 +10979,10 @@ This choice holds wherever the model is fitted: the data errors when they are ta
     <message>
       <source>Transmitter loop</source>
       <translation>发射线框</translation>
+    </message>
+    <message>
+      <source>Readings on screen</source>
+      <translation>画面上的读数</translation>
     </message>
     <message>
       <source>Zoom: drag a box right (top left to bottom right) to zoom in, left (bottom right to top left) to show everything</source>
@@ -10951,6 +11023,10 @@ This choice holds wherever the model is fitted: the data errors when they are ta
     <message>
       <source>Pseudo-depth: 0.19 x electrode spread (Edwards 1977)</source>
       <translation>拟深度：电极跨度的 0.19 倍（Edwards 1977）</translation>
+    </message>
+    <message>
+      <source>Group</source>
+      <translation>组</translation>
     </message>
     <message>
       <source>Channel</source>

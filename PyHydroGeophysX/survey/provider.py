@@ -12,11 +12,12 @@ from typing import Protocol, runtime_checkable
 
 from PyHydroGeophysX.survey.layout import SurveyLayout
 from PyHydroGeophysX.survey.pseudo import PseudoPoints
-from PyHydroGeophysX.survey.traces import TraceSet
+from PyHydroGeophysX.survey.traces import TraceCollection, TraceSet
 
 #: ``layout``: a plan and a 3-D view; ``pseudo``: pseudo-depth points on the
-#: section and in 3-D; ``traces``: a curve view; ``spectrum``: a spectrum view.
-CAPABILITIES = ("layout", "pseudo", "traces", "spectrum")
+#: section and in 3-D; ``traces``: a curve view; ``spectrum``: a spectrum view;
+#: ``multi_traces``: curves of several groups at once (:class:`MultiGroupProvider`).
+CAPABILITIES = ("layout", "pseudo", "traces", "spectrum", "multi_traces")
 
 
 @runtime_checkable
@@ -38,4 +39,18 @@ class SurveyProvider(Protocol):
         ...
 
 
-__all__ = ["CAPABILITIES", "SurveyProvider"]
+@runtime_checkable
+class MultiGroupProvider(Protocol):
+    """Optional. Curves of several groups, each with its own time axis.
+
+    Used only when :meth:`SurveyProvider.survey_capabilities` contains
+    ``multi_traces``. A provider that does not implement it keeps the
+    one-group views exactly as they were.
+    """
+
+    def survey_trace_sets(self, groups: Sequence[str], channels: Sequence[str]) -> TraceCollection | None:
+        """One :class:`TraceSet` per group that has any of ``channels`` (every channel when empty)."""
+        ...
+
+
+__all__ = ["CAPABILITIES", "MultiGroupProvider", "SurveyProvider"]

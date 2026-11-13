@@ -20,11 +20,17 @@ class SurveySelection(QObject):
 
     groupChanged = Signal(str)
     keysChanged = Signal(object)
+    #: The groups drawn together (the focused group stays :meth:`group`).
+    groupsChanged = Signal(object)
+    #: Keys of everything on screen, for the plan and section to mark.
+    displayChanged = Signal(object)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._group = ""
         self._keys: tuple[Key, ...] = ()
+        self._groups: tuple[str, ...] = ()
+        self._display: tuple[Key, ...] = ()
 
     def group(self) -> str:
         return self._group
@@ -46,6 +52,27 @@ class SurveySelection(QObject):
 
     def clear(self) -> None:
         self.set_keys(())
+
+    def groups(self) -> tuple[str, ...]:
+        """Groups drawn together: those set, else just the focused group."""
+        if self._groups:
+            return self._groups
+        return (self._group,) if self._group else ()
+
+    def set_groups(self, groups: Iterable[str]) -> None:
+        chosen = tuple(dict.fromkeys(str(group) for group in groups if str(group)))
+        if chosen != self._groups:
+            self._groups = chosen
+            self.groupsChanged.emit(chosen)
+
+    def display_keys(self) -> tuple[Key, ...]:
+        return self._display
+
+    def set_display_keys(self, keys: Iterable[Key]) -> None:
+        chosen = tuple(dict.fromkeys(tuple(key) for key in keys))
+        if chosen != self._display:
+            self._display = chosen
+            self.displayChanged.emit(chosen)
 
 
 __all__ = ["SurveySelection"]

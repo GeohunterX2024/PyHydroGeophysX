@@ -218,6 +218,7 @@ def plan_default() -> PlotStyle:
     symbols["others"] = SymbolStyle("t1", 7.0, FADED, "#1f2937", 0.6)
     symbols["current"] = SymbolStyle("o", 22.0, "", "#f59e0b", 2.5)
     symbols["selected"] = SymbolStyle("o", 16.0, "", "#f59e0b", 2.0)
+    symbols["shown"] = SymbolStyle("o", 16.0, "", "#2563eb", 1.6)
     lines = {kind: LineStyle(colour, 2.0, "solid") for kind, colour in LINK_COLOURS.items()}
     return PlotStyle(aspect="equal", symbols=symbols, lines=lines)
 
@@ -229,6 +230,7 @@ def section_default() -> PlotStyle:
         "pseudo": SymbolStyle("o", 7.0, "#6b7280", "", 0.0),
         "current": SymbolStyle("o", 9.0, "", "#f59e0b", 1.6),
         "selected": SymbolStyle("o", 11.0, "", "#111827", 1.6),
+        "shown": SymbolStyle("o", 8.0, "", "#2563eb", 1.2),
     }
     lines = {"terrain": LineStyle("#4d7c0f", 1.6, "solid")}
     return PlotStyle(symbols=symbols, lines=lines, point_labels=False)
@@ -248,6 +250,7 @@ PLAN_SYMBOL_NAMES = dict(
         ("others", "Other shots"),
         ("current", "Current shot ring"),
         ("selected", "Selected points"),
+        ("shown", "Shots on screen"),
     )
 )
 PLAN_LINE_NAMES = dict(
@@ -265,6 +268,7 @@ SECTION_SYMBOL_NAMES = dict(
         ("pseudo", "Pseudo-depth points"),
         ("current", "Current shot ring"),
         ("selected", "Selected points"),
+        ("shown", "Readings on screen"),
     )
 )
 SECTION_LINE_NAMES = dict((("terrain", "Terrain"),))
