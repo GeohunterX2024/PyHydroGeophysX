@@ -68,10 +68,11 @@ if [ -f .importlinter ]; then
   step "import-linter (layer contracts)" "$BIN/lint-imports" --config .importlinter
 fi
 # A clean checkout (CI, a release build) lacks any source file .gitignore hides.
+# Finder's .DS_Store is not a source file and macOS writes it back whenever a folder is opened.
 no_ignored_sources() {
   local hidden
   hidden="$(git ls-files --others --ignored --exclude-standard --directory \
-    -- PyHydroGeophysX/ tests/ tools/ | grep -Ev '__pycache__/|\.pyc$')"
+    -- PyHydroGeophysX/ tests/ tools/ | grep -Ev '__pycache__/|\.pyc$|(^|/)\.DS_Store$')"
   # shellcheck disable=SC2086  # one line per hidden path
   [ -z "$hidden" ] || { printf '      ignored by .gitignore: %s\n' $hidden; return 1; }
 }

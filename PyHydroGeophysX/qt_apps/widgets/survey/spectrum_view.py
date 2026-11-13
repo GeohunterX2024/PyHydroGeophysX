@@ -1,9 +1,11 @@
-"""Power spectra of one group's channels over a window, with the line harmonics marked.
+"""Power spectra of the groups' channels over a window, with the line harmonics marked.
 
 Harmonics that sampling folds below the Nyquist frequency are dashed. Under the
-plot, one row per channel: the line-frequency peak over the broadband floor,
-the floor itself, the noise RMS of the noise window and the signal-to-noise
-ratio; the table sorts by any column, so the worst channel is one click away.
+plot, one row per group and channel, every pair shown and not only the curves
+drawn: the line-frequency peak over the broadband floor, the floor itself, the
+noise RMS of the noise window and the signal-to-noise ratio; the table sorts by
+any column, so the worst channel is one click away. Spectra and measures are
+cached per channel, so a redraw only computes the channels it has not seen.
 """
 
 from __future__ import annotations
@@ -35,13 +37,7 @@ from PyHydroGeophysX.qt_apps.widgets.survey.trace_view import (
     REFERENCE_COLOUR,
 )
 from PyHydroGeophysX.survey.series import COLOURS, encode
-from PyHydroGeophysX.survey.spectra import (
-    NoiseMetrics,
-    Spectrum,
-    line_harmonics,
-    noise_metrics,
-    trace_spectrum,
-)
+from PyHydroGeophysX.survey.spectra import NoiseMetrics, Spectrum, SpectrumCache, line_harmonics
 from PyHydroGeophysX.survey.traces import TraceCollection, TraceSet
 
 #: Power-line frequencies offered (Hz).
@@ -77,6 +73,7 @@ class SurveySpectrumView(QWidget):
         self._collection: TraceCollection | None = None
         self._spectrum: Spectrum | None = None
         self._metrics: tuple[NoiseMetrics, ...] = ()
+        self._cache = SpectrumCache()
         self._window = QComboBox()
         self._window.setToolTip(
             QCoreApplication.translate(
@@ -184,11 +181,19 @@ class SurveySpectrumView(QWidget):
             )
             return
         name = str(self._window.currentData() or "")
-        spectra = {
-            item.group: trace_spectrum(item, item.window(name))
+        f0 = self.line_frequency()
+        measured = {
+            item.group: self._cache.measure(
+                item,
+                item.window(name),
+                line_frequency=f0,
+                signal_window=item.window("End of on-time"),
+                noise_window=item.window("Late off-time") or item.window("Off-time"),
+            )
             for item in collection.sets
             if item.sample_rate > 0
         }
+        spectra = {group: found[0] for group, found in measured.items()}
         spectrum = spectra.get(traces.group)
         self._spectrum = spectrum
         styles = encode(collection)
@@ -228,7 +233,6 @@ class SurveySpectrumView(QWidget):
             plot.plot(
                 spectrum.frequency[keep], np.maximum(spectrum.reference[keep], floor), pen=pen, name=label
             )
-        f0 = self.line_frequency()
         if spectrum is not None:
             for harmonic in line_harmonics(spectrum.sample_rate, f0):
                 style_pen = Qt.PenStyle.DashLine if harmonic.aliased else Qt.PenStyle.SolidLine
@@ -244,7 +248,7 @@ class SurveySpectrumView(QWidget):
             plot.setXRange(0, spectrum.nyquist, padding=0.01)
         unit = f"{traces.unit}²/Hz" if traces.unit else "1/Hz"
         plot.setLabel("left", QCoreApplication.translate("PHGX", "PSD ({0})").format(unit))
-        self._fill_table(collection, spectra, f0)
+        self._fill_table(collection, {group: found[1] for group, found in measured.items()})
         rates = {round(item.sample_rate, 3) for item in collection.sets}
         note = QCoreApplication.translate(
             "PHGX", "Welch, Hann window · Nyquist {0:g} Hz · window: {1}"
@@ -265,23 +269,14 @@ class SurveySpectrumView(QWidget):
         self._info.setText(note)  # i18n: as written
         self.metricsComputed.emit(self._metrics)
 
-    def _fill_table(
-        self, collection: TraceCollection, spectra: dict[str, Spectrum], line_frequency: float
-    ) -> None:
+    def _fill_table(self, collection: TraceCollection, measured: dict[str, tuple[NoiseMetrics, ...]]) -> None:
         table = self._table
         rows: list[tuple[str, object, NoiseMetrics]] = []
         focus_metrics: tuple[NoiseMetrics, ...] = ()
         for item in collection.sets:
-            spectrum = spectra.get(item.group)
-            if spectrum is None:
+            metrics = measured.get(item.group)
+            if metrics is None:
                 continue
-            metrics = noise_metrics(
-                item,
-                spectrum,
-                line_frequency=line_frequency,
-                signal_window=item.window("End of on-time"),
-                noise_window=item.window("Late off-time") or item.window("Off-time"),
-            )
             if item.group == collection.focus:
                 focus_metrics = metrics
             for index, metric in enumerate(metrics):
